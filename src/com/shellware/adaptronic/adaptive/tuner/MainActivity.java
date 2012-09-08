@@ -3,7 +3,6 @@ package com.shellware.adaptronic.adaptive.tuner;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.DecimalFormat;
 import java.util.Set;
 import java.util.UUID;
 
@@ -112,6 +111,7 @@ public class MainActivity extends Activity {
         public void run() 
         {
         	final String data = getDataBuffer();
+        	
         	if (data.length() > 0 && data.startsWith("1 3 ")) {
         		// RPM, MAP, MAT, WAT, AUXT, & AFR
         		if (data.contains("1 3 C")) {
@@ -133,6 +133,7 @@ public class MainActivity extends Activity {
         				imgStatus.setBackgroundColor(Color.RED);
         			}
 	        	} else {
+	        		// Learning Flags
 	        		if (data.contains("1 3 2")) {
 	        			final String[] buf = data.substring(data.indexOf("1 3 2"), data.length()).split(" ");
 	        			
@@ -166,6 +167,8 @@ public class MainActivity extends Activity {
 	        			} else {
 	        				imgStatus.setBackgroundColor(Color.RED);
 	        			}
+	            	} else {
+	    				imgStatus.setBackgroundColor(Color.RED);
 	        		}
 	        	}
         	} else {
