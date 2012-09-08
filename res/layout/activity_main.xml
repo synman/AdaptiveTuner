@@ -3,20 +3,113 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <TextView
-        android:id="@+id/txtData"
+    <RelativeLayout
+        android:id="@+id/learningFrame"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:layout_marginTop="@dimen/padding_small" >
+    
+	    <RelativeLayout
+	        android:id="@+id/ignitionFrame"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content" >
+	
+	        <TextView
+	            android:id="@+id/textView2"
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:layout_centerHorizontal="true"
+	            android:layout_marginBottom="@dimen/padding_small"
+	            android:text="@string/ignition"
+	            android:textAppearance="?android:attr/textAppearanceMedium" />
+	
+	        <ImageView
+	            android:id="@+id/imgIWait"
+	            android:layout_width="60dp"
+	            android:layout_height="60dp"
+	            android:layout_below="@id/textView2"
+	            android:src="@drawable/iwait" />
+	
+	        <ImageView
+	            android:id="@+id/imgIRpm"
+	            android:layout_width="60dp"
+	            android:layout_height="60dp"
+	            android:layout_marginLeft="25dp"
+	            android:layout_marginRight="25dp"
+	            android:layout_below="@id/textView2"
+	            android:layout_toRightOf="@id/imgIWait"
+	            android:src="@drawable/irpm" />
+	
+			<ImageView
+	            android:id="@+id/imgILoad"
+	            android:layout_width="60dp"
+	            android:layout_height="60dp"
+	            android:layout_below="@id/textView2"
+	            android:layout_toRightOf="@id/imgIRpm"
+	            android:src="@drawable/iload" />
+	
+	        </RelativeLayout>
+	        
+		    <RelativeLayout
+		        android:id="@+id/fuelFrame"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_alignParentTop="true"
+		        android:layout_marginLeft="@dimen/padding_50dp"
+		        android:layout_toRightOf="@id/ignitionFrame" >
+	
+			    <TextView
+			        android:id="@+id/TextView01"
+			        android:layout_width="wrap_content"
+			        android:layout_height="wrap_content"
+			        android:layout_centerHorizontal="true"
+			        android:layout_marginBottom="@dimen/padding_small"
+			        android:text="@string/fuel"
+			        android:textAppearance="?android:attr/textAppearanceMedium" />
+	
+			    <ImageView
+			        android:id="@+id/imgFWait"
+			        android:layout_width="60dp"
+			        android:layout_height="60dp"
+			        android:layout_below="@+id/TextView01"
+			        android:src="@drawable/iwait" />
+	
+			    <ImageView
+			        android:id="@+id/imgFRpm"
+			        android:layout_width="60dp"
+			        android:layout_height="60dp"
+			        android:layout_below="@+id/TextView01"
+			        android:layout_marginLeft="25dp"
+			        android:layout_marginRight="25dp"
+			        android:layout_toRightOf="@+id/imgFWait"
+			        android:src="@drawable/irpm" />
+	
+			    <ImageView
+			        android:id="@+id/imgFLoad"
+			        android:layout_width="60dp"
+			        android:layout_height="60dp"
+			        android:layout_below="@+id/TextView01"
+			        android:layout_toRightOf="@+id/imgFRpm"
+			        android:src="@drawable/iload" />
+			</RelativeLayout>
+	</RelativeLayout>
+
+    <ImageView
+        android:id="@+id/imgStatus"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_alignParentRight="true"
+        android:layout_margin="@dimen/padding_small" />
 
     <GridView
         android:id="@+id/gridData"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/txtData"
+        android:layout_below="@id/learningFrame"
         android:layout_centerInParent="true"
+        android:layout_margin="@dimen/padding_large"
+        android:layout_marginLeft="300dp"
         android:numColumns="3" >
 
     </GridView>
