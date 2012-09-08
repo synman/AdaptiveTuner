@@ -1,0 +1,12 @@
+<resources>
+
+    <string name="app_name">Adaptive Tuner</string>
+    <string name="menu_connect">Connect</string>
+    <string name="menu_disconnect">Disconnect</string>
+    <string name="menu_refresh">Refresh</string>
+    <string name="menu_exit">Quit</string>
+    <string name="title_activity_main">Adaptive Tuner</string>
+    <string name="large_text">Large Text</string>
+    <string name="device_list">Bluetooth Device List</string>
+
+</resources>

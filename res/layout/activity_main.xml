@@ -1,0 +1,52 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <TextView
+        android:id="@+id/txtData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <GridView
+        android:id="@+id/gridData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/txtData"
+        android:layout_centerInParent="true"
+        android:numColumns="3" >
+
+    </GridView>
+
+    <RelativeLayout android:id="@+id/layoutDevices"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="@dimen/padding_50dp"
+        android:visibility="invisible"
+        android:background="#3B3131"
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content" >
+	    
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/device_list"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+   	    <ListView
+   	        android:id="@+id/lvDevices"
+   	        android:layout_width="match_parent"
+   	        android:layout_height="wrap_content"
+   	        android:layout_below="@+id/textView1"
+   	        android:layout_marginTop="@dimen/padding_small"
+   	        android:clickable="true" >
+	
+	    </ListView>
+	</RelativeLayout>
+</RelativeLayout>
