@@ -436,8 +436,8 @@ public class MainActivity extends Activity {
 		
         // Handle item selection
         switch (item.getItemId()) {
-	        case android.R.id.home:
-	        	return false;
+//	        case android.R.id.home:
+//	        	return false;
 	        	
 	        case R.id.menu_exit:
 	        	System.exit(0);

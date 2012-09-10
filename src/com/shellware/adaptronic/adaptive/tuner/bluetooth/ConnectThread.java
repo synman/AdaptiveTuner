@@ -71,13 +71,7 @@ import android.util.Log;
 		        	bt.cancelDiscovery();
 					bts = btd.createRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);
 				} catch (IOException e) {
-					// try an insecure connection
-					try {
-						bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);
-					} catch (IOException e1) {
-						// increment counter
-						counter++;
-					}
+					counter++;
 				}
 		        
 		        try {
