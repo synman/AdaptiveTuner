@@ -20,8 +20,7 @@
 	<group>
 	    <item android:id="@+id/menu_connect"
 	        android:title="@string/menu_connect"
-	        android:orderInCategory="100"
-	        android:showAsAction="never" />
+	        android:orderInCategory="100" />
     </group>
     <group>
 	    <item android:id="@+id/menu_prefs"
@@ -32,7 +31,6 @@
     <group>
 	    <item android:id="@+id/menu_exit"
 	        android:title="@string/menu_exit"
-	        android:orderInCategory="100"
-	        android:showAsAction="never" />
+	        android:orderInCategory="100" />
     </group>
 </menu>
