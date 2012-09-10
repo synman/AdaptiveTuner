@@ -32,9 +32,6 @@ import android.util.Log;
     public class ConnectThread extends Thread {
 
     	private static final UUID UUID_RFCOMM_GENERIC = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    	
-    	private static final short CONNECTION_ERROR = 1;
-    	private static final short CONNECTED = 3;
 
     	private final Handler handler;
     	private final String name;
@@ -92,7 +89,7 @@ import android.util.Log;
 			        // bail if we've tried 10 times
 			        if (counter >= 10) {
 				        
-				        b.putShort("handle", CONNECTION_ERROR);
+				        b.putShort("handle", MainActivity.CONNECTION_ERROR);
 				        b.putString("title", name);
 				        b.putString("message", "Connection attempt failed");
 				        msg.setData(b);
@@ -107,7 +104,7 @@ import android.util.Log;
     		connectedThread.setSocket(bts);
     		connectedThread.start();
 
-	        b.putShort("handle", CONNECTED);
+	        b.putShort("handle", MainActivity.CONNECTED);
 	        msg.setData(b);
 	        
 	        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Connected");
