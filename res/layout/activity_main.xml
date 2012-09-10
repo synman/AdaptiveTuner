@@ -1,4 +1,22 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 
+/*
+ *   Copyright 2012 Shell M. Shrader
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+ -->
+ <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
@@ -102,17 +120,26 @@
         android:layout_alignParentRight="true"
         android:layout_margin="@dimen/padding_small" />
 
-    <GridView
-        android:id="@+id/gridData"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/learningFrame"
-        android:layout_centerInParent="true"
-        android:layout_margin="@dimen/padding_large"
-        android:layout_marginLeft="300dp"
-        android:numColumns="3" >
-
-    </GridView>
+	<RelativeLayout
+	    android:id="@+id/gridFrame"
+	    android:layout_width="600dp"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@id/learningFrame"
+	    android:layout_centerHorizontal="true"
+	    android:layout_marginTop="@dimen/padding_50dp" >
+    
+	    <!-- android:layout_marginLeft="80dp"-->
+	    <GridView
+	        android:id="@+id/gridData"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        android:columnWidth="125dip"
+	        android:gravity="center"
+	        android:horizontalSpacing="10dip"
+	        android:stretchMode="spacingWidthUniform"
+	        android:verticalSpacing="10dip"
+	        android:numColumns="3" />
+    </RelativeLayout>
 
     <RelativeLayout android:id="@+id/layoutDevices"
         android:layout_centerHorizontal="true"
@@ -123,14 +150,14 @@
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content" >
 	    
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:text="@string/device_list"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+	    <TextView
+	        android:id="@+id/textView1"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:layout_alignParentTop="true"
+	        android:layout_centerHorizontal="true"
+	        android:text="@string/device_list"
+	        android:textAppearance="?android:attr/textAppearanceLarge" />
 
    	    <ListView
    	        android:id="@+id/lvDevices"
@@ -138,8 +165,15 @@
    	        android:layout_height="wrap_content"
    	        android:layout_below="@+id/textView1"
    	        android:layout_marginTop="@dimen/padding_small"
-   	        android:clickable="true" >
-	
-	    </ListView>
+   	        android:clickable="true" />
 	</RelativeLayout>
+
+    <TextView
+        android:id="@+id/txtData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
 </RelativeLayout>

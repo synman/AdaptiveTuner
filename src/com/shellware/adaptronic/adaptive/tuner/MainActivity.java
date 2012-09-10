@@ -1,18 +1,28 @@
+/*
+ *   Copyright 2012 Shell M. Shrader
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package com.shellware.adaptronic.adaptive.tuner;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Set;
-import java.util.UUID;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -31,14 +41,34 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.shellware.adaptronic.adaptive.tuner.modbus.CRC16;
+import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectThread;
+import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
+import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
 
 public class MainActivity extends Activity {
 	
-//	static final private String MAC_ADDR = "00:18:DB:00:D6:FA";
-	private static final UUID UUID_RFCOMM_GENERIC = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+	public static final String TAG = "Adaptive";
+	public static final boolean DEBUG_MODE = true;
+	
+	public static final short CONNECTION_ERROR = 1;
+	public static final short DATA_READY = 2;
+	public static final short CONNECTED = 3;
 
-	private ConnectedThread connected;
+	private static final byte SLAVE_ADDRESS = 0x01;
+	private static final byte HOLDING_REGISTER = 0x03;
+	
+	private static final short REGISTER_4096_PLUS_FIVE = 4096;
+	private static final int REGISTER_4096_LENGTH = 17;
+	
+	private static final short REGISTER_4140 = 4140;
+	private static final short REGISTER_4146 = 4146;
+	private static final int SINGLE_REGISTER_LENGTH = 7;
+
+	private static final String SIX_REGISTERS = "1 3 C ";
+	private static final String ONE_REGISTER = "1 3 2 ";
+	
+	private static final int SHORT_PAUSE = 125;
+	private static final int LONG_PAUSE = 250;
 	
 //	private TextView txtData;
 	private ListView lvDevices;
@@ -56,24 +86,24 @@ public class MainActivity extends Activity {
 	private ImageView imgFLoad;
 	
 	private ProgressDialog progress;
-	private MessageHandler msgHandler = new MessageHandler(this);
-	private DataHandler dataHandler = new DataHandler();
-	private Handler refreshHandler = new Handler();
 	
+	private Handler refreshHandler = new Handler();
+	private ConnectionHandler connectionHandler = new ConnectionHandler();
+	private ConnectedThread connected;
+		
 	private BluetoothAdapter bt;
-	private BluetoothDevice btd;
-	private BluetoothSocket bts;
+//	private BluetoothDevice btd;
+//	private BluetoothSocket bts;
 	
 	private ArrayAdapter<String> devices;
 	private ArrayAdapter<String> dataArray;
-	
-//	private DecimalFormat myFormatter = new DecimalFormat("00");
-	private StringBuffer dataBuffer = new StringBuffer(1024);
-		
-	private final byte[] forty96Register = { 0x01, 0x03, 0x10, 0x00, 0x00, 0x06 };
-	private final byte[] fortyOne46Register = { 0x01, 0x03, 0x10, 0x32, 0x00, 0x01 };
 
+	private StringBuffer dataBuffer = new StringBuffer(512);
 	
+	private float targetAFR = 0f;
+	private int lastRPM = 0;
+	private short lastRegister = 0;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -112,138 +142,165 @@ public class MainActivity extends Activity {
         {
         	final String data = getDataBuffer();
         	
+        	// first check that we've got the right device and mode
         	if (data.length() > 0 && data.startsWith("1 3 ")) {
-        		// RPM, MAP, MAT, WAT, AUXT, & AFR
-        		if (data.contains("1 3 C")) {
-        			final String[] buf = data.substring(data.indexOf("1 3 C"), data.length()).split(" ");
-            		
-        			if (buf.length > 13 && validCRC(buf)) {   
-        				Log.d("Adaptive", "Received a valid 4096 register response");
+        		// RPM, MAP, MAT, WAT, AUXT, & AFR - 6 16 bit integers (twelve bytes)
+        		if (data.contains(SIX_REGISTERS) && data.length() >= REGISTER_4096_LENGTH) {
+        			final String[] buf = data.substring(data.indexOf(SIX_REGISTERS), data.length()).split(" ");
+
+        			if (ModbusRTU.validCRC(buf, REGISTER_4096_LENGTH)) {   
+    					imgStatus.setBackgroundColor(Color.GREEN);
 	            		dataArray.clear();
-		        		dataArray.add(String.format("RPM\n%d", Integer.parseInt(buf[3] + buf[4], 16)));
+	            		
+	            		final int rpm = Integer.parseInt(buf[3] + buf[4], 16);
+		        		dataArray.add(String.format("RPM\n%d", (rpm < 200 ? lastRPM : rpm)));
+		        		if (rpm >= 200) lastRPM = rpm;
+		        		
 		        		dataArray.add(String.format("MAP\n%d kPa", Integer.parseInt(buf[5] + buf[6], 16)));
 		        		dataArray.add(String.format("MAT\n%d\u00B0 F", Integer.parseInt(buf[7] + buf[8], 16) * 9 / 5 + 32));
-		        		dataArray.add(String.format("WAT\n%d\u00B0 F", Integer.parseInt(buf[9] + buf[10], 16) * 9 / 5 + 32));
-		        		dataArray.add(String.format("AFR\n%.1f", Integer.parseInt(buf[13], 16) / 10f));
 		        		
-		        		sendFortyOne46Register();
-		                refreshHandler.postDelayed(this, 150);
+		        		dataArray.add("TAFR\n" +  (targetAFR != 0f ? String.format("%.1f", targetAFR) : "--.-"));
+		        		dataArray.add(String.format("AFR\n%.1f (%.1f)", Integer.parseInt(buf[14], 16) / 10f, Integer.parseInt(buf[13], 16) / 10f));
+		        		dataArray.add(String.format("WAT\n%d\u00B0 F", Integer.parseInt(buf[9] + buf[10], 16) * 9 / 5 + 32));
+		        		
+		        		if (connected != null && connected.isAlive()) {
+		        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4140)); 
+			            	lastRegister = REGISTER_4140;
+		        		}
+		                refreshHandler.postDelayed(this, SHORT_PAUSE);
+
+		                if (DEBUG_MODE) Log.d(TAG, "Processed 4096 response: " + data);
 		                return;
         			} else {
-        				imgStatus.setBackgroundColor(Color.RED);
+    					if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister);
         			}
 	        	} else {
-	        		// Learning Flags
-	        		if (data.contains("1 3 2")) {
-	        			final String[] buf = data.substring(data.indexOf("1 3 2"), data.length()).split(" ");
-	        			
-	        			if (buf.length > 6 && validCRC(buf)) {        			
-	        				Log.d("Adaptive", "Received a valid 4146 register response");
+	        		// Learning Flags and Target AFR - one 16 bit integer (two bytes)
+	        		if (data.contains(ONE_REGISTER) && data.length() >= SINGLE_REGISTER_LENGTH) {
+	        			final String[] buf = data.substring(data.indexOf("1 3 2 "), data.length()).split(" ");
+ 			
+	        			if (ModbusRTU.validCRC(buf, SINGLE_REGISTER_LENGTH)) { 
+        					imgStatus.setBackgroundColor(Color.GREEN);
 	        				
-//	        				txtData.setText(String.format("%s - %s", buf[3], buf[4]));
-	        				
-	        				imgFWait.setBackgroundColor(Color.TRANSPARENT);
-	        				imgFRpm.setBackgroundColor(Color.TRANSPARENT);
-	        				imgFLoad.setBackgroundColor(Color.TRANSPARENT);
-	        				
-	        				imgIWait.setBackgroundColor(Color.TRANSPARENT);
-	        				imgIRpm.setBackgroundColor(Color.TRANSPARENT);
-	        				imgILoad.setBackgroundColor(Color.TRANSPARENT);
-	        				
-	        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 0) > 0) 
-	        					 imgFWait.setBackgroundColor(Color.RED);
-	        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 1) > 0) 
-	        					 imgFRpm.setBackgroundColor(Color.GREEN);
-	        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 2) > 0) 
-	        					 imgFLoad.setBackgroundColor(Color.GREEN);
+	        				switch (lastRegister) {
+		        				case REGISTER_4140:	// target AFR
+		        					targetAFR = Integer.parseInt(buf[3] + buf[4], 16) / 10f;
+		        					
+					        		if (connected != null && connected.isAlive()) {
+					        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4146)); 
+						            	lastRegister = REGISTER_4146;
+					        		}
 
-	        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 3) > 0) 
-	        					 imgIWait.setBackgroundColor(Color.RED);
-	        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 4) > 0) 
-	        					 imgIRpm.setBackgroundColor(Color.GREEN);
-	        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 5) > 0) 
-	        					 imgILoad.setBackgroundColor(Color.GREEN);
-		        				 
-	        			} else {
-	        				imgStatus.setBackgroundColor(Color.RED);
-	        			}
-	            	} else {
-	    				imgStatus.setBackgroundColor(Color.RED);
+					        		refreshHandler.postDelayed(this, SHORT_PAUSE);	
+					        		if (DEBUG_MODE) Log.d(TAG, "Processed 4140 response: " + data);
+		    		                return;
+		    		                
+		        				case REGISTER_4146:	// learning flags
+			        				imgFWait.setBackgroundColor(Color.TRANSPARENT);
+			        				imgFRpm.setBackgroundColor(Color.TRANSPARENT);
+			        				imgFLoad.setBackgroundColor(Color.TRANSPARENT);
+			        				
+			        				imgIWait.setBackgroundColor(Color.TRANSPARENT);
+			        				imgIRpm.setBackgroundColor(Color.TRANSPARENT);
+		        					imgILoad.setBackgroundColor(Color.TRANSPARENT);
+			        				
+			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 0) > 0) 
+			        					 imgFWait.setBackgroundColor(Color.RED);
+			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 1) > 0) 
+			        					 imgFRpm.setBackgroundColor(Color.GREEN);
+			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 2) > 0) 
+			        					 imgFLoad.setBackgroundColor(Color.GREEN);
+		
+			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 3) > 0) 
+			        					 imgIWait.setBackgroundColor(Color.RED);
+			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 4) > 0) 
+			        					 imgIRpm.setBackgroundColor(Color.GREEN);
+			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 5) > 0) 
+			        					imgILoad.setBackgroundColor(Color.GREEN);
+			        				 
+					        		if (connected != null && connected.isAlive()) {
+					        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4096_PLUS_FIVE, (short) 6)); 
+						            	lastRegister = REGISTER_4096_PLUS_FIVE;
+					        		}
+					        		
+					        		refreshHandler.postDelayed(this, LONG_PAUSE);
+			        				 if (DEBUG_MODE) Log.d(TAG, "Processed 4146 response: " + data);
+			        				 return;
+			        				 
+		        				default:
+		        					// should never get here
+		        					Log.d(TAG, "should have never got here");
+	        				}
+        				} else {
+        					if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister);
+        				}
 	        		}
 	        	}
-        	} else {
-				imgStatus.setBackgroundColor(Color.RED);
         	}
         	
-        	sendForty96Register();
-            refreshHandler.postDelayed(this, 250);
+        	// last time slice of data is trash -- discard it and try again
+        	if (DEBUG_MODE) Log.d(TAG, lastRegister + " response discarded: " + data);
+			imgStatus.setBackgroundColor(Color.RED);
+			
+			switch (lastRegister) {
+        		case REGISTER_4096_PLUS_FIVE:
+	        		if (connected != null && connected.isAlive()) {
+	        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6)); 
+	        		}
+                    refreshHandler.postDelayed(this, LONG_PAUSE * 2);
+                    break;
+        		default:
+	        		if (connected != null && connected.isAlive()) {
+	        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister)); 
+	        		}
+        			refreshHandler.postDelayed(this,  SHORT_PAUSE * 2);
+        	}
         }
-        
-        private boolean validCRC(final String[] msg ) {
-        	
-        	byte[] buf = new byte[512];
-        	
-        	for (int x = 0; x < msg.length - 2; x++) {
-        		buf[x] = (byte) Integer.parseInt(msg[x], 16);
-        	}
-        	
-        	final int[] crc = CRC16.getCRC(buf, msg.length - 2);
-        	final int crc0 = Integer.parseInt(msg[msg.length - 2], 16);
-        	final int crc1 = Integer.parseInt(msg[msg.length - 1], 16);
-        	 	
-        	final boolean res = (crc[0] == crc0 && crc[1] == crc1);
-        	
-        	if (res) {
-        		imgStatus.setBackgroundColor(Color.GREEN);
-        	}
-        	
-        	return res;
-        }
+    	
+	    private int getBit(final int item, final int position) {   
+	    	return (item >> position) & 1;
+	    }
     };
-    	
-    private int getBit(final int item, final int position) {   
-    	return (item >> position) & 1;
-    }
     
-	private class MessageHandler extends Handler {
-
-    	Context ctx;
-    	String title;
-    	
-    	public MessageHandler(Context ctx) {
-    		this.ctx = ctx;
-    	}
-    	
-    	public void setTitle(final String title) {
-    		this.title = title;
-    	}
+	private class ConnectionHandler extends Handler {
 
 		@Override
 		public void handleMessage(Message message) {
 		
-			AlertDialog alert = new AlertDialog.Builder(ctx).create();
-			alert.setTitle(title);
-			alert.setMessage("\n" + message.getData().getString("message") + "\n");
-			alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
-					new DialogInterface.OnClickListener() {	
-						public void onClick(DialogInterface dialog, int which) {
-							dialog.dismiss();
-						}
-					});
-			alert.show();
-		}	
-    }    
-    private class DataHandler extends Handler {
+	        if (progress != null && progress.isShowing()) progress.dismiss();
 
-		@Override
-		public void handleMessage(Message message) {
-			
-			byte[] data = message.getData().getByteArray("data");
-			int length = message.getData().getInt("length");
-			
-			if (length > 0) setDataBuffer(data, length);			
-		}
-    }
+	        switch (message.getData().getShort("handle")) {
+	        	case CONNECTED: 
+		    		menuConnect.setTitle(R.string.menu_disconnect);
+		    		lastRegister = REGISTER_4096_PLUS_FIVE;
+					connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6));     		
+		    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
+		    		
+		    		break;
+		    		
+	        	case CONNECTION_ERROR:
+					AlertDialog alert = new AlertDialog.Builder(MainActivity.this).create();
+					alert.setTitle(message.getData().getString("title"));
+					alert.setMessage("\n" + message.getData().getString("message") + "\n");
+					alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
+							new DialogInterface.OnClickListener() {	
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.dismiss();
+								}
+							});
+					alert.show();
+					
+					disconnect();
+					break;
+					
+	        	case DATA_READY:
+	    			byte[] data = message.getData().getByteArray("data");
+	    			int length = message.getData().getInt("length");
+	    			
+	    			if (length > 0) setDataBuffer(data, length);			
+			}
+		}	
+    }   
     
     private String getDataBuffer() {
     	synchronized(this) {
@@ -275,33 +332,6 @@ public class MainActivity extends Activity {
     	}
     };
     
-    private void sendForty96Register() {
-    	int[] crc = CRC16.getCRC(forty96Register, forty96Register.length);
-    	final byte[] MESSAGE = { forty96Register[0], 
-    							 forty96Register[1], 
-    							 forty96Register[2], 
-    							 forty96Register[3], 
-    							 forty96Register[4], 
-    							 forty96Register[5], 
-    							 (byte) crc[0], 
-    							 (byte) crc[1] };
-
-		if (connected != null && connected.isAlive()) connected.write(MESSAGE); 
-    }    
-    private void sendFortyOne46Register() {
-    	int[] crc = CRC16.getCRC(fortyOne46Register, fortyOne46Register.length);
-    	final byte[] MESSAGE = { fortyOne46Register[0], 
-    							 fortyOne46Register[1], 
-    							 fortyOne46Register[2], 
-    							 fortyOne46Register[3], 
-    							 fortyOne46Register[4], 
-    							 fortyOne46Register[5], 
-    							 (byte) crc[0], 
-    							 (byte) crc[1] };
-
-		if (connected != null && connected.isAlive()) connected.write(MESSAGE); 
-    }
-    
     private void showDevices() {
     	
     	try {    		
@@ -331,28 +361,27 @@ public class MainActivity extends Activity {
     	
     	progress = ProgressDialog.show(this, "Bluetooth Connection" , "Connecting to " + name);
     	
-    	msgHandler.setTitle(name);
-    	Thread doConnect = new ConnectThread(macAddr);
+    	connected = new ConnectedThread(connectionHandler);    	
+    	ConnectThread doConnect = new ConnectThread(connectionHandler, name, macAddr, connected);
     	doConnect.start();
     }
     
+    // needs to be become a handler
     private void disconnect() {
     	
     	refreshHandler.removeCallbacks(RefreshRunnable);
     	dataArray.clear();
+		menuConnect.setTitle(R.string.menu_connect);
     	
 		try {
 	    	if (connected != null && connected.isAlive()) connected.cancel();
-	    	if (bts != null) bts.close();
 		} catch (Exception e) {
 			// do nothing
-		}
-		
-		btd = null;
-		bts = null;		
+		}	
     }
     
-    private void sleep(final int millis) {
+    @SuppressWarnings("unused")
+	private void sleep(final int millis) {
     	try {
 			Thread.sleep(millis);
 		} catch (InterruptedException e) {
@@ -381,151 +410,10 @@ public class MainActivity extends Activity {
 	        		showDevices();
 	        	} else {
 	        		disconnect();
-	        		item.setTitle(R.string.menu_connect);
 	        	}
 	            return false;
         	default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-	
-
-    private class ConnectThread extends Thread {
-
-    	private String addr;
-    	
-    	public ConnectThread(final String addr) {
-    		super();
-    		this.addr = addr;
-    	}
-    	
-		@Override
-		public void run() {
-
-	        int counter = 0;
-	        
-	        while (true) {
-		
-	        	try {            	
-	    	        if (bt == null) bt = BluetoothAdapter.getDefaultAdapter();
-	    	        btd = bt.getRemoteDevice(addr);        		
-	        	} catch (Exception ex) {
-	        		// do nothing -- let it fall thru and eventually crash
-	        	}
-		        
-		        try {
-		        	bt.cancelDiscovery();
-					bts = btd.createRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);
-				} catch (IOException e) {
-					// try an insecure connection
-					try {
-						bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);
-					} catch (IOException e1) {
-						// increment counter
-						counter++;
-					}
-				}
-		        
-		        try {
-					bts.connect();
-					break;
-				} catch (IOException e) {
-					counter++;
-					
-			        // bail if we've tried 10 times
-			        if (counter >= 10) {
-				        progress.dismiss();
-				        
-				        Bundle b = new Bundle();
-				        b.putString("message", "Connection attempt failed");
-				        Message msg = new Message();
-				        msg.setData(b);
-				        
-				        msgHandler.sendMessage(msg);
-				        return;
-			        }
-				}
-	        }
-	        
-	        progress.dismiss();
-    		menuConnect.setTitle(R.string.menu_disconnect);
-    		
-    		connected = new ConnectedThread(bts);
-    		connected.start();
-    		
-    		sendForty96Register(); 
-	    	refreshHandler.postDelayed(RefreshRunnable, 500);
-		}
-    }
-    private class ConnectedThread extends Thread {
-    	
-        private final BluetoothSocket mmSocket;
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
-     
-        public ConnectedThread(BluetoothSocket socket) {
-            mmSocket = socket;
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-     
-            // Get the input and output streams, using temp objects because
-            // member streams are final
-            try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
-            } catch (IOException e) { }
-     
-            mmInStream = tmpIn;
-            mmOutStream = tmpOut;
-        }
-     
-        public void run() {
-            byte[] buffer = new byte[512];  // buffer store for the stream
-            int bytes; // bytes returned from read()
-
-            // Keep listening to the InputStream until an exception occurs
-            while (true) {
-                try {
-                    // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
-                                        
-                    Log.d("Adaptive", String.format("Received %d bytes", bytes));
-                    
-                    // Send the obtained bytes to the UI activity
-			        Bundle b = new Bundle();
-			        
-//			        for (int x = 0; x < bytes; x++) {
-//			        	Log.d("Adaptive", String.format("%X", buffer[x]));
-//			        }
-
-			        b.putByteArray("data", buffer);
-			        b.putInt("length", bytes);
-			        
-			        Message msg = new Message();
-			        msg.setData(b);
-			        
-			        dataHandler.sendMessage(msg);
-			        
-                } catch (IOException e) {
-                    break;
-                }
-            }
-        }
-     
-        /* Call this from the main activity to send data to the remote device */
-        public void write(byte[] bytes) {
-            try {
-                mmOutStream.write(bytes);
-            } catch (IOException e) { }
-        }
-     
-        /* Call this from the main activity to shutdown the connection */
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) { }
-        }
-    }
-
-    
+    } 
 }
