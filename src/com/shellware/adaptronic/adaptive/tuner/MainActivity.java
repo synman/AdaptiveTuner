@@ -48,7 +48,7 @@ import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
 public class MainActivity extends Activity {
 	
 	public static final String TAG = "Adaptive";
-	public static final boolean DEBUG_MODE = true;
+	public static final boolean DEBUG_MODE = false;
 	
 	public static final short CONNECTION_ERROR = 1;
 	public static final short DATA_READY = 2;
