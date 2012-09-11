@@ -24,10 +24,13 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,6 +47,7 @@ import android.widget.TextView;
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectThread;
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
+import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
 
 public class MainActivity extends Activity {
 	
@@ -92,8 +96,6 @@ public class MainActivity extends Activity {
 	private ConnectedThread connected;
 		
 	private BluetoothAdapter bt;
-//	private BluetoothDevice btd;
-//	private BluetoothSocket bts;
 	
 	private ArrayAdapter<String> devices;
 	private ArrayAdapter<String> dataArray;
@@ -103,12 +105,17 @@ public class MainActivity extends Activity {
 	private float targetAFR = 0f;
 	private int lastRPM = 0;
 	private short lastRegister = 0;
+	
+	private static SharedPreferences prefs ;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.activity_main);
+        
+    	prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
 //        txtData = (TextView) findViewById(R.id.txtData);
         lvDevices = (ListView) findViewById(R.id.lvDevices);
@@ -157,11 +164,11 @@ public class MainActivity extends Activity {
 		        		if (rpm >= 200) lastRPM = rpm;
 		        		
 		        		dataArray.add(String.format("MAP\n%d kPa", Integer.parseInt(buf[5] + buf[6], 16)));
-		        		dataArray.add(String.format("MAT\n%d\u00B0 F", Integer.parseInt(buf[7] + buf[8], 16) * 9 / 5 + 32));
+		        		dataArray.add(String.format("MAT\n%d\u00B0 " + getTemperatureSymbol(), getTemperatureValue(buf[7] + buf[8])));
 		        		
 		        		dataArray.add("TAFR\n" +  (targetAFR != 0f ? String.format("%.1f", targetAFR) : "--.-"));
 		        		dataArray.add(String.format("AFR\n%.1f (%.1f)", Integer.parseInt(buf[14], 16) / 10f, Integer.parseInt(buf[13], 16) / 10f));
-		        		dataArray.add(String.format("WAT\n%d\u00B0 F", Integer.parseInt(buf[9] + buf[10], 16) * 9 / 5 + 32));
+		        		dataArray.add(String.format("WAT\n%d\u00B0 " + getTemperatureSymbol(), getTemperatureValue(buf[9] + buf[10])));
 		        		
 		        		if (connected != null && connected.isAlive()) {
 		        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4140)); 
@@ -259,6 +266,35 @@ public class MainActivity extends Activity {
     	
 	    private int getBit(final int item, final int position) {   
 	    	return (item >> position) & 1;
+	    }
+	    
+	    private String getTemperatureSymbol() {
+	    	switch (Integer.parseInt(prefs.getString("prefs_uom_temp", "1"))) {
+	    		case 1:
+	    			return "F";
+	    		case 2:
+	    			return "K";
+	    		case 3:
+	    			return "N";
+    			default:
+    				return "C";
+	    	}
+	    }
+	    private int getTemperatureValue(String in) {
+	    	
+	    	final int temp = Integer.parseInt(in, 16);
+	    	
+	    	switch (Integer.parseInt(prefs.getString("prefs_uom_temp", "1"))) {
+	    		case 1:
+	    			return temp * 9 / 5 + 32; 
+	    		case 2:
+	    			return (int) (temp + 273.15);
+	    		case 3:
+	    			return temp * 33 / 100;
+	    		default:
+	    			return temp;
+	    				
+	    	}
 	    }
     };
     
@@ -402,8 +438,10 @@ public class MainActivity extends Activity {
         switch (item.getItemId()) {
 	        case android.R.id.home:
 	        	return false;
+	        	
 	        case R.id.menu_exit:
 	        	System.exit(0);
+	        	
 	        case R.id.menu_connect:
 	        	if (menuConnect == null) menuConnect = item;
 	        	if (item.getTitle().toString().equalsIgnoreCase(getResources().getString(R.string.menu_connect))) {
@@ -412,6 +450,11 @@ public class MainActivity extends Activity {
 	        		disconnect();
 	        	}
 	            return false;
+	            
+	        case R.id.menu_prefs:
+                startActivity(new Intent(this, AdaptivePreferences.class));
+                return true;
+                
         	default:
                 return super.onOptionsItemSelected(item);
         }

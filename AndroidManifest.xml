@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shellware.adaptronic.adaptive.tuner"
-    android:versionCode="1000"
-    android:versionName="1.0" android:installLocation="preferExternal">
+    android:versionCode="1001"
+    android:versionName="1.01" android:installLocation="preferExternal">
 
     <uses-sdk
         android:minSdkVersion="11"
@@ -22,6 +22,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".preferences.AdaptivePreferences" android:screenOrientation="landscape" android:theme="@android:style/Theme.Holo"></activity>
     </application>
 
 </manifest>

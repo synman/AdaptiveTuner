@@ -15,7 +15,8 @@
  *  limitations under the License.
  *
  */
- --><resources>
+ -->
+ <resources>
 
     <string name="app_name">Adaptive Tuner</string>
     <string name="menu_connect">Connect</string>
@@ -27,5 +28,11 @@
     <string name="device_list">Bluetooth Device List</string>
     <string name="ignition">Ignition Learning</string>
     <string name="fuel">Fuel Learning</string>
+    
+    <string name="menu_prefs">Preferences</string>
+    <string name="prefs_title">Adaptive Tuner Preferences</string>
+    <string name="prefs_general_pref">General Settings</string>
+    <string name="prefs_uom_temp_dialog_title">Selected Temperature Unit of Measure</string>
+    <string name="prefs_uom_temp_title">Temperature Unit of Measure</string>
 
 </resources>
