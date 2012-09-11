@@ -113,50 +113,50 @@ public class AdaptivePreferences extends PreferenceActivity {
     }
 	
 
-    private static SeekBarPreference OpacityPreference(final String title, 
-											    final String key) {
-    
-        final SeekBarPreference newPref = new SeekBarPreference(ctx);
-        
-        newPref.setPersistent(false);
-        newPref.setTitle(title);
-        newPref.setSummary(String.format("%.0f%%", prefs.getFloat(key, 100f)));
-        newPref.setSuffix("%");
-        newPref.setMinValue(0f);
-        newPref.setMaxValue(100f);
-        newPref.setScale(10f);
-        newPref.setDefaultValue(prefs.getFloat(key, 100f));
-        
-        newPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-			public boolean onPreferenceChange(Preference arg0, Object arg1) {
-				newPref.setSummary(String.format("%.0f%%", (Float) arg1));
-				edit.putFloat(key, (Float) arg1);
-				edit.commit();
-				return true;
-			}
-        });
-        
-    	return newPref;
-    }
-    
-    private static Preference simplePreference(final int title, final String summary) {
-    	return simplePreference(res.getString(title), summary);
-    }
-    private static Preference simplePreference(final int title, final int summary) {
-    	return simplePreference(res.getString(title), res.getString(summary));
-    }
-    private static Preference simplePreference(final String title, final String summary) {
-	    Preference simplePref = new Preference(ctx);
-	    simplePref.setTitle(title);
-	    simplePref.setSummary(summary);
-	    return simplePref;
-    }
-    	        
-
-    private static void restartPreferences() {
-		
-    	ctx.finish();
-    }
+//    private static SeekBarPreference OpacityPreference(final String title, 
+//											    final String key) {
+//    
+//        final SeekBarPreference newPref = new SeekBarPreference(ctx);
+//        
+//        newPref.setPersistent(false);
+//        newPref.setTitle(title);
+//        newPref.setSummary(String.format("%.0f%%", prefs.getFloat(key, 100f)));
+//        newPref.setSuffix("%");
+//        newPref.setMinValue(0f);
+//        newPref.setMaxValue(100f);
+//        newPref.setScale(10f);
+//        newPref.setDefaultValue(prefs.getFloat(key, 100f));
+//        
+//        newPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+//			public boolean onPreferenceChange(Preference arg0, Object arg1) {
+//				newPref.setSummary(String.format("%.0f%%", (Float) arg1));
+//				edit.putFloat(key, (Float) arg1);
+//				edit.commit();
+//				return true;
+//			}
+//        });
+//        
+//    	return newPref;
+//    }
+//    
+//    private static Preference simplePreference(final int title, final String summary) {
+//    	return simplePreference(res.getString(title), summary);
+//    }
+//    private static Preference simplePreference(final int title, final int summary) {
+//    	return simplePreference(res.getString(title), res.getString(summary));
+//    }
+//    private static Preference simplePreference(final String title, final String summary) {
+//	    Preference simplePref = new Preference(ctx);
+//	    simplePref.setTitle(title);
+//	    simplePref.setSummary(summary);
+//	    return simplePref;
+//    }
+//    	        
+//
+//    private static void restartPreferences() {
+//		
+//    	ctx.finish();
+//    }
     
     @Override
     protected void onStop() {
