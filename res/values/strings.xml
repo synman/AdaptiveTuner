@@ -32,6 +32,7 @@
     <string name="menu_prefs">Preferences</string>
     <string name="prefs_title">Adaptive Tuner Preferences</string>
     <string name="prefs_general_pref">General Settings</string>
+    <string name="prefs_general_summary">Unit of Measure, Refresh Rate, &amp; Default Device Settings</string>
     <string name="prefs_uom_temp_dialog_title">Selected Temperature Unit of Measure</string>
     <string name="prefs_uom_temp_title">Temperature Unit of Measure</string>
 

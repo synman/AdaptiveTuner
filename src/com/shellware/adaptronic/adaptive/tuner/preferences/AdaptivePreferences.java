@@ -1,7 +1,5 @@
 package com.shellware.adaptronic.adaptive.tuner.preferences;
 
-import java.util.List;
-
 import android.bluetooth.BluetoothAdapter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -11,7 +9,7 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.util.Log;
@@ -46,10 +44,8 @@ public class AdaptivePreferences extends PreferenceActivity {
 
     	prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
     	edit = prefs.edit();
-        
-        //TODO: localize preferences title
+
         setTitle(R.string.prefs_title);
-		getActionBar().setDisplayHomeAsUpEnabled(true);
     }
     
 	@Override
@@ -57,8 +53,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 		
         // Handle item selection
         switch (item.getItemId()) {
-	        case android.R.id.home:
-	        	this.finish();
+
         }
         return true;
 	}
@@ -72,16 +67,26 @@ public class AdaptivePreferences extends PreferenceActivity {
 
 	    Log.d(MainActivity.TAG, "Preferences onResume");
 
+    	setPreferenceScreen(createPreferenceHierarchy());   
 	}
 
-	    public static class GeneralFragment extends PreferenceFragment {
-	        @Override
-	        public void onCreate(Bundle savedInstanceState) {
-	            super.onCreate(savedInstanceState);
+
+	  private PreferenceScreen createPreferenceHierarchy() {  	
+  	
+	      // Root
+	      PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
+	      root.setTitle(R.string.menu_prefs);
 	
-	            PreferenceScreen generalPref = getPreferenceManager().createPreferenceScreen(ctx);
-	            generalPref.setKey("prefs_general");
-	            generalPref.setTitle(R.string.prefs_general_pref);
+	      PreferenceCategory generalPrefCat = new PreferenceCategory(this);
+	      generalPrefCat.setTitle(R.string.prefs_general_pref);
+	      root.addPreference(generalPrefCat);
+	
+//	            PreferenceScreen generalPref = getPreferenceManager().createPreferenceScreen(ctx);
+//	            generalPref.setKey("prefs_general");
+//	            generalPref.setTitle(R.string.prefs_general_pref);
+//	            generalPref.setSummary(R.string.prefs_general_summary);
+//	            generalPref.setTitle(R.string.prefs_general_pref);
+//	            generalPrefCat.addPreference(generalPref);
 		        
 			        // List preference
 			        final ListPreference uomTempPref = new ListPreference(ctx);
@@ -102,23 +107,11 @@ public class AdaptivePreferences extends PreferenceActivity {
 							return true;
 						}
 			        });
-			        generalPref.addPreference(uomTempPref);
-			        		   
-			        setPreferenceScreen(generalPref);
-	        }
-	    }
-	    
-	    @Override
-	    public void onBuildHeaders(List<Header> target) {
-
-	    	Header generalHead = new Header();
-	    	generalHead.titleRes = R.string.prefs_general_pref;	    	
-	    	generalHead.fragment="com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences$GeneralFragment";
-	    	generalHead.iconRes = R.drawable.action_settings;
-	    	target.add(generalHead);
-	    	
-	    }
-
+			        generalPrefCat.addPreference(uomTempPref);
+			        
+	        return root;
+    }
+	
 
     private static SeekBarPreference OpacityPreference(final String title, 
 											    final String key) {

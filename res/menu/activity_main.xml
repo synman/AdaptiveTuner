@@ -25,8 +25,7 @@
     <group>
 	    <item android:id="@+id/menu_prefs"
 	        android:title="@string/menu_prefs"
-	        android:orderInCategory="100"
-	        android:showAsAction="never" />
+	        android:orderInCategory="100" />
     </group>
     <group>
 	    <item android:id="@+id/menu_exit"

@@ -1,14 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
-  xmlns:android="http://schemas.android.com/apk/res/android" android:paddingBottom="20px" android:paddingLeft="20px" android:paddingRight="20px" android:paddingTop="20px" android:layout_height="fill_parent" android:layout_width="fill_parent">
+  xmlns:android="http://schemas.android.com/apk/res/android" 
+  android:paddingBottom="20dp" 
+  android:paddingLeft="20dp" 
+  android:paddingRight="20dp" 
+  android:paddingTop="20dp" 
+  android:layout_height="fill_parent" 
+  android:layout_width="fill_parent">
 
 	<TextView android:id="@+id/currentValue" 
-		android:layout_centerHorizontal="true" android:layout_height="wrap_content" android:layout_width="wrap_content" android:textSize="18pt" android:text="XX'"/>
+		android:layout_centerHorizontal="true" 
+		android:layout_height="wrap_content" 
+		android:layout_width="wrap_content" 
+		android:textSize="18pt" />
          
-	<SeekBar android:layout_height="wrap_content" android:layout_marginBottom="20px" android:layout_marginTop="20px" android:id="@+id/seek" android:paddingLeft="20px" android:paddingRight="20px" android:layout_centerInParent="true" android:layout_width="fill_parent" android:layout_marginLeft="10px" android:layout_marginRight="10px"></SeekBar>
+	<SeekBar android:layout_height="wrap_content" 
+	    android:layout_marginBottom="20dp" 
+	    android:layout_marginTop="20dp" 
+	    android:id="@+id/seek" 
+	    android:paddingLeft="20dp" 
+	    android:paddingRight="20dp"
+	    android:layout_centerInParent="true" 
+	    android:layout_width="fill_parent" 
+	    android:layout_marginLeft="10dp" 
+	    android:layout_marginRight="10dp" />
 
 	<TextView android:id="@+id/splashText" 
-		android:text="This is a test" android:layout_height="wrap_content" android:layout_below="@+id/seek" android:layout_width="wrap_content" android:layout_centerHorizontal="true" android:paddingTop="40px" android:paddingBottom="20px"/>
+		android:layout_height="wrap_content" 
+		android:layout_below="@+id/seek" 
+		android:layout_width="wrap_content" 
+		android:layout_centerHorizontal="true" 
+		android:paddingTop="40dp" 
+		android:paddingBottom="20dp"/>
          
     
 </RelativeLayout>
