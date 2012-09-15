@@ -81,7 +81,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 
 	}
 
-    public static class GeneralFragment extends PreferenceFragment {
+	public static class GeneralFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -166,15 +166,27 @@ public class AdaptivePreferences extends PreferenceActivity {
 					}
 		        });
 
+		        final CheckBoxPreference afrLoggingPref = new CheckBoxPreference(ctx);
+		        
+		        afrLoggingPref.setPersistent(true);
+		        afrLoggingPref.setKey("prefs_afr_alarm_logging");
+		        afrLoggingPref.setDefaultValue(false);
+		        afrLoggingPref.setSummaryOn(R.string.enabled);
+		        afrLoggingPref.setSummaryOff(R.string.disabled);
+		        afrLoggingPref.setTitle(R.string.prefs_afr_alarm_loging);
+		        afrLoggingPref.setEnabled(prefs.getBoolean("prefs_afrnottarget_pref", false));
+		        
 		        afrNotTargetPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 					public boolean onPreferenceChange(Preference arg0, Object arg1) {
 						afrNotTargetTolPref.setEnabled((Boolean) arg1);
+						afrLoggingPref.setEnabled((Boolean) arg1);
 						return true;
 					}
 		        });
 	         
 		        alertsPref.addPreference(afrNotTargetPref);
 		        alertsPref.addPreference(afrNotTargetTolPref);
+		        alertsPref.addPreference(afrLoggingPref);
 		        
 		        //prefs_alert_water_temperature
 		        CheckBoxPreference waterTempPref = new CheckBoxPreference(ctx);

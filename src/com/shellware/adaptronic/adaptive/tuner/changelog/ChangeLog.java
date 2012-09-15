@@ -11,14 +11,13 @@
  * @see: http://code.google.com/p/android-change-log/
  */
 
-package com.shellware.adaptronic.adaptive.tuner;
+package com.shellware.adaptronic.adaptive.tuner.changelog;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-import android.R.color;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,6 +27,8 @@ import android.graphics.Color;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.webkit.WebView;
+
+import com.shellware.adaptronic.adaptive.tuner.R;
 
 public class ChangeLog {
     

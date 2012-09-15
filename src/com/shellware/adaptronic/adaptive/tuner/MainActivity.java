@@ -16,6 +16,12 @@
  */
 package com.shellware.adaptronic.adaptive.tuner;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Set;
 
 import android.app.Activity;
@@ -28,6 +34,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
@@ -46,8 +53,11 @@ import android.widget.TextView;
 
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectThread;
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
+import com.shellware.adaptronic.adaptive.tuner.changelog.ChangeLog;
 import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
 import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
+import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems;
+import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 
 public class MainActivity extends Activity {
 	
@@ -112,9 +122,11 @@ public class MainActivity extends Activity {
 	private boolean afrNotEqualTargetPref = false;
 	private float afrNotEqualTargetTolerance = 5f;
 	private boolean waterTempPref = false;
-	private float minimumWaterTemp = 0;
-	private float maximumWaterTemp = 210;
-
+	private float minimumWaterTemp = 0f;
+	private float maximumWaterTemp = 210f;
+	
+	private boolean afrAlarmLogging = false;
+	private final LogItems afrAlarmLogItems = new LogItems();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -168,7 +180,49 @@ public class MainActivity extends Activity {
     	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_FAHRENHEIT);
     	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_FAHRENHEIT);
     	}
+    	
+    	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false);
 	}
+    
+    @Override
+	protected void onDestroy() {
+		super.onDestroy();
+		
+		// if we're logging save the log file
+		if (afrAlarmLogging) {
+			
+			try {
+				File sdcard = Environment.getExternalStorageDirectory();
+				File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner");
+				dir.mkdirs();
+				
+				final String filename = String.format("AdaptiveTuner_%d.csv", System.currentTimeMillis());
+				FileOutputStream f = new FileOutputStream(new File(dir, filename));
+				
+				// write our header
+				f.write("timestamp, rpm, map, targetafr, afr, refafr, wat, mat".getBytes());
+				
+				ArrayList<LogItem> items = afrAlarmLogItems.getItems();
+				Iterator<LogItem> iterator = items.iterator();
+				
+				while (iterator.hasNext()) {
+					final LogItem item = (LogItem) iterator.next();
+					f.write(item.getLogBytes());
+				}
+				
+				f.flush();
+				f.close();
+				
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
 
     final Runnable RefreshRunnable = new Runnable()
     {
@@ -187,21 +241,22 @@ public class MainActivity extends Activity {
 	            		dataArray.clear();
 	            		
 	            		final int rpm = Integer.parseInt(buf[3] + buf[4], 16);
+	            		final int map = Integer.parseInt(buf[5] + buf[6], 16);
+	            		final int mat = getTemperatureValue(buf[7] + buf[8]);
+		        		final int wat = getTemperatureValue(buf[9] + buf[10]);
+		        		final float afr = Integer.parseInt(buf[14], 16) / 10f;
+		        		final float referenceAfr = Integer.parseInt(buf[13], 16) / 10f;
+	            		
 		        		dataArray.add(String.format("RPM\n%d", (rpm < 200 ? lastRPM : rpm)));
 		        		if (rpm >= 200) lastRPM = rpm;
 		        		
-		        		dataArray.add(String.format("MAP\n%d kPa", Integer.parseInt(buf[5] + buf[6], 16)));
-		        		dataArray.add(String.format("MAT\n%d\u00B0 " + getTemperatureSymbol(), getTemperatureValue(buf[7] + buf[8])));
-		        		
-		        		
-		        		final float afr = Integer.parseInt(buf[14], 16) / 10f;
-		        		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, Integer.parseInt(buf[13], 16) / 10f));
-		        		
+		        		dataArray.add(String.format("MAP\n%d kPa", map));
+		        		dataArray.add(String.format("MAT\n%d\u00B0 " + getTemperatureSymbol(), mat));
+		        		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
 		        		dataArray.add("TAFR\n" +  (targetAFR != 0f ? String.format("%.1f", targetAFR) : "--.-"));
-		        		
-		        		final int wat = getTemperatureValue(buf[9] + buf[10]);
 		        		dataArray.add(String.format("WAT\n%d\u00B0 " + getTemperatureSymbol(), wat));
-		        		
+
+		        		// alarm stuff
 		        		if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) {
 			        		// water temperature
 		        			gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
@@ -219,6 +274,19 @@ public class MainActivity extends Activity {
 			        					gridData.getChildAt(3).setBackgroundColor(Color.RED);
 			        				} else {
 			        					gridData.getChildAt(3).setBackgroundColor(Color.BLUE);
+			        				}
+			        				
+			        				if (afrAlarmLogging) {
+			        					LogItem newItem = afrAlarmLogItems.newLogItem();
+			        					newItem.setAfr(afr);
+			        					newItem.setReferenceAfr(referenceAfr);
+			        					newItem.setMap(map);
+			        					newItem.setMat(mat);
+			        					newItem.setRpm(rpm);
+			        					newItem.setTargetAfr(targetAFR);
+			        					newItem.setWat(wat);
+			        					
+			        					afrAlarmLogItems.getItems().add(newItem);
 			        				}
 			        			}
 			        		}
@@ -286,6 +354,7 @@ public class MainActivity extends Activity {
 					        		
 					        		refreshHandler.postDelayed(this, LONG_PAUSE);
 			        				 if (DEBUG_MODE) Log.d(TAG, "Processed 4146 response: " + data);
+			        				 
 			        				 return;
 			        				 
 		        				default:
