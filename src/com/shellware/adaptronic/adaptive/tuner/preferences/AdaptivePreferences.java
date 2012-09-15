@@ -31,6 +31,12 @@ public class AdaptivePreferences extends PreferenceActivity {
 	
     // Local Bluetooth adapter
     private static BluetoothAdapter bta = null;
+    
+    public static final float MIN_WATER_TEMP_CELCIUS = 72f;
+    public static final float MAX_WATER_TEMP_CELCIUS = 98f;
+    
+    public static final float MIN_WATER_TEMP_FAHRENHEIT = 160f;
+    public static final float MAX_WATER_TEMP_FAHRENHEIT = 210f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,7 +105,20 @@ public class AdaptivePreferences extends PreferenceActivity {
 		        uomTempPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 					public boolean onPreferenceChange(Preference arg0, final Object arg1) {
 				        uomTempPref.setSummary(res.getStringArray(R.array.temperature_uom_names) 
-				        		[Integer.parseInt((String) arg1)]);							
+				        		[Integer.parseInt((String) arg1)]);	
+				        
+				        // reset our water temp alarms as they are no longer valid
+				        switch (Integer.parseInt((String) arg1)) {
+					        case 0:
+						        edit.putFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS);
+						        edit.putFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS);
+						        break;
+					        case 1:
+						        edit.putFloat("prefs_min_water_temp", MIN_WATER_TEMP_FAHRENHEIT);
+						        edit.putFloat("prefs_max_water_temp", MAX_WATER_TEMP_FAHRENHEIT);
+				        }
+				        
+				        edit.commit();
 						return true;
 					}
 		        });
@@ -130,7 +149,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 		        
 		        afrNotTargetTolPref.setPersistent(false);
 		        afrNotTargetTolPref.setTitle(R.string.prefs_alert_afrnottarget_tolerance_pref);
-		        afrNotTargetTolPref.setSummary(String.format("%.0f%%", prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f)));
+		        afrNotTargetTolPref.setSummary(String.format("%.2f%%", prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f)));
 		        afrNotTargetTolPref.setSuffix("%");
 		        afrNotTargetTolPref.setMinValue(0f);
 		        afrNotTargetTolPref.setMaxValue(10);
@@ -140,7 +159,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 		        
 		        afrNotTargetTolPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 					public boolean onPreferenceChange(Preference arg0, Object arg1) {
-						afrNotTargetTolPref.setSummary(String.format("%.0f%%", (Float) arg1));
+						afrNotTargetTolPref.setSummary(String.format("%.2f%%", (Float) arg1));
 						edit.putFloat("prefs_afrnottarget_tolerance_pref", (Float) arg1);
 						edit.commit();
 						return true;
@@ -170,12 +189,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 		        
 		        minWaterTempPref.setPersistent(false);
 		        minWaterTempPref.setTitle(R.string.prefs_alert_water_temperature_minimum);
-		        minWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_min_water_temp", 160f)));
 		        minWaterTempPref.setSuffix("\u00B0");
-		        minWaterTempPref.setMinValue(-30f);
-		        minWaterTempPref.setMaxValue(220f);
-		        minWaterTempPref.setScale(5f);
-		        minWaterTempPref.setDefaultValue(prefs.getFloat("prefs_min_water_temp", 160f));
 		        minWaterTempPref.setEnabled(prefs.getBoolean("prefs_watertemp_pref", false));
 		        
 		        minWaterTempPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
@@ -191,12 +205,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 
 		        maxWaterTempPref.setPersistent(false);
 		        maxWaterTempPref.setTitle(R.string.prefs_alert_water_temperature_maximum);
-		        maxWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_max_water_temp", 210f)));
 		        maxWaterTempPref.setSuffix("\u00B0");
-		        maxWaterTempPref.setMinValue(-30f);
-		        maxWaterTempPref.setMaxValue(220f);
-		        maxWaterTempPref.setScale(5f);
-		        maxWaterTempPref.setDefaultValue(prefs.getFloat("prefs_max_water_temp", 210f));
 		        maxWaterTempPref.setEnabled(prefs.getBoolean("prefs_watertemp_pref", false));
 		        
 		        maxWaterTempPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
@@ -216,6 +225,36 @@ public class AdaptivePreferences extends PreferenceActivity {
 						return true;
 					}
 		        });
+		        
+		        switch (Integer.parseInt(prefs.getString("prefs_uom_temp", "1"))) {
+		        	case 0:  // celcius
+				        minWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS)));
+				        minWaterTempPref.setMinValue(-20f);
+				        minWaterTempPref.setMaxValue(120f);
+				        minWaterTempPref.setScale(2.5f);
+				        minWaterTempPref.setDefaultValue(prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS));
+
+				        maxWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS)));
+				        maxWaterTempPref.setMinValue(-20f);
+				        maxWaterTempPref.setMaxValue(120f);
+				        maxWaterTempPref.setScale(2.5f);
+				        maxWaterTempPref.setDefaultValue(prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS));
+				        
+				        break;
+		        		
+		        	case 1:  // fahrenheit
+				        minWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_FAHRENHEIT)));
+				        minWaterTempPref.setMinValue(-30f);
+				        minWaterTempPref.setMaxValue(220f);
+				        minWaterTempPref.setScale(5f);
+				        minWaterTempPref.setDefaultValue(prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_FAHRENHEIT));
+
+				        maxWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_FAHRENHEIT)));
+				        maxWaterTempPref.setMinValue(-30f);
+				        maxWaterTempPref.setMaxValue(220f);
+				        maxWaterTempPref.setScale(5f);
+				        maxWaterTempPref.setDefaultValue(prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_FAHRENHEIT));
+		        }
 
 		        alertsPref.addPreference(waterTempPref);
 		        alertsPref.addPreference(minWaterTempPref);

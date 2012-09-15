@@ -142,6 +142,11 @@ public class MainActivity extends Activity {
         gridData.setAdapter(dataArray);
         
         lvDevices.setOnItemClickListener(DevicesClickListener);
+        
+        ChangeLog cl = new ChangeLog(this);
+        if (cl.firstRun()) {
+            cl.getLogDialog().show();
+        }
     }
     
     
@@ -154,8 +159,15 @@ public class MainActivity extends Activity {
     	afrNotEqualTargetPref = prefs.getBoolean("prefs_afrnottarget_pref", false);
     	afrNotEqualTargetTolerance = prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f);
     	waterTempPref = prefs.getBoolean("prefs_watertemp_pref", false);
-    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", 160f);
-    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", 210f);
+    	
+    	switch (tempUomPref) {
+    		case 0:
+    	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_CELCIUS);
+    	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_CELCIUS);
+    		case 1:
+    	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_FAHRENHEIT);
+    	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_FAHRENHEIT);
+    	}
 	}
 
     final Runnable RefreshRunnable = new Runnable()
@@ -478,8 +490,11 @@ public class MainActivity extends Activity {
 		
         // Handle item selection
         switch (item.getItemId()) {
+        
 	        case android.R.id.home:
-	        	return false;
+	        	ChangeLog cl = new ChangeLog(this);
+	        	cl.getFullLogDialog().show();
+	        	return true;
 	        	
 	        case R.id.menu_exit:
 	        	System.exit(0);

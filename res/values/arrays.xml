@@ -21,15 +21,15 @@
 	<string-array name="temperature_uom_names">
 		<item>Celcius</item>
 		<item>Fahrenheit</item>
-		<item>Kelvin</item>
-		<item>Newton</item>
+<!-- 		<item>Kelvin</item>
+		<item>Newton</item> -->
 	</string-array>
     
 	<string-array name="temperature_uom_values">
 		<item>0</item>
 		<item>1</item>
-		<item>2</item>
-		<item>3</item>
+<!-- 		<item>2</item>
+		<item>3</item> -->
 	</string-array>
 
 </resources>
