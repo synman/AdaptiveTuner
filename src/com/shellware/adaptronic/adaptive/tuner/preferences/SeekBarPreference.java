@@ -56,7 +56,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		splashTextView = (TextView) view.findViewById(R.id.splashText);
 		splashTextView.setText(getTitle());
 		
-		//Log.d("ARPro", "bound");
+		//Log.d(MainActivity.TAG, "bound");
 		super.onBindDialogView(view);
 	}
 
@@ -64,7 +64,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		barValue = progress;
 		displayValue = barValue * scale + minValue;
 		valueTextView.setText(String.format("%.2f%s", displayValue, suffix));
-		//Log.d("ARPro", String.format("changed value %.2f/%.2f", displayValue, barValue));
+		//Log.d(MainActivity.TAG, String.format("changed value %.2f/%.2f", displayValue, barValue));
 	}
 
 	@Override
@@ -72,14 +72,14 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		if (positiveResult) {
 			callChangeListener(displayValue);
 			startingValue = displayValue;
-			//Log.d("ARPro", String.format("close positive value %.2f/%.2f", displayValue, barValue));
+			//Log.d(MainActivity.TAG, String.format("close positive value %.2f/%.2f", displayValue, barValue));
 		} else {
 
 			displayValue = startingValue;
 			barValue = (displayValue - minValue) / scale;
 			seekBarView.setProgress((int) barValue);
 
-			//Log.d("ARPro", String.format("close negative value %.2f/%.2f", displayValue, barValue));
+			//Log.d(MainActivity.TAG, String.format("close negative value %.2f/%.2f", displayValue, barValue));
 		}
 		super.onDialogClosed(positiveResult);
 	}
@@ -94,7 +94,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		barValue = (displayValue - minValue) / scale;
 		startingValue = displayValue;
 
-		//Log.d("ARPro", String.format("initial value %.2f/%.2f", displayValue, barValue));
+		//Log.d(MainActivity.TAG, String.format("initial value %.2f/%.2f", displayValue, barValue));
 	}
 
 	public void setMinValue(float minValue) {

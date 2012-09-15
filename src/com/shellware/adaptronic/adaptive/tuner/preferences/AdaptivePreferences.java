@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
@@ -28,6 +29,12 @@ public class AdaptivePreferences extends PreferenceActivity {
 	
     // Local Bluetooth adapter
     private static BluetoothAdapter bta = null;
+    
+    public static final float MIN_WATER_TEMP_CELCIUS = 72f;
+    public static final float MAX_WATER_TEMP_CELCIUS = 98f;
+    
+    public static final float MIN_WATER_TEMP_FAHRENHEIT = 160f;
+    public static final float MAX_WATER_TEMP_FAHRENHEIT = 210f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +82,7 @@ public class AdaptivePreferences extends PreferenceActivity {
   	
 	      // Root
 	      PreferenceScreen root = getPreferenceManager().createPreferenceScreen(this);
-	      root.setTitle(R.string.menu_prefs);
+	      root.setTitle(R.string.prefs_title);
 	
 	      PreferenceCategory generalPrefCat = new PreferenceCategory(this);
 	      generalPrefCat.setTitle(R.string.prefs_general_pref);
@@ -103,15 +110,158 @@ public class AdaptivePreferences extends PreferenceActivity {
 			        uomTempPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 						public boolean onPreferenceChange(Preference arg0, final Object arg1) {
 					        uomTempPref.setSummary(res.getStringArray(R.array.temperature_uom_names) 
-					        		[Integer.parseInt((String) arg1)]);							
+					        		[Integer.parseInt((String) arg1)]);	
+					        
+					        // reset our water temp alarms as they are no longer valid
+					        switch (Integer.parseInt((String) arg1)) {
+						        case 0:
+							        edit.putFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS);
+							        edit.putFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS);
+							        break;
+						        case 1:
+							        edit.putFloat("prefs_min_water_temp", MIN_WATER_TEMP_FAHRENHEIT);
+							        edit.putFloat("prefs_max_water_temp", MAX_WATER_TEMP_FAHRENHEIT);
+					        }
+					        
+					        edit.commit();
 							return true;
 						}
 			        });
 			        generalPrefCat.addPreference(uomTempPref);
+
+//		            PreferenceScreen alertsPref = getPreferenceManager().createPreferenceScreen(ctx);
+//		            alertsPref.setKey("prefs_alerts");
+//		            alertsPref.setTitle(R.string.prefs_alerts_pref);
+
+				      PreferenceCategory alertsPrefCat = new PreferenceCategory(this);
+				      alertsPrefCat.setTitle(R.string.prefs_alerts_pref);
+				      root.addPreference(alertsPrefCat);
+
+				        CheckBoxPreference afrNotTargetPref = new CheckBoxPreference(ctx);
+				        afrNotTargetPref.setPersistent(true);
+				        afrNotTargetPref.setKey("prefs_afrnottarget_pref");
+				        afrNotTargetPref.setDefaultValue(false);
+				        afrNotTargetPref.setSummaryOn(R.string.enabled);
+				        afrNotTargetPref.setSummaryOff(R.string.disabled);
+				        afrNotTargetPref.setTitle(R.string.prefs_alert_afrnottarget);
+				        
+				        final SeekBarPreference afrNotTargetTolPref = new SeekBarPreference(ctx);
+				        
+				        afrNotTargetTolPref.setPersistent(false);
+				        afrNotTargetTolPref.setTitle(R.string.prefs_alert_afrnottarget_tolerance_pref);
+				        afrNotTargetTolPref.setSummary(String.format("%.2f%%", prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f)));
+				        afrNotTargetTolPref.setSuffix("%");
+				        afrNotTargetTolPref.setMinValue(0f);
+				        afrNotTargetTolPref.setMaxValue(10);
+				        afrNotTargetTolPref.setScale(.25f);
+				        afrNotTargetTolPref.setDefaultValue(prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f));
+				        afrNotTargetTolPref.setEnabled(prefs.getBoolean("prefs_afrnottarget_pref", false));
+				        
+				        afrNotTargetTolPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+							public boolean onPreferenceChange(Preference arg0, Object arg1) {
+								afrNotTargetTolPref.setSummary(String.format("%.2f%%", (Float) arg1));
+								edit.putFloat("prefs_afrnottarget_tolerance_pref", (Float) arg1);
+								edit.commit();
+								return true;
+							}
+				        });
+
+				        afrNotTargetPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+							public boolean onPreferenceChange(Preference arg0, Object arg1) {
+								afrNotTargetTolPref.setEnabled((Boolean) arg1);
+								return true;
+							}
+				        });
+			         
+				        alertsPrefCat.addPreference(afrNotTargetPref);
+				        alertsPrefCat.addPreference(afrNotTargetTolPref);
+				        
+				        //prefs_alert_water_temperature
+				        CheckBoxPreference waterTempPref = new CheckBoxPreference(ctx);
+				        waterTempPref.setPersistent(true);
+				        waterTempPref.setKey("prefs_watertemp_pref");
+				        waterTempPref.setDefaultValue(false);
+				        waterTempPref.setSummaryOn(R.string.enabled);
+				        waterTempPref.setSummaryOff(R.string.disabled);
+				        waterTempPref.setTitle(R.string.prefs_alert_water_temperature);
+				        
+				        final SeekBarPreference minWaterTempPref = new SeekBarPreference(ctx);
+				        
+				        minWaterTempPref.setPersistent(false);
+				        minWaterTempPref.setTitle(R.string.prefs_alert_water_temperature_minimum);
+				        minWaterTempPref.setSuffix("\u00B0");
+				        minWaterTempPref.setEnabled(prefs.getBoolean("prefs_watertemp_pref", false));
+				        
+				        minWaterTempPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+							public boolean onPreferenceChange(Preference arg0, Object arg1) {
+								minWaterTempPref.setSummary(String.format("%.0f\u00B0", (Float) arg1));
+								edit.putFloat("prefs_min_water_temp", (Float) arg1);
+								edit.commit();
+								return true;
+							}
+				        });		
+
+				        final SeekBarPreference maxWaterTempPref = new SeekBarPreference(ctx);
+
+				        maxWaterTempPref.setPersistent(false);
+				        maxWaterTempPref.setTitle(R.string.prefs_alert_water_temperature_maximum);
+				        maxWaterTempPref.setSuffix("\u00B0");
+				        maxWaterTempPref.setEnabled(prefs.getBoolean("prefs_watertemp_pref", false));
+				        
+				        maxWaterTempPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+							public boolean onPreferenceChange(Preference arg0, Object arg1) {
+								maxWaterTempPref.setSummary(String.format("%.0f\u00B0", (Float) arg1));
+								edit.putFloat("prefs_max_water_temp", (Float) arg1);
+								edit.commit();
+								return true;
+							}
+				        });		
+
+				        waterTempPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+							public boolean onPreferenceChange(Preference arg0, Object arg1) {
+								final boolean enabled = (Boolean) arg1;
+								minWaterTempPref.setEnabled(enabled);
+								maxWaterTempPref.setEnabled(enabled);
+								return true;
+							}
+				        });
+				        
+				        switch (Integer.parseInt(prefs.getString("prefs_uom_temp", "1"))) {
+				        	case 0:  // celcius
+						        minWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS)));
+						        minWaterTempPref.setMinValue(-20f);
+						        minWaterTempPref.setMaxValue(120f);
+						        minWaterTempPref.setScale(2.5f);
+						        minWaterTempPref.setDefaultValue(prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS));
+
+						        maxWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS)));
+						        maxWaterTempPref.setMinValue(-20f);
+						        maxWaterTempPref.setMaxValue(120f);
+						        maxWaterTempPref.setScale(2.5f);
+						        maxWaterTempPref.setDefaultValue(prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS));
+
+						        break;
+				        		
+				        	case 1:  // fahrenheit
+						        minWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_FAHRENHEIT)));
+						        minWaterTempPref.setMinValue(-30f);
+						        minWaterTempPref.setMaxValue(220f);
+						        minWaterTempPref.setScale(5f);
+						        minWaterTempPref.setDefaultValue(prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_FAHRENHEIT));
+
+						        maxWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_FAHRENHEIT)));
+						        maxWaterTempPref.setMinValue(-30f);
+						        maxWaterTempPref.setMaxValue(220f);
+						        maxWaterTempPref.setScale(5f);
+						        maxWaterTempPref.setDefaultValue(prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_FAHRENHEIT));
+				        }
+
+				        alertsPrefCat.addPreference(waterTempPref);
+				        alertsPrefCat.addPreference(minWaterTempPref);
+				        alertsPrefCat.addPreference(maxWaterTempPref);
 			        
 	        return root;
     }
-	
 
 //    private static SeekBarPreference OpacityPreference(final String title, 
 //											    final String key) {

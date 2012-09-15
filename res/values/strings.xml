@@ -35,5 +35,20 @@
     <string name="prefs_general_summary">Unit of Measure, Refresh Rate, &amp; Default Device Settings</string>
     <string name="prefs_uom_temp_dialog_title">Selected Temperature Unit of Measure</string>
     <string name="prefs_uom_temp_title">Temperature Unit of Measure</string>
+    
+    <string name="prefs_alerts_pref">Alerts &amp; Warnings</string>
+    <string name="prefs_alert_afrnottarget">Actual AFR vs Target AFR</string>
+    <string name="prefs_alert_afrnottarget_tolerance_pref">AFR Tolerance</string>
+	<string name="prefs_alert_water_temperature">Water Tempertuare</string>    
+	<string name="prefs_alert_water_temperature_minimum">Minimum Water Tempertuare</string>
+	<string name="prefs_alert_water_temperature_maximum">Maximum Water Tempertuare</string>
+		
+	<string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+    
+    <string name="changelog_full_title">Adaptive Tuner Change Log</string>
+    <string name="changelog_title">What\'s New in Apaptive Tuner</string>
+    <string name="changelog_ok_button">OK</string>
+    
 
 </resources>

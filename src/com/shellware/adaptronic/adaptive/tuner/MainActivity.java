@@ -107,6 +107,13 @@ public class MainActivity extends Activity {
 	private short lastRegister = 0;
 	
 	private static SharedPreferences prefs ;
+	
+	private int tempUomPref = 1;
+	private boolean afrNotEqualTargetPref = false;
+	private float afrNotEqualTargetTolerance = 5f;
+	private boolean waterTempPref = false;
+	private float minimumWaterTemp = 0;
+	private float maximumWaterTemp = 210;
 
 
     @Override
@@ -135,12 +142,32 @@ public class MainActivity extends Activity {
         gridData.setAdapter(dataArray);
         
         lvDevices.setOnItemClickListener(DevicesClickListener);
+        
+        ChangeLog cl = new ChangeLog(this);
+        if (cl.firstRun()) {
+            cl.getLogDialog().show();
+        }
     }
     
     
     @Override
 	protected void onResume() {
     	super.onResume();
+    	
+    	// initialize our preferences
+    	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
+    	afrNotEqualTargetPref = prefs.getBoolean("prefs_afrnottarget_pref", false);
+    	afrNotEqualTargetTolerance = prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f);
+    	waterTempPref = prefs.getBoolean("prefs_watertemp_pref", false);
+    	
+    	switch (tempUomPref) {
+    		case 0:
+    	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_CELCIUS);
+    	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_CELCIUS);
+    		case 1:
+    	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_FAHRENHEIT);
+    	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_FAHRENHEIT);
+    	}
 	}
 
     final Runnable RefreshRunnable = new Runnable()
@@ -166,9 +193,36 @@ public class MainActivity extends Activity {
 		        		dataArray.add(String.format("MAP\n%d kPa", Integer.parseInt(buf[5] + buf[6], 16)));
 		        		dataArray.add(String.format("MAT\n%d\u00B0 " + getTemperatureSymbol(), getTemperatureValue(buf[7] + buf[8])));
 		        		
+		        		
+		        		final float afr = Integer.parseInt(buf[14], 16) / 10f;
+		        		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, Integer.parseInt(buf[13], 16) / 10f));
+		        		
 		        		dataArray.add("TAFR\n" +  (targetAFR != 0f ? String.format("%.1f", targetAFR) : "--.-"));
-		        		dataArray.add(String.format("AFR\n%.1f (%.1f)", Integer.parseInt(buf[14], 16) / 10f, Integer.parseInt(buf[13], 16) / 10f));
-		        		dataArray.add(String.format("WAT\n%d\u00B0 " + getTemperatureSymbol(), getTemperatureValue(buf[9] + buf[10])));
+		        		
+		        		final int wat = getTemperatureValue(buf[9] + buf[10]);
+		        		dataArray.add(String.format("WAT\n%d\u00B0 " + getTemperatureSymbol(), wat));
+		        		
+		        		if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) {
+			        		// water temperature
+		        			gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
+			        		if (waterTempPref) {
+			        			if (wat < minimumWaterTemp) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
+			        			if (wat > maximumWaterTemp) gridData.getChildAt(5).setBackgroundColor(Color.RED);
+			        		}
+
+			        		// afr vs target alarm
+	        				gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
+			        		if (afrNotEqualTargetPref) {
+			        			final float threshold = targetAFR * (afrNotEqualTargetTolerance * .01f);
+			        			if (Math.abs(targetAFR - afr) >= threshold ) {
+			        				if (afr > targetAFR) {
+			        					gridData.getChildAt(3).setBackgroundColor(Color.RED);
+			        				} else {
+			        					gridData.getChildAt(3).setBackgroundColor(Color.BLUE);
+			        				}
+			        			}
+			        		}
+		        		}
 		        		
 		        		if (connected != null && connected.isAlive()) {
 		        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4140)); 
@@ -269,7 +323,7 @@ public class MainActivity extends Activity {
 	    }
 	    
 	    private String getTemperatureSymbol() {
-	    	switch (Integer.parseInt(prefs.getString("prefs_uom_temp", "1"))) {
+	    	switch (tempUomPref) {
 	    		case 1:
 	    			return "F";
 	    		case 2:
@@ -284,7 +338,7 @@ public class MainActivity extends Activity {
 	    	
 	    	final int temp = Integer.parseInt(in, 16);
 	    	
-	    	switch (Integer.parseInt(prefs.getString("prefs_uom_temp", "1"))) {
+	    	switch (tempUomPref) {
 	    		case 1:
 	    			return temp * 9 / 5 + 32; 
 	    		case 2:
@@ -436,6 +490,7 @@ public class MainActivity extends Activity {
 		
         // Handle item selection
         switch (item.getItemId()) {
+        
 
         case R.id.menu_exit:
 	        	System.exit(0);
