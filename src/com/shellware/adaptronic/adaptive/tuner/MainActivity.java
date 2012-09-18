@@ -64,7 +64,7 @@ import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 public class MainActivity extends Activity {
 	
 	public static final String TAG = "Adaptive";
-	public static final boolean DEBUG_MODE = true;
+	public static final boolean DEBUG_MODE = false;
 	
 	public static final short CONNECTION_ERROR = 1;
 	public static final short DATA_READY = 2;
@@ -86,7 +86,7 @@ public class MainActivity extends Activity {
 	private static final int SHORT_PAUSE = 125;
 	private static final int LONG_PAUSE = 250;
 	
-	private TextView txtData;
+//	private TextView txtData;
 	private ListView lvDevices;
 	private RelativeLayout layoutDevices;
 	
@@ -143,7 +143,7 @@ public class MainActivity extends Activity {
         
     	prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
-        txtData = (TextView) findViewById(R.id.txtData);
+//        txtData = (TextView) findViewById(R.id.txtData);
         lvDevices = (ListView) findViewById(R.id.lvDevices);
         layoutDevices = (RelativeLayout) findViewById(R.id.layoutDevices);
         imgStatus = (ImageView) findViewById(R.id.imgStatus);
