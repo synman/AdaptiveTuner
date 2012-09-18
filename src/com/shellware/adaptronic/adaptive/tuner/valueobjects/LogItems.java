@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 public class LogItems {
 
-	private ArrayList<LogItem> items = new ArrayList<LogItem>(4096);
+	private ArrayList<LogItem> items = new ArrayList<LogItem>(65535);
 	
 	public ArrayList<LogItem> getItems() {
 		return items;
@@ -137,9 +137,25 @@ public class LogItems {
 			this.referenceAfr = referenceAfr;
 		}
 		
+		public String getLogString() {
+			
+			final String str = String.format("%d, %d, %d, %.1f, %.1f, %.1f, %d, %d\n", 
+												timestamp,
+												rpm,
+												map,
+												targetAfr,
+												afr,
+												referenceAfr,
+												wat,
+												mat);
+			
+			return str;
+												
+		}
+		
 		public byte[] getLogBytes() {
 			
-			final String str = String.format("%d, %d, %d, %.1f, %.1f, %.1f, %d, %d", 
+			final String str = String.format("%d, %d, %d, %.1f, %.1f, %.1f, %d, %d\n", 
 												timestamp,
 												rpm,
 												map,

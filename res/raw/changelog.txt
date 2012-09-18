@@ -23,7 +23,7 @@ $ 1.03
   % Version 1.03
   _ 2012-09-15
   ! Initial Alarm Logging Implementation
-  	* Added AFR Alarm Logging - If enabled, the log will be written out to /sdcard/AdaptiveTuner on activity destroy.
+  	* Added AFR Alarm Logging - You can save and share the resulting log file.  Log files are located in /sdcard/AdaptiveTuner and are saved in CSV format.
   % Version 1.02
   _ 2012-09-14
   ! Minor Enhancements

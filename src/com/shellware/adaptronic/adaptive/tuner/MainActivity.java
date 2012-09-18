@@ -17,10 +17,10 @@
 package com.shellware.adaptronic.adaptive.tuner;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -33,6 +33,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -50,6 +51,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectThread;
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
@@ -62,7 +64,7 @@ import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 public class MainActivity extends Activity {
 	
 	public static final String TAG = "Adaptive";
-	public static final boolean DEBUG_MODE = false;
+	public static final boolean DEBUG_MODE = true;
 	
 	public static final short CONNECTION_ERROR = 1;
 	public static final short DATA_READY = 2;
@@ -84,10 +86,15 @@ public class MainActivity extends Activity {
 	private static final int SHORT_PAUSE = 125;
 	private static final int LONG_PAUSE = 250;
 	
-//	private TextView txtData;
+	private TextView txtData;
 	private ListView lvDevices;
 	private RelativeLayout layoutDevices;
+	
+	private Menu myMenu;
 	private MenuItem menuConnect;
+//	private MenuItem menuSaveLog;
+	private MenuItem menuShareLog;
+	
 	private GridView gridData;
 	private ImageView imgStatus;
 	
@@ -136,7 +143,7 @@ public class MainActivity extends Activity {
         
     	prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
-//        txtData = (TextView) findViewById(R.id.txtData);
+        txtData = (TextView) findViewById(R.id.txtData);
         lvDevices = (ListView) findViewById(R.id.lvDevices);
         layoutDevices = (RelativeLayout) findViewById(R.id.layoutDevices);
         imgStatus = (ImageView) findViewById(R.id.imgStatus);
@@ -181,48 +188,13 @@ public class MainActivity extends Activity {
     	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_FAHRENHEIT);
     	}
     	
-    	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false);
+    	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false);    	
+    	if (menuShareLog != null) {
+//    		menuSaveLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
+    		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
+    	}
 	}
     
-    @Override
-	protected void onDestroy() {
-		super.onDestroy();
-		
-		// if we're logging save the log file
-		if (afrAlarmLogging) {
-			
-			try {
-				File sdcard = Environment.getExternalStorageDirectory();
-				File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner");
-				dir.mkdirs();
-				
-				final String filename = String.format("AdaptiveTuner_%d.csv", System.currentTimeMillis());
-				FileOutputStream f = new FileOutputStream(new File(dir, filename));
-				
-				// write our header
-				f.write("timestamp, rpm, map, targetafr, afr, refafr, wat, mat".getBytes());
-				
-				ArrayList<LogItem> items = afrAlarmLogItems.getItems();
-				Iterator<LogItem> iterator = items.iterator();
-				
-				while (iterator.hasNext()) {
-					final LogItem item = (LogItem) iterator.next();
-					f.write(item.getLogBytes());
-				}
-				
-				f.flush();
-				f.close();
-				
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-
 
     final Runnable RefreshRunnable = new Runnable()
     {
@@ -251,10 +223,10 @@ public class MainActivity extends Activity {
 		        		if (rpm >= 200) lastRPM = rpm;
 		        		
 		        		dataArray.add(String.format("MAP\n%d kPa", map));
-		        		dataArray.add(String.format("MAT\n%d\u00B0 " + getTemperatureSymbol(), mat));
+		        		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
 		        		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
 		        		dataArray.add("TAFR\n" +  (targetAFR != 0f ? String.format("%.1f", targetAFR) : "--.-"));
-		        		dataArray.add(String.format("WAT\n%d\u00B0 " + getTemperatureSymbol(), wat));
+		        		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
 
 		        		// alarm stuff
 		        		if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) {
@@ -287,6 +259,11 @@ public class MainActivity extends Activity {
 			        					newItem.setWat(wat);
 			        					
 			        					afrAlarmLogItems.getItems().add(newItem);
+			        					
+			        					if (!menuShareLog.isVisible()) {
+//			        						menuSaveLog.setVisible(true);
+			        						menuShareLog.setVisible(true);
+			        					}
 			        				}
 			        			}
 			        		}
@@ -551,6 +528,15 @@ public class MainActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_main, menu);
+        
+        myMenu = menu;
+        menuShareLog = myMenu.findItem(R.id.menu_share);
+//    	menuSaveLog = myMenu.findItem(R.id.menu_save);
+    	menuConnect = myMenu.findItem(R.id.menu_connect);
+    	
+//		menuSaveLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());    	
+		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());  
+		
         return true;
     }
 
@@ -568,8 +554,15 @@ public class MainActivity extends Activity {
 	        case R.id.menu_exit:
 	        	System.exit(0);
 	        	
+	        case R.id.menu_share:
+	        	shareLog();
+	        	return true;
+	        	
+//	        case R.id.menu_save:
+//	        	saveLogAsFile(true);
+//	        	return true;
+	        	
 	        case R.id.menu_connect:
-	        	if (menuConnect == null) menuConnect = item;
 	        	if (item.getTitle().toString().equalsIgnoreCase(getResources().getString(R.string.menu_connect))) {
 	        		showDevices();
 	        	} else {
@@ -585,4 +578,87 @@ public class MainActivity extends Activity {
                 return super.onOptionsItemSelected(item);
         }
     } 
+	
+//	private void shareLog() {
+//		
+//		synchronized(this) {
+//			
+//			final StringBuffer sb = new StringBuffer(65535);
+//	
+//			// if we're logging save the log file
+//			if (afrAlarmLogging) {
+//				
+//				// write our header
+//				sb.append("timestamp, rpm, map, targetafr, afr, refafr, wat, mat\n");
+//				
+//				ArrayList<LogItem> items = afrAlarmLogItems.getItems();
+//				Iterator<LogItem> iterator = items.iterator();
+//				
+//				while (iterator.hasNext()) {
+//					final LogItem item = (LogItem) iterator.next();
+//					sb.append(item.getLogString());
+//				}
+//				
+//				afrAlarmLogItems.getItems().clear();	
+//				
+//				menuShareLog.setVisible(false);
+//				menuSaveLog.setVisible(false);
+//
+//				Intent sharingIntent = new Intent(Intent.ACTION_SEND);
+//				sharingIntent.setType("text/plain");
+//				sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, sb.toString());
+//				startActivity(Intent.createChooser(sharingIntent, getText(R.string.share_log)));
+//			}
+//		}
+//	}
+	
+	private void shareLog() {
+		
+		synchronized(this) {
+			
+			// if we're logging save the log file
+			if (afrAlarmLogging) {		
+				try {
+					final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.csv'").format(new Date());
+
+					File sdcard = Environment.getExternalStorageDirectory();
+					File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
+					dir.mkdirs();
+					
+					File file = new File(dir, filename);
+					FileOutputStream f = new FileOutputStream(file);
+					
+					// write our header
+					f.write("timestamp, rpm, map, targetafr, afr, refafr, wat, mat\n".getBytes());
+					
+					ArrayList<LogItem> items = afrAlarmLogItems.getItems();
+					Iterator<LogItem> iterator = items.iterator();
+					
+					while (iterator.hasNext()) {
+						final LogItem item = (LogItem) iterator.next();
+						f.write(item.getLogBytes());
+					}
+					
+					afrAlarmLogItems.getItems().clear();
+					
+					f.flush();
+					f.close();
+					
+					menuShareLog.setVisible(false);
+//					menuSaveLog.setVisible(false);
+					
+					Toast.makeText(getApplicationContext(), String.format("Log saved as %s%s%s", sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename), Toast.LENGTH_LONG).show();
+					if (DEBUG_MODE) Log.d(TAG, String.format("Log saved as %s%s%s", sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename));
+
+					Intent share = new Intent(Intent.ACTION_SEND);
+					share.setType("text/plain");
+					share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getPath()));
+					startActivity(Intent.createChooser(share, getText(R.string.share_log)));
+
+				} catch (Exception e) {
+					Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+				}
+			}
+		}
+	}
 }
