@@ -166,15 +166,27 @@ public class AdaptivePreferences extends PreferenceActivity {
 							}
 				        });
 
+				        final CheckBoxPreference afrLoggingPref = new CheckBoxPreference(ctx);
+				        
+				        afrLoggingPref.setPersistent(true);
+				        afrLoggingPref.setKey("prefs_afr_alarm_logging");
+			    	    afrLoggingPref.setDefaultValue(false);
+			        	afrLoggingPref.setSummaryOn(R.string.enabled);
+				        afrLoggingPref.setSummaryOff(R.string.disabled);
+				        afrLoggingPref.setTitle(R.string.prefs_afr_alarm_loging);
+				        afrLoggingPref.setEnabled(prefs.getBoolean("prefs_afrnottarget_pref", false));
+				        
 				        afrNotTargetPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 							public boolean onPreferenceChange(Preference arg0, Object arg1) {
 								afrNotTargetTolPref.setEnabled((Boolean) arg1);
+								afrLoggingPref.setEnabled((Boolean) arg1);
 								return true;
 							}
 				        });
 			         
-				        alertsPrefCat.addPreference(afrNotTargetPref);
-				        alertsPrefCat.addPreference(afrNotTargetTolPref);
+			        alertsPrefCat.addPreference(afrNotTargetPref);
+			        alertsPrefCat.addPreference(afrNotTargetTolPref);
+			        alertsPrefCat.addPreference(afrLoggingPref);
 				        
 				        //prefs_alert_water_temperature
 				        CheckBoxPreference waterTempPref = new CheckBoxPreference(ctx);
@@ -256,9 +268,9 @@ public class AdaptivePreferences extends PreferenceActivity {
 						        maxWaterTempPref.setDefaultValue(prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_FAHRENHEIT));
 				        }
 
-				        alertsPrefCat.addPreference(waterTempPref);
-				        alertsPrefCat.addPreference(minWaterTempPref);
-				        alertsPrefCat.addPreference(maxWaterTempPref);
+			        alertsPrefCat.addPreference(waterTempPref);
+			        alertsPrefCat.addPreference(minWaterTempPref);
+			        alertsPrefCat.addPreference(maxWaterTempPref);
 			        
 	        return root;
     }
