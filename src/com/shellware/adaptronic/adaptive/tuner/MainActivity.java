@@ -165,7 +165,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         
         mActionBarView = getLayoutInflater().inflate(
                 R.layout.action_bar_custom, null);
-
+ 
         bar.setCustomView(mActionBarView);
         bar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM | ActionBar.DISPLAY_USE_LOGO);
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
