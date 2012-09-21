@@ -29,9 +29,9 @@
    	    
    	 	<RelativeLayout
    	 	    android:id="@+id/mapmeter"
-   	 	    android:layout_width="100dp"
-   	 	    android:layout_height="100dp"
-   	 	    android:layout_marginBottom="20dp"
+   	 	    android:layout_width="110dp"
+   	 	    android:layout_height="110dp"
+   	 	    android:layout_marginBottom="10dp"
    	 	    android:layout_centerHorizontal="true" >
 	
 		    <ImageView
@@ -55,10 +55,10 @@
    	    
  	    <RelativeLayout
  	        android:id="@+id/watermeter"
- 	        android:layout_width="100dp"
- 	        android:layout_height="100dp"
+ 	        android:layout_width="110dp"
+ 	        android:layout_height="110dp"
  	        android:layout_below="@id/mapmeter"
- 	        android:layout_marginRight="20dp" >
+ 	        android:layout_marginRight="10dp" >
     	    	
 		    <ImageView
 			    android:id="@+id/watertemp"
@@ -81,10 +81,10 @@
 		
     	<RelativeLayout
     	    android:id="@+id/intakemeter"
-    	    android:layout_width="100dp"
-    	    android:layout_height="100dp"
+    	    android:layout_width="110dp"
+    	    android:layout_height="110dp"
     	    android:layout_below="@id/mapmeter"
-    	    android:layout_marginLeft="20dp"
+    	    android:layout_marginLeft="10dp"
     	    android:layout_toRightOf="@id/watermeter" >
 	
 		    <ImageView
