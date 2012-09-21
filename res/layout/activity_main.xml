@@ -35,6 +35,13 @@
         class="com.shellware.adaptronic.adaptive.tuner.fragments.GaugesFragment"
         tools:layout="@layout/gauges_tab" />
     
+    <ImageView
+        android:id="@+id/imgStatus"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_alignParentRight="true"
+        android:layout_margin="@dimen/padding_small" />
+    
     <RelativeLayout android:id="@+id/layoutDevices"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"

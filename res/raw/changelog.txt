@@ -19,7 +19,12 @@
     </style>
   </head>
   <body>
-$ 1.03
+$ 1.04
+  % Version 1.04
+  _ 2012-09-21
+  ! Honeycomb Navigation Tabs!
+  	* Navigation tab framework complete
+  	* Added <i>Gauges Dashboard</i> navigation tab
   % Version 1.03
   _ 2012-09-15
   ! Initial Alarm Logging Implementation

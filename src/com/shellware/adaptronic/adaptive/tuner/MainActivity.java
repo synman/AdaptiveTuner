@@ -185,7 +185,15 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         imgFLoad = (ImageView) findViewById(R.id.imgFLoad);
 
         gridData = (GridView) findViewById(R.id.gridData);
+        
         dataArray = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        dataArray.add("RPM\n ----");
+        dataArray.add("MAP\n ---");
+        dataArray.add("MAT\n ---\u00B0");
+        dataArray.add("AFR\n --.-");
+        dataArray.add("TAFR\n --.-");
+        dataArray.add("WAT\n ---\u00B0");
+        
         gridData.setAdapter(dataArray);
         
         lvDevices.setOnItemClickListener(DevicesClickListener);
