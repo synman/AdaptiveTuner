@@ -146,6 +146,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	
 	private GaugeNeedle waterNeedle;
 	private GaugeNeedle iatNeedle;
+	private GaugeNeedle mapNeedle;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -200,6 +201,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         
         waterNeedle = (GaugeNeedle) findViewById(R.id.waterneedle);
         iatNeedle = (GaugeNeedle) findViewById(R.id.iatneedle);
+        mapNeedle = (GaugeNeedle) findViewById(R.id.mapneedle);
 
         waterNeedle.setPivotPoint(.65f);
         waterNeedle.setMinValue(100);
@@ -212,6 +214,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         iatNeedle.setMaxValue(200);
         iatNeedle.setMinDegrees(-180);
         iatNeedle.setMaxDegrees(90);
+        
+        mapNeedle.setPivotPoint(.5f);
+        mapNeedle.setMinValue(0);
+        mapNeedle.setMaxValue(200);
+        mapNeedle.setMinDegrees(-135);
+        mapNeedle.setMaxDegrees(135);
         
         ChangeLog cl = new ChangeLog(this);
         if (cl.firstRun()) {
@@ -272,6 +280,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		        		
 		        		iatNeedle.setValue(mat);
 		        		waterNeedle.setValue(wat);
+		        		mapNeedle.setValue(map);
 	            		
 		        		dataArray.add(String.format("RPM\n%d", (rpm < 200 ? lastRPM : rpm)));
 		        		if (rpm >= 200) lastRPM = rpm;
