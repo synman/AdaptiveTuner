@@ -24,8 +24,12 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
+import android.app.ActionBar;
+import android.app.ActionBar.Tab;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -56,12 +60,13 @@ import android.widget.Toast;
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectThread;
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.changelog.ChangeLog;
+import com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle;
 import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
 import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements ActionBar.TabListener {
 	
 	public static final String TAG = "Adaptive";
 	public static final boolean DEBUG_MODE = false;
@@ -134,6 +139,13 @@ public class MainActivity extends Activity {
 	
 	private boolean afrAlarmLogging = false;
 	private final LogItems afrAlarmLogItems = new LogItems();
+	
+	private View mActionBarView;
+	private Fragment adaptiveFragment;
+	private Fragment gaugesFragment;
+	
+	private GaugeNeedle waterNeedle;
+	private GaugeNeedle iatNeedle;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -142,7 +154,23 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         
     	prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    	
+        adaptiveFragment = getFragmentManager().findFragmentById(R.id.frag_adaptive);
+        gaugesFragment = getFragmentManager().findFragmentById(R.id.frag_gauges);
         
+        ActionBar bar = getActionBar();
+        
+        bar.addTab(bar.newTab().setText("Adaptive Monitor").setTabListener(this));        
+        bar.addTab(bar.newTab().setText("Gauges Dashboard").setTabListener(this));
+        
+        mActionBarView = getLayoutInflater().inflate(
+                R.layout.action_bar_custom, null);
+
+        bar.setCustomView(mActionBarView);
+        bar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM | ActionBar.DISPLAY_USE_LOGO);
+        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        bar.setDisplayShowHomeEnabled(true);
+
 //        txtData = (TextView) findViewById(R.id.txtData);
         lvDevices = (ListView) findViewById(R.id.lvDevices);
         layoutDevices = (RelativeLayout) findViewById(R.id.layoutDevices);
@@ -161,6 +189,21 @@ public class MainActivity extends Activity {
         gridData.setAdapter(dataArray);
         
         lvDevices.setOnItemClickListener(DevicesClickListener);
+        
+        waterNeedle = (GaugeNeedle) findViewById(R.id.waterneedle);
+        iatNeedle = (GaugeNeedle) findViewById(R.id.iatneedle);
+
+        waterNeedle.setPivotPoint(.65f);
+        waterNeedle.setMinValue(100);
+        waterNeedle.setMaxValue(250);
+        waterNeedle.setMinDegrees(-45);
+        waterNeedle.setMaxDegrees(45);
+
+        iatNeedle.setPivotPoint(.5f);
+        iatNeedle.setMinValue(0);
+        iatNeedle.setMaxValue(200);
+        iatNeedle.setMinDegrees(-180);
+        iatNeedle.setMaxDegrees(90);
         
         ChangeLog cl = new ChangeLog(this);
         if (cl.firstRun()) {
@@ -218,6 +261,9 @@ public class MainActivity extends Activity {
 		        		final int wat = getTemperatureValue(buf[9] + buf[10]);
 		        		final float afr = Integer.parseInt(buf[14], 16) / 10f;
 		        		final float referenceAfr = Integer.parseInt(buf[13], 16) / 10f;
+		        		
+		        		iatNeedle.setValue(mat);
+		        		waterNeedle.setValue(wat);
 	            		
 		        		dataArray.add(String.format("RPM\n%d", (rpm < 200 ? lastRPM : rpm)));
 		        		if (rpm >= 200) lastRPM = rpm;
@@ -659,6 +705,29 @@ public class MainActivity extends Activity {
 					Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 				}
 			}
+		}
+	}
+
+
+	public void onTabReselected(Tab tab, FragmentTransaction ft) {
+	}
+	
+	public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+	}
+	
+	
+	public void onTabSelected(Tab tab, FragmentTransaction ft) {
+		
+		ft.hide(adaptiveFragment);
+		ft.hide(gaugesFragment);
+		
+		switch (tab.getPosition()) {
+			case 0:
+				ft.show(adaptiveFragment);
+				break;
+			case 1:
+				ft.show(gaugesFragment);
+				break;  
 		}
 	}
 }
