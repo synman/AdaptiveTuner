@@ -30,6 +30,9 @@
     <string name="fuel">Fuel Learning</string>
     <string name="share_log">Share using</string>
     
+    <string name="tab_adaptive">Adaptive Monitor</string>
+    <string name="tab_gauges">Gauges Dashboard</string>
+    
     <string name="menu_prefs">Preferences</string>
     <string name="prefs_title">Adaptive Tuner Preferences</string>
     <string name="prefs_general_pref">General Preferences</string>

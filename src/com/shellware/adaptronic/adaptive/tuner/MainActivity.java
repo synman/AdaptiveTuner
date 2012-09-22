@@ -91,6 +91,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private static final int SHORT_PAUSE = 125;
 	private static final int LONG_PAUSE = 250;
 	
+	private static final int AFR_MIN = 970;
+	private static final int AFR_MAX = 1970;
+	
 //	private TextView txtData;
 	private ListView lvDevices;
 	private RelativeLayout layoutDevices;
@@ -163,8 +166,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         
         ActionBar bar = getActionBar();
         
-        bar.addTab(bar.newTab().setText("Adaptive Monitor").setTabListener(this));        
-        bar.addTab(bar.newTab().setText("Gauges Dashboard").setTabListener(this));
+        bar.addTab(bar.newTab().setText(R.string.tab_adaptive).setTabListener(this));        
+        bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this));
         
         mActionBarView = getLayoutInflater().inflate(
                 R.layout.action_bar_custom, null);
@@ -226,14 +229,14 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         mapNeedle.setMaxDegrees(140);
         
         afrNeedle.setPivotPoint(.5f);
-        afrNeedle.setMinValue(735);
-        afrNeedle.setMaxValue(2239);
+        afrNeedle.setMinValue(AFR_MIN);
+        afrNeedle.setMaxValue(AFR_MAX);
         afrNeedle.setMinDegrees(-180);
         afrNeedle.setMaxDegrees(90);   
         
         targetAfrNeedle.setPivotPoint(.5f);
-        targetAfrNeedle.setMinValue(735);
-        targetAfrNeedle.setMaxValue(2239);
+        targetAfrNeedle.setMinValue(AFR_MIN);
+        targetAfrNeedle.setMaxValue(AFR_MAX);
         targetAfrNeedle.setMinDegrees(-180);
         targetAfrNeedle.setMaxDegrees(90);
         
@@ -297,11 +300,23 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		        		iatNeedle.setValue(mat);
 		        		waterNeedle.setValue(wat);
 		        		mapNeedle.setValue(map);
-		        		afrNeedle.setValue(afr * 100);
-		        		targetAfrNeedle.setValue(targetAFR * 100);
-	            		
-		        		dataArray.add(String.format("RPM\n%d", (rpm < 200 ? lastRPM : rpm)));
+		        		
+		        		{
+			        		float afrVal = afr * 100;
+			        		float targetAfrVal = targetAFR * 100;
+			        		
+			        		if (afrVal > AFR_MAX) afrVal = AFR_MAX;
+			        		if (afrVal < AFR_MIN) afrVal = AFR_MIN;
+			        		
+			        		if (targetAfrVal > AFR_MAX) targetAfrVal = AFR_MAX;
+			        		if (targetAfrVal < AFR_MIN) targetAfrVal = AFR_MIN;
+	
+			        		afrNeedle.setValue(AFR_MAX - afrVal + AFR_MIN);
+			        		targetAfrNeedle.setValue(AFR_MAX - targetAfrVal + AFR_MIN);
+		        		}
+		        		
 		        		if (rpm >= 200) lastRPM = rpm;
+		        		dataArray.add(String.format("RPM\n%d", lastRPM));
 		        		
 		        		dataArray.add(String.format("MAP\n%d kPa", map));
 		        		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
