@@ -31,8 +31,8 @@
    	 	    android:id="@+id/mapmeter"
    	 	    android:layout_width="260dp"
    	 	    android:layout_height="260dp"
-   	 	    android:layout_marginBottom="60dp"
-   	 	    android:layout_centerHorizontal="true" >
+       	    android:layout_marginRight="60dp"  
+   	 	    android:layout_marginBottom="60dp" >
 	
 		    <ImageView
 			    android:id="@+id/map"
@@ -45,6 +45,42 @@
 		    	
 			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
 			    android:id="@+id/mapneedle"
+			    android:layout_width="fill_parent"
+			    android:layout_height="fill_parent"
+			    android:layout_centerHorizontal="true"
+			    android:layout_centerVertical="true"
+			    android:src="@drawable/needle_middle" 
+			    android:scaleType="fitXY"/>
+		</RelativeLayout>
+   	    		    
+		<RelativeLayout
+		    android:id="@+id/afrmeter"
+		    android:layout_width="260dp"
+		    android:layout_height="260dp"
+       	    android:layout_marginLeft="60dp"  
+		    android:layout_toRightOf="@id/mapmeter"
+		    android:layout_marginBottom="60dp" >
+	
+		    <ImageView
+			    android:id="@+id/afr"
+			    android:layout_width="fill_parent"
+			    android:layout_height="fill_parent"
+			    android:layout_centerHorizontal="true"
+			    android:layout_centerVertical="true"
+			    android:src="@drawable/afr" 
+			    android:scaleType="fitXY"/>
+		    	
+			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+			    android:id="@+id/targetafrneedle"
+			    android:layout_width="fill_parent"
+			    android:layout_height="fill_parent"
+			    android:layout_centerHorizontal="true"
+			    android:layout_centerVertical="true"
+			    android:src="@drawable/needle_middle_yellow" 
+			    android:scaleType="fitXY"/>
+
+			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+			    android:id="@+id/afrneedle"
 			    android:layout_width="fill_parent"
 			    android:layout_height="fill_parent"
 			    android:layout_centerHorizontal="true"

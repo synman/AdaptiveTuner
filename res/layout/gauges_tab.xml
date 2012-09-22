@@ -31,8 +31,8 @@
    	 	    android:id="@+id/mapmeter"
    	 	    android:layout_width="110dp"
    	 	    android:layout_height="110dp"
-   	 	    android:layout_marginBottom="10dp"
-   	 	    android:layout_centerHorizontal="true" >
+       	    android:layout_marginRight="20dp"  
+   	 	    android:layout_marginBottom="10dp" >
 	
 		    <ImageView
 			    android:id="@+id/map"
@@ -52,13 +52,48 @@
 			    android:src="@drawable/needle_middle" 
 			    android:scaleType="fitXY"/>
 		</RelativeLayout>
-   	    
+   	    		    
+		<RelativeLayout
+		    android:id="@+id/afrmeter"
+		    android:layout_width="110dp"
+		    android:layout_height="110dp"
+       	    android:layout_marginLeft="20dp"  
+		    android:layout_toRightOf="@id/mapmeter" >
+	
+		    <ImageView
+			    android:id="@+id/afr"
+			    android:layout_width="fill_parent"
+			    android:layout_height="fill_parent"
+			    android:layout_centerHorizontal="true"
+			    android:layout_centerVertical="true"
+			    android:src="@drawable/afr" 
+			    android:scaleType="fitXY"/>
+		    	
+			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+			    android:id="@+id/targetafrneedle"
+			    android:layout_width="fill_parent"
+			    android:layout_height="fill_parent"
+			    android:layout_centerHorizontal="true"
+			    android:layout_centerVertical="true"
+			    android:src="@drawable/needle_middle_yellow" 
+			    android:scaleType="fitXY"/>
+
+			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+			    android:id="@+id/afrneedle"
+			    android:layout_width="fill_parent"
+			    android:layout_height="fill_parent"
+			    android:layout_centerHorizontal="true"
+			    android:layout_centerVertical="true"
+			    android:src="@drawable/needle_middle" 
+			    android:scaleType="fitXY"/>
+		</RelativeLayout>
+		
  	    <RelativeLayout
  	        android:id="@+id/watermeter"
  	        android:layout_width="110dp"
  	        android:layout_height="110dp"
  	        android:layout_below="@id/mapmeter"
- 	        android:layout_marginRight="10dp" >
+ 	        android:layout_marginRight="20dp" >
     	    	
 		    <ImageView
 			    android:id="@+id/watertemp"
@@ -84,7 +119,7 @@
     	    android:layout_width="110dp"
     	    android:layout_height="110dp"
     	    android:layout_below="@id/mapmeter"
-    	    android:layout_marginLeft="10dp"
+    	    android:layout_marginLeft="20dp"
     	    android:layout_toRightOf="@id/watermeter" >
 	
 		    <ImageView
