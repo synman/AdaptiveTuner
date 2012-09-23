@@ -245,7 +245,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         rpmNeedle.setPivotPoint(.5f);
         rpmNeedle.setMinValue(0);
         rpmNeedle.setMaxValue(9000);
-        rpmNeedle.setMinDegrees(-119);
+        rpmNeedle.setMinDegrees(-130);
         rpmNeedle.setMaxDegrees(157); 
         
         ChangeLog cl = new ChangeLog(this);
