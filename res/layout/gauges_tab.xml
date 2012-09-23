@@ -20,125 +20,150 @@
      xmlns:tools="http://schemas.android.com/tools"
      android:layout_width="match_parent"
      android:layout_height="match_parent"
+     android:layout_gravity="center"
      tools:context=".fragments.GaugesFragment" >
 
-   	<RelativeLayout
-   	    android:layout_width="wrap_content"
-   	    android:layout_height="wrap_content"
-   	    android:layout_centerInParent="true" >
-   	    
-   	 	<RelativeLayout
-   	 	    android:id="@+id/mapmeter"
-   	 	    android:layout_width="110dp"
-   	 	    android:layout_height="110dp"
-       	    android:layout_marginRight="20dp"  
-   	 	    android:layout_marginBottom="10dp" >
-	
-		    <ImageView
-			    android:id="@+id/map"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/mapgauge" 
-			    android:scaleType="fitXY"/>
-		    	
-			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
-			    android:id="@+id/mapneedle"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/needle_middle" 
-			    android:scaleType="fitXY"/>
-		</RelativeLayout>
-   	    		    
-		<RelativeLayout
-		    android:id="@+id/afrmeter"
-		    android:layout_width="110dp"
-		    android:layout_height="110dp"
-       	    android:layout_marginLeft="20dp"  
-		    android:layout_toRightOf="@id/mapmeter" >
-	
-		    <ImageView
-			    android:id="@+id/afr"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/afr" 
-			    android:scaleType="fitXY"/>
-		    	
-			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
-			    android:id="@+id/targetafrneedle"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/needle_middle_yellow" 
-			    android:scaleType="fitXY"/>
+	<RelativeLayout
+	    android:id="@+id/afrmeter"
+	    android:layout_width="110dp"
+	    android:layout_height="110dp"
+		android:layout_centerInParent="true" >
 
-			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
-			    android:id="@+id/afrneedle"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/needle_middle" 
-			    android:scaleType="fitXY"/>
-		</RelativeLayout>
-		
- 	    <RelativeLayout
- 	        android:id="@+id/watermeter"
- 	        android:layout_width="110dp"
- 	        android:layout_height="110dp"
- 	        android:layout_below="@id/mapmeter"
- 	        android:layout_marginRight="20dp" >
-    	    	
-		    <ImageView
-			    android:id="@+id/watertemp"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/watertemp" 
-			    android:scaleType="fitXY"/>
-		    	
-			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
-			    android:id="@+id/waterneedle"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/needle_offset" 
-			    android:scaleType="fitXY"/>
-		</RelativeLayout>
-		
-    	<RelativeLayout
-    	    android:id="@+id/intakemeter"
-    	    android:layout_width="110dp"
-    	    android:layout_height="110dp"
-    	    android:layout_below="@id/mapmeter"
-    	    android:layout_marginLeft="20dp"
-    	    android:layout_toRightOf="@id/watermeter" >
+	    <ImageView
+	        android:id="@+id/afr"
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"
+	        android:layout_centerInParent="true"
+	        android:scaleType="fitXY"
+	        android:src="@drawable/afr" />
+	    	
+		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+		    android:id="@+id/targetafrneedle"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerInParent="true"
+		    android:scaleType="fitXY"
+		    android:src="@drawable/needle_middle_yellow" />
+
+		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+		    android:id="@+id/afrneedle"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/needle_middle" 
+		    android:scaleType="fitXY"/>
+	</RelativeLayout>
+	   	    
+	<RelativeLayout
+	    android:id="@+id/mapmeter"
+	    android:layout_width="110dp"
+	    android:layout_height="110dp"
+	    android:layout_alignParentTop="true"
+	    android:layout_marginRight="20dp"
+	    android:layout_marginTop="10dp"
+	    android:layout_toLeftOf="@id/afrmeter" >
+
+	    <ImageView
+		    android:id="@+id/map"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/mapgauge" 
+		    android:scaleType="fitXY"/>
+	    	
+		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+		    android:id="@+id/mapneedle"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/needle_middle" 
+		    android:scaleType="fitXY"/>
+	</RelativeLayout>
 	
-		    <ImageView
-			    android:id="@+id/iat"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/iatgauge" 
-			    android:scaleType="fitXY"/>
-		    	
-			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
-			    android:id="@+id/iatneedle"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/needle_middle" 
-			    android:scaleType="fitXY"/>
-		</RelativeLayout>
-      </RelativeLayout> 
+	<RelativeLayout
+  	 	android:id="@+id/tachometer"
+	    android:layout_alignParentTop="true"
+	    android:layout_width="110dp"
+	    android:layout_height="110dp"
+      	android:layout_marginLeft="20dp"  
+ 	    android:layout_marginTop="10dp"
+ 	    android:layout_toRightOf="@id/afrmeter" >
+
+	    <ImageView
+		    android:id="@+id/rpm"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/tachometer" 
+		    android:scaleType="fitXY"/>
+	    	
+		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+		    android:id="@+id/rpmneedle"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/needle_middle" 
+		    android:scaleType="fitXY"/>
+	</RelativeLayout>
+	
+    <RelativeLayout
+        android:id="@+id/watermeter"
+        android:layout_width="110dp"
+        android:layout_height="110dp"
+        android:layout_alignParentBottom="true"
+		android:layout_marginBottom="10dp"
+        android:layout_marginRight="20dp"
+        android:layout_toLeftOf="@id/afrmeter" >
+   	    	
+	    <ImageView
+		    android:id="@+id/watertemp"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/watertemp" 
+		    android:scaleType="fitXY"/>
+	    	
+		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+		    android:id="@+id/waterneedle"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/needle_offset" 
+		    android:scaleType="fitXY"/>
+	</RelativeLayout>
+	
+   	<RelativeLayout
+   	    android:id="@+id/intakemeter"
+   	    android:layout_width="110dp"
+   	    android:layout_height="110dp"
+   	    android:layout_alignParentBottom="true"
+   	    android:layout_marginLeft="20dp"
+   	    android:layout_marginBottom="10dp"
+   	    android:layout_toRightOf="@id/afrmeter" >
+
+	    <ImageView
+		    android:id="@+id/iat"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/iatgauge" 
+		    android:scaleType="fitXY"/>
+	    	
+		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+		    android:id="@+id/iatneedle"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:layout_centerHorizontal="true"
+		    android:layout_centerVertical="true"
+		    android:src="@drawable/needle_middle" 
+		    android:scaleType="fitXY"/>
+	</RelativeLayout>
 </RelativeLayout>

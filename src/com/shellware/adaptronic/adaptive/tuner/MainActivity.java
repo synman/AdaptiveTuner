@@ -152,6 +152,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private GaugeNeedle mapNeedle;
 	private GaugeNeedle afrNeedle;
 	private GaugeNeedle targetAfrNeedle;
+	private GaugeNeedle rpmNeedle;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -209,6 +210,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         mapNeedle = (GaugeNeedle) findViewById(R.id.mapneedle);
         afrNeedle = (GaugeNeedle) findViewById(R.id.afrneedle);
         targetAfrNeedle = (GaugeNeedle) findViewById(R.id.targetafrneedle);
+        rpmNeedle = (GaugeNeedle) findViewById(R.id.rpmneedle);
 
         waterNeedle.setPivotPoint(.65f);
         waterNeedle.setMinValue(100);
@@ -221,13 +223,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         iatNeedle.setMaxValue(200);
         iatNeedle.setMinDegrees(-180);
         iatNeedle.setMaxDegrees(90);
-        
-        mapNeedle.setPivotPoint(.5f);
-        mapNeedle.setMinValue(0);
-        mapNeedle.setMaxValue(200);
-        mapNeedle.setMinDegrees(-140);
-        mapNeedle.setMaxDegrees(140);
-        
+
         afrNeedle.setPivotPoint(.5f);
         afrNeedle.setMinValue(AFR_MIN);
         afrNeedle.setMaxValue(AFR_MAX);
@@ -239,6 +235,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         targetAfrNeedle.setMaxValue(AFR_MAX);
         targetAfrNeedle.setMinDegrees(-180);
         targetAfrNeedle.setMaxDegrees(90);
+        
+        mapNeedle.setPivotPoint(.5f);
+        mapNeedle.setMinValue(0);
+        mapNeedle.setMaxValue(200);
+        mapNeedle.setMinDegrees(-150);
+        mapNeedle.setMaxDegrees(140);
+
+        rpmNeedle.setPivotPoint(.5f);
+        rpmNeedle.setMinValue(0);
+        rpmNeedle.setMaxValue(9000);
+        rpmNeedle.setMinDegrees(-119);
+        rpmNeedle.setMaxDegrees(157); 
         
         ChangeLog cl = new ChangeLog(this);
         if (cl.firstRun()) {
@@ -317,6 +325,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		        		
 		        		if (rpm >= 200) lastRPM = rpm;
 		        		dataArray.add(String.format("RPM\n%d", lastRPM));
+		        		rpmNeedle.setValue(lastRPM);
 		        		
 		        		dataArray.add(String.format("MAP\n%d kPa", map));
 		        		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
