@@ -105,6 +105,9 @@ import android.util.Log;
     		connectedThread.start();
 
 	        b.putShort("handle", MainActivity.CONNECTED);
+	        b.putString("name", name);
+	        b.putString("addr", addr);
+	        
 	        msg.setData(b);
 	        
 	        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Connected");

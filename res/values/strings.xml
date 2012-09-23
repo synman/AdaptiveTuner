@@ -39,7 +39,7 @@
     
     <string name="prefs_uom_category">Units of Measure</string>
     <string name="prefs_uom_temp_dialog_title">Selected Temperature Unit of Measure</string>
-    <string name="prefs_uom_temp_title">Temperature Unit of Measure</string>
+    <string name="prefs_uom_temp_title">Temperature</string>
     
     <string name="prefs_bt_category">Bluetooth Preferences</string>
     <string name="prefs_bt_default_device">Default Device</string>

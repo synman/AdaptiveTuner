@@ -36,6 +36,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -139,6 +140,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private boolean waterTempPref = false;
 	private float minimumWaterTemp = 0f;
 	private float maximumWaterTemp = 210f;
+	private String remoteMacAddr = "";
+	private String remoteName = "";
 	
 	private boolean afrAlarmLogging = false;
 	private final LogItems afrAlarmLogItems = new LogItems();
@@ -265,6 +268,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	afrNotEqualTargetTolerance = prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f);
     	waterTempPref = prefs.getBoolean("prefs_watertemp_pref", false);
     	
+    	remoteName = prefs.getString("prefs_remote_name", "");
+    	remoteMacAddr = prefs.getString("prefs_remote_mac", "");
+    	
     	switch (tempUomPref) {
     		case 0:
     	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_CELCIUS);
@@ -278,6 +284,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	if (menuShareLog != null) {
 //    		menuSaveLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
     		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
+    	}
+    	
+    	if (remoteMacAddr.length() > 0 && !(connected != null && connected.isAlive())) {
+//    		disconnect();
+    		new Handler().postDelayed(( new Runnable() { public void run() { connect(remoteName,  remoteMacAddr); } } ), 500);
     	}
 	}
     
@@ -517,6 +528,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 					connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6));     		
 		    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
 		    		
+	        		Editor edit = prefs.edit();
+	        		edit.putString("prefs_remote_name", message.getData().getString("name"));
+	        		edit.putString("prefs_remote_mac", message.getData().getString("addr"));
+	        		edit.commit();
+		    		
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
@@ -611,7 +627,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     private void disconnect() {
     	
     	refreshHandler.removeCallbacks(RefreshRunnable);
-    	dataArray.clear();
 		menuConnect.setTitle(R.string.menu_connect);
     	
 		try {
@@ -672,6 +687,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	        		showDevices();
 	        	} else {
 	        		disconnect();
+	        		Editor edit = prefs.edit();
+	        		edit.putString("prefs_remote_name", "");
+	        		edit.putString("prefs_remote_mac", "");
+	        		edit.commit();
 	        	}
 	            return false;
 	            
