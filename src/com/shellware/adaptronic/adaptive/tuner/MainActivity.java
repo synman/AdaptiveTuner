@@ -115,13 +115,15 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private ImageView imgFRpm;
 	private ImageView imgFLoad;
 	
+	private ImageView imgIat;
+	
 	private ProgressDialog progress;
 	
 	private Handler refreshHandler = new Handler();
 	private ConnectionHandler connectionHandler = new ConnectionHandler();
 	private ConnectedThread connected;
 		
-	private BluetoothAdapter bt;
+	private final BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();;
 	
 	private ArrayAdapter<String> devices;
 	private ArrayAdapter<String> dataArray;
@@ -131,6 +133,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private float targetAFR = 0f;
 	private int lastRPM = 0;
 	private short lastRegister = 0;
+	private boolean alertOnConnectionError = false;
 	
 	private static SharedPreferences prefs ;
 	
@@ -172,7 +175,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         
         bar.addTab(bar.newTab().setText(R.string.tab_adaptive).setTabListener(this));        
         bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this));
-        
+
         mActionBarView = getLayoutInflater().inflate(
                 R.layout.action_bar_custom, null);
  
@@ -193,6 +196,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         imgFWait = (ImageView) findViewById(R.id.imgFWait);
 		imgFRpm = (ImageView) findViewById(R.id.imgFRpm);
         imgFLoad = (ImageView) findViewById(R.id.imgFLoad);
+        
+        imgIat = (ImageView) findViewById(R.id.iat);
 
         gridData = (GridView) findViewById(R.id.gridData);
         
@@ -217,15 +222,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
         waterNeedle.setPivotPoint(.65f);
         waterNeedle.setMinValue(100);
-        waterNeedle.setMaxValue(250);
-        waterNeedle.setMinDegrees(-48);
-        waterNeedle.setMaxDegrees(48);
+        waterNeedle.setMaxValue(240);
+        waterNeedle.setMinDegrees(-50);
+        waterNeedle.setMaxDegrees(55);
 
-        iatNeedle.setPivotPoint(.5f);
-        iatNeedle.setMinValue(0);
-        iatNeedle.setMaxValue(200);
-        iatNeedle.setMinDegrees(-180);
-        iatNeedle.setMaxDegrees(90);
+        // moved to onresume
+//        iatNeedle.setPivotPoint(.5f);
+//        iatNeedle.setMinValue(0);
+//        iatNeedle.setMaxValue(200);
+//        iatNeedle.setMinDegrees(-180);
+//        iatNeedle.setMaxDegrees(90);
 
         afrNeedle.setPivotPoint(.5f);
         afrNeedle.setMinValue(AFR_MIN);
@@ -275,9 +281,28 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		case 0:
     	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_CELCIUS);
     	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_CELCIUS);
+
+    	        iatNeedle.setPivotPoint(.5f);
+    	        iatNeedle.setMinValue(0);
+    	        iatNeedle.setMaxValue(100);
+    	        iatNeedle.setMinDegrees(-180);
+    	        iatNeedle.setMaxDegrees(90);
+
+    	        imgIat.setImageResource(R.drawable.iatgauge_celcius);
+    	        break;
+
     		case 1:
     	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_FAHRENHEIT);
     	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_FAHRENHEIT);
+    	    	
+    	        iatNeedle.setPivotPoint(.5f);
+    	        iatNeedle.setMinValue(0);
+    	        iatNeedle.setMaxValue(200);
+    	        iatNeedle.setMinDegrees(-180);
+    	        iatNeedle.setMaxDegrees(90);
+
+    	        imgIat.setImageResource(R.drawable.iatgauge);
+    	        break;
     	}
     	
     	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false);    	
@@ -288,8 +313,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	
     	if (remoteMacAddr.length() > 0 && !(connected != null && connected.isAlive())) {
 //    		disconnect();
-    		new Handler().postDelayed(( new Runnable() { public void run() { connect(remoteName,  remoteMacAddr); } } ), 500);
+//    		new Handler().postDelayed(( new Runnable() { public void run() { connect(remoteName,  remoteMacAddr); } } ), 500);
+    		connect(remoteName,  remoteMacAddr);
     	}
+    	
+    	ActionBar bar = getActionBar();
+    	bar.selectTab(bar.getTabAt(prefs.getInt("prefs_last_tab", 1)));    	
 	}
     
 
@@ -312,12 +341,14 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	            		final int rpm = Integer.parseInt(buf[3] + buf[4], 16);
 	            		final int map = Integer.parseInt(buf[5] + buf[6], 16);
 	            		final int mat = getTemperatureValue(buf[7] + buf[8]);
-		        		final int wat = getTemperatureValue(buf[9] + buf[10]);
+
+	            		final int wat = getTemperatureValue(buf[9] + buf[10]);
+		        		
 		        		final float afr = Integer.parseInt(buf[14], 16) / 10f;
 		        		final float referenceAfr = Integer.parseInt(buf[13], 16) / 10f;
 		        		
 		        		iatNeedle.setValue(mat);
-		        		waterNeedle.setValue(wat);
+		        		waterNeedle.setValue(Integer.parseInt(buf[9] + buf[10], 16) * 9 / 5 + 32);
 		        		mapNeedle.setValue(map);
 		        		
 		        		{
@@ -418,27 +449,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		    		                return;
 		    		                
 		        				case REGISTER_4146:	// learning flags
-			        				imgFWait.setBackgroundColor(Color.TRANSPARENT);
-			        				imgFRpm.setBackgroundColor(Color.TRANSPARENT);
-			        				imgFLoad.setBackgroundColor(Color.TRANSPARENT);
-			        				
-			        				imgIWait.setBackgroundColor(Color.TRANSPARENT);
-			        				imgIRpm.setBackgroundColor(Color.TRANSPARENT);
-		        					imgILoad.setBackgroundColor(Color.TRANSPARENT);
-			        				
-			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 0) > 0) 
-			        					 imgFWait.setBackgroundColor(Color.RED);
-			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 1) > 0) 
-			        					 imgFRpm.setBackgroundColor(Color.GREEN);
-			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 2) > 0) 
-			        					 imgFLoad.setBackgroundColor(Color.GREEN);
-		
-			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 3) > 0) 
-			        					 imgIWait.setBackgroundColor(Color.RED);
-			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 4) > 0) 
-			        					 imgIRpm.setBackgroundColor(Color.GREEN);
-			        				 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 5) > 0) 
-			        					imgILoad.setBackgroundColor(Color.GREEN);
+		        					setLearningFlags(buf);
 			        				 
 					        		if (connected != null && connected.isAlive()) {
 					        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4096_PLUS_FIVE, (short) 6)); 
@@ -479,7 +490,32 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         			refreshHandler.postDelayed(this,  SHORT_PAUSE * 2);
         	}
         }
-    	
+		
+		private void setLearningFlags(String[] buf) {
+			
+			imgFWait.setBackgroundColor(Color.TRANSPARENT);
+			imgFRpm.setBackgroundColor(Color.TRANSPARENT);
+			imgFLoad.setBackgroundColor(Color.TRANSPARENT);
+			
+			imgIWait.setBackgroundColor(Color.TRANSPARENT);
+			imgIRpm.setBackgroundColor(Color.TRANSPARENT);
+			imgILoad.setBackgroundColor(Color.TRANSPARENT);
+			
+			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 0) > 0) 
+				 imgFWait.setBackgroundColor(Color.RED);
+			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 1) > 0) 
+				 imgFRpm.setBackgroundColor(Color.GREEN);
+			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 2) > 0) 
+				 imgFLoad.setBackgroundColor(Color.GREEN);
+
+			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 3) > 0) 
+				 imgIWait.setBackgroundColor(Color.RED);
+			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 4) > 0) 
+				 imgIRpm.setBackgroundColor(Color.GREEN);
+			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 5) > 0) 
+				imgILoad.setBackgroundColor(Color.GREEN);
+		}
+		
 	    private int getBit(final int item, final int position) {   
 	    	return (item >> position) & 1;
 	    }
@@ -536,16 +572,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
-					AlertDialog alert = new AlertDialog.Builder(MainActivity.this).create();
-					alert.setTitle(message.getData().getString("title"));
-					alert.setMessage("\n" + message.getData().getString("message") + "\n");
-					alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
-							new DialogInterface.OnClickListener() {	
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.dismiss();
-								}
-							});
-					alert.show();
+	        		if (alertOnConnectionError) {
+						AlertDialog alert = new AlertDialog.Builder(MainActivity.this).create();
+						alert.setTitle(message.getData().getString("title"));
+						alert.setMessage("\n" + message.getData().getString("message") + "\n");
+						alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
+								new DialogInterface.OnClickListener() {	
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.dismiss();
+									}
+								});
+						alert.show();
+	        		}
 					
 					disconnect();
 					break;
@@ -592,7 +630,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     private void showDevices() {
     	
     	try {    		
-	    	if (bt == null) bt = BluetoothAdapter.getDefaultAdapter();
 	    	if (devices == null) devices = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice);
 	    	devices.clear();
 	    	
@@ -623,7 +660,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	doConnect.start();
     }
     
-    // needs to be become a handler
     private void disconnect() {
     	
     	refreshHandler.removeCallbacks(RefreshRunnable);
@@ -683,9 +719,14 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 //	        	return true;
 	        	
 	        case R.id.menu_connect:
-	        	if (item.getTitle().toString().equalsIgnoreCase(getResources().getString(R.string.menu_connect))) {
+	        	// bail if no bluetooth adapter
+        		if (bt == null) return false;
+
+        		if (item.getTitle().toString().equalsIgnoreCase(getResources().getString(R.string.menu_connect))) {
+	        		alertOnConnectionError = true;
 	        		showDevices();
 	        	} else {
+	        		alertOnConnectionError = false;
 	        		disconnect();
 	        		Editor edit = prefs.edit();
 	        		edit.putString("prefs_remote_name", "");
@@ -806,6 +847,13 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			case 1:
 				ft.show(gaugesFragment);
 				break;  
+		}
+		
+		// we don't want to overwrite our pref if we're in onCreate
+		if (lvDevices != null) {
+			Editor edit = prefs.edit();
+			edit.putInt("prefs_last_tab", tab.getPosition());
+			edit.commit();
 		}
 	}
 }

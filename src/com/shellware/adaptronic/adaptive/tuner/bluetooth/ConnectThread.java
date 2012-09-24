@@ -16,10 +16,7 @@
  */
 package com.shellware.adaptronic.adaptive.tuner.bluetooth;
 
-import java.io.IOException;
 import java.util.UUID;
-
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -28,6 +25,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+
+import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 
     public class ConnectThread extends Thread {
 
@@ -38,7 +37,7 @@ import android.util.Log;
     	private final String addr;
     	private final ConnectedThread connectedThread;
     	
-    	private BluetoothAdapter bt;
+    	private BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();
     	private BluetoothDevice btd;
     	private BluetoothSocket bts;
     	
@@ -61,21 +60,22 @@ import android.util.Log;
 	        while (true) {
 		
 	        	try {            	
-	    	        bt = BluetoothAdapter.getDefaultAdapter();
+//	    	        bt = BluetoothAdapter.getDefaultAdapter();
 	    	        btd = bt.getRemoteDevice(addr);        		
 	        	} catch (Exception ex) {
-	        		// do nothing -- let it fall thru and eventually crash
+	        		Log.d(MainActivity.TAG, "bluetooth adapter: " + ex.getMessage());
 	        	}
 		        
 		        try {
 		        	bt.cancelDiscovery();
 					bts = btd.createRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);
-				} catch (IOException e) {
+				} catch (Exception e) {
 					// try an insecure connection
 					try {
 						bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);
-					} catch (IOException e1) {
+					} catch (Exception e1) {
 						// increment counter
+		        		Log.d(MainActivity.TAG, "bluetooth connect: " + e.getMessage());
 						counter++;
 					}
 				}
@@ -83,7 +83,7 @@ import android.util.Log;
 		        try {
 					bts.connect();
 					break;
-				} catch (IOException e) {
+				} catch (Exception e) {
 					counter++;
 					
 			        // bail if we've tried 10 times

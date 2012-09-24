@@ -154,7 +154,7 @@
 		    android:layout_height="fill_parent"
 		    android:layout_centerHorizontal="true"
 		    android:layout_centerVertical="true"
-		    android:src="@drawable/iatgauge" 
+		    android:src="@drawable/iatgauge_celcius" 
 		    android:scaleType="fitXY"/>
 	    	
 		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
