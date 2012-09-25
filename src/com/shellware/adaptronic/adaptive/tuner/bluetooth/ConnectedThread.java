@@ -39,7 +39,9 @@ public class ConnectedThread extends Thread {
 	
 	private String name;
 	
-    public ConnectedThread(Handler handler) {
+	private boolean disconnecting = false;
+
+	public ConnectedThread(Handler handler) {
         this.handler = handler;
         
     }
@@ -85,6 +87,8 @@ public class ConnectedThread extends Thread {
 		        handler.sendMessage(msg);
 		        
             } catch (IOException e) {
+            	if (disconnecting) break;
+
     	        Bundle b = new Bundle();
     	        
     	        b.putShort("handle", MainActivity.CONNECTION_ERROR);
@@ -107,6 +111,8 @@ public class ConnectedThread extends Thread {
             mmOutStream.write(bytes);
             mmOutStream.flush();
         } catch (IOException e) { 
+        	if (disconnecting) return;
+        	
 	        Bundle b = new Bundle();
 	        
 	        b.putShort("handle", MainActivity.CONNECTION_ERROR);
@@ -124,7 +130,9 @@ public class ConnectedThread extends Thread {
     /* Call this from the main activity to shutdown the connection */
     public void cancel() {
         try {
+        	disconnecting = true;
             mmSocket.close();
         } catch (IOException e) { }
     }
+    
 }

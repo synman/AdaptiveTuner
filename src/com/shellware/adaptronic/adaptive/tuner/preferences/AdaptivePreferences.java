@@ -128,9 +128,23 @@ public class AdaptivePreferences extends PreferenceActivity {
 						}
 			        });
 			        
-			        uomPrefCat.addPreference(uomTempPref);
+		        uomPrefCat.addPreference(uomTempPref);
+			        
+	        	PreferenceCategory connectionPrefCat = new PreferenceCategory(ctx);
+	        	connectionPrefCat.setTitle(R.string.prefs_connection_category);
+	        	generalPref.addPreference(connectionPrefCat);
+		        
+			        CheckBoxPreference autoConnectPref = new CheckBoxPreference(ctx);
+			        autoConnectPref.setPersistent(true);
+			        autoConnectPref.setKey("prefs_auto_connect");
+			        autoConnectPref.setDefaultValue(false);
+			        autoConnectPref.setSummaryOn(R.string.enabled);
+			        autoConnectPref.setSummaryOff(R.string.disabled);
+			        autoConnectPref.setTitle(R.string.prefs_connection_auto_connect);
+				        
+		        connectionPrefCat.addPreference(autoConnectPref);
 		        		   
-		        setPreferenceScreen(generalPref);
+	        setPreferenceScreen(generalPref);
         }
     }
     

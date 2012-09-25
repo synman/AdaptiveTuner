@@ -133,7 +133,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private float targetAFR = 0f;
 	private int lastRPM = 0;
 	private short lastRegister = 0;
-	private boolean alertOnConnectionError = false;
 	
 	private static SharedPreferences prefs ;
 	
@@ -145,6 +144,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private float maximumWaterTemp = 210f;
 	private String remoteMacAddr = "";
 	private String remoteName = "";
+	private boolean autoConnect = false;
 	
 	private boolean afrAlarmLogging = false;
 	private final LogItems afrAlarmLogItems = new LogItems();
@@ -263,7 +263,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         }
     }
     
-    
     @Override
 	protected void onResume() {
     	super.onResume();
@@ -272,10 +271,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
     	afrNotEqualTargetPref = prefs.getBoolean("prefs_afrnottarget_pref", false);
     	afrNotEqualTargetTolerance = prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f);
-    	waterTempPref = prefs.getBoolean("prefs_watertemp_pref", false);
-    	
+    	waterTempPref = prefs.getBoolean("prefs_watertemp_pref", false);    	
     	remoteName = prefs.getString("prefs_remote_name", "");
-    	remoteMacAddr = prefs.getString("prefs_remote_mac", "");
+    	remoteMacAddr = prefs.getString("prefs_remote_mac", "");    	
+    	autoConnect = prefs.getBoolean("prefs_auto_connect", false);
     	
     	switch (tempUomPref) {
     		case 0:
@@ -310,19 +309,36 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 //    		menuSaveLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
     		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
     	}
-    	
-    	if (remoteMacAddr.length() > 0 && !(connected != null && connected.isAlive())) {
-//    		disconnect();
-//    		new Handler().postDelayed(( new Runnable() { public void run() { connect(remoteName,  remoteMacAddr); } } ), 500);
-    		connect(remoteName,  remoteMacAddr);
-    	}
-    	
-    	ActionBar bar = getActionBar();
-    	bar.selectTab(bar.getTabAt(prefs.getInt("prefs_last_tab", 1)));    	
-	}
-    
 
-    final Runnable RefreshRunnable = new Runnable()
+    	ActionBar bar = getActionBar();
+    	bar.selectTab(bar.getTabAt(prefs.getInt("prefs_last_tab", 1)));    
+    	
+    	if (connected != null && connected.isAlive()) {
+    		lastRegister = REGISTER_4096_PLUS_FIVE;
+			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6));     		
+    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
+    	} else {
+        	if (autoConnect && remoteMacAddr.length() > 0) {
+        		disconnect();
+//        		new Handler().postDelayed(( new Runnable() { public void run() { connect(remoteName,  remoteMacAddr); } } ), 500);
+        		connect(remoteName,  remoteMacAddr);
+        	}
+    	}
+	}
+
+    @Override
+    protected void onPause() {
+    	super.onPause();
+    	refreshHandler.removeCallbacks(RefreshRunnable);
+    }
+    
+    @Override
+	protected void onDestroy() {
+		super.onDestroy();
+		disconnect();
+	}
+
+	final Runnable RefreshRunnable = new Runnable()
     {
         public void run() 
         {
@@ -572,18 +588,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
-	        		if (alertOnConnectionError) {
-						AlertDialog alert = new AlertDialog.Builder(MainActivity.this).create();
-						alert.setTitle(message.getData().getString("title"));
-						alert.setMessage("\n" + message.getData().getString("message") + "\n");
-						alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
-								new DialogInterface.OnClickListener() {	
-									public void onClick(DialogInterface dialog, int which) {
-										dialog.dismiss();
-									}
-								});
-						alert.show();
-	        		}
+					AlertDialog alert = new AlertDialog.Builder(MainActivity.this).create();
+					alert.setTitle(message.getData().getString("title"));
+					alert.setMessage("\n" + message.getData().getString("message") + "\n");
+					alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
+							new DialogInterface.OnClickListener() {	
+								public void onClick(DialogInterface dialog, int which) {
+									dialog.dismiss();
+								}
+							});
+					alert.show();
 					
 					disconnect();
 					break;
@@ -663,10 +677,13 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     private void disconnect() {
     	
     	refreshHandler.removeCallbacks(RefreshRunnable);
-		menuConnect.setTitle(R.string.menu_connect);
+		if (menuConnect != null) menuConnect.setTitle(R.string.menu_connect);
     	
 		try {
-	    	if (connected != null && connected.isAlive()) connected.cancel();
+	    	if (connected != null && connected.isAlive()) {
+	    		connected.cancel();
+	    		connected.join();
+	    	}
 		} catch (Exception e) {
 			// do nothing
 		}	
@@ -723,10 +740,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         		if (bt == null) return false;
 
         		if (item.getTitle().toString().equalsIgnoreCase(getResources().getString(R.string.menu_connect))) {
-	        		alertOnConnectionError = true;
 	        		showDevices();
 	        	} else {
-	        		alertOnConnectionError = false;
 	        		disconnect();
 	        		Editor edit = prefs.edit();
 	        		edit.putString("prefs_remote_name", "");

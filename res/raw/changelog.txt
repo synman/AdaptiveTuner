@@ -21,10 +21,14 @@
   <body>
 $ 1.04
   % Version 1.04
-  _ 2012-09-21
+  _ 2012-09-24
   ! Honeycomb Navigation Tabs!
   	* Navigation tab framework complete
   	* Added <i>Gauges Dashboard</i> navigation tab
+  	* Added Automatic Connection on Startup preference
+  	* Remember last tab selected
+  	* Android Lifecycle optimizations
+  	* Normal, Large, and X-Large display optimizations
   % Version 1.03
   _ 2012-09-15
   ! Initial Alarm Logging Implementation
