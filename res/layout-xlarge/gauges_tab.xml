@@ -35,7 +35,8 @@
 	        android:layout_height="fill_parent"
 	        android:layout_centerInParent="true"
 	        android:scaleType="fitXY"
-	        android:src="@drawable/afr" />
+	        android:src="@drawable/afr" 
+	        android:contentDescription="@string/afr_gauge"/>
 	    	
 		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
 		    android:id="@+id/targetafrneedle"
@@ -71,6 +72,7 @@
 		    android:layout_centerHorizontal="true"
 		    android:layout_centerVertical="true"
 		    android:src="@drawable/mapgauge" 
+		    android:contentDescription="@string/map_gauge"
 		    android:scaleType="fitXY"/>
 	    	
 		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
@@ -99,6 +101,7 @@
 		    android:layout_centerHorizontal="true"
 		    android:layout_centerVertical="true"
 		    android:src="@drawable/tachometer" 
+		    android:contentDescription="@string/tachometer"
 		    android:scaleType="fitXY"/>
 	    	
 		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
@@ -127,6 +130,7 @@
 		    android:layout_centerHorizontal="true"
 		    android:layout_centerVertical="true"
 		    android:src="@drawable/watertemp" 
+		    android:contentDescription="@string/water_gauge"
 		    android:scaleType="fitXY"/>
 	    	
 		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
@@ -155,6 +159,7 @@
 		    android:layout_centerHorizontal="true"
 		    android:layout_centerVertical="true"
 		    android:src="@drawable/iatgauge_celcius" 
+		    android:contentDescription="@string/iat_gauge"
 		    android:scaleType="fitXY"/>
 	    	
 		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle

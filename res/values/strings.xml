@@ -57,6 +57,12 @@
     <string name="prefs_alert_water_temperature">Water Tempertuare</string>    
 	<string name="prefs_alert_water_temperature_minimum">Minimum Water Tempertuare</string>
 	<string name="prefs_alert_water_temperature_maximum">Maximum Water Tempertuare</string>
+	
+	<string name="afr_gauge">AFR Gauge</string>
+	<string name="map_gauge">MAP Gauge</string>
+	<string name="tachometer">Tachometer</string>
+	<string name="water_gauge">Water Temperature Gauge</string>
+	<string name="iat_gauge">Intake Temperature Gauge</string>
 		
 	<string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>

@@ -174,8 +174,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         
         ActionBar bar = getActionBar();
         
-        bar.addTab(bar.newTab().setText(R.string.tab_adaptive).setTabListener(this));        
-        bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this));
+        bar.addTab(bar.newTab().setText(R.string.tab_adaptive).setTabListener(this), false);        
+        bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this), false);
 
         mActionBarView = getLayoutInflater().inflate(
                 R.layout.action_bar_custom, null);
@@ -305,6 +305,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
     	}
 
+    	// ensure both fragments are hidden
+    	FragmentTransaction ft = getFragmentManager().beginTransaction();
+    	ft.hide(adaptiveFragment);
+    	ft.hide(gaugesFragment);
+    	ft.commit();  
+    	
     	ActionBar bar = getActionBar();
     	bar.selectTab(bar.getTabAt(prefs.getInt("prefs_last_tab", 1)));    
     	
@@ -872,16 +878,38 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
 
 	public void onTabReselected(Tab tab, FragmentTransaction ft) {
+		
+		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
+		
+		switch (tab.getPosition()) {
+			case 0:
+				ft.show(adaptiveFragment);
+				break;
+			case 1:
+				ft.show(gaugesFragment);
+				break;  
+		}
+		
 	}
 	
 	public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+
+		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
+
+		switch (tab.getPosition()) {
+			case 0:
+				ft.hide(adaptiveFragment);
+				break;
+			case 1:
+				ft.hide(gaugesFragment);
+				break;  
+		}
 	}
 	
 	
 	public void onTabSelected(Tab tab, FragmentTransaction ft) {
 		
-		ft.hide(adaptiveFragment);
-		ft.hide(gaugesFragment);
+		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
 		
 		switch (tab.getPosition()) {
 			case 0:
