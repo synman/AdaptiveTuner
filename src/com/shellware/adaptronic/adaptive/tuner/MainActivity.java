@@ -33,6 +33,7 @@ import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -104,62 +105,63 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private RelativeLayout layoutDevices;
 	
 	private Menu myMenu;
-	private MenuItem menuConnect;
+	private static MenuItem menuConnect;
 //	private MenuItem menuSaveLog;
-	private MenuItem menuShareLog;
+	private static MenuItem menuShareLog;
 	
-	private GridView gridData;
-	private ImageView imgStatus;
+	private static GridView gridData;
+	private static ImageView imgStatus;
 	
-	private ImageView imgIWait;
-	private ImageView imgIRpm;
-	private ImageView imgILoad;
+	private static ImageView imgIWait;
+	private static ImageView imgIRpm;
+	private static ImageView imgILoad;
 	
-	private ImageView imgFWait;
-	private ImageView imgFRpm;
-	private ImageView imgFLoad;
+	private static ImageView imgFWait;
+	private static ImageView imgFRpm;
+	private static ImageView imgFLoad;
 	
 	private ImageView imgIat;
 	
-	private GaugeNeedle waterNeedle;
-	private GaugeNeedle iatNeedle;
-	private GaugeNeedle mapNeedle;
-	private GaugeNeedle afrNeedle;
-	private GaugeNeedle targetAfrNeedle;
-	private GaugeNeedle rpmNeedle;
+	private static GaugeNeedle waterNeedle;
+	private static GaugeNeedle iatNeedle;
+	private static GaugeNeedle mapNeedle;
+	private static GaugeNeedle afrNeedle;
+	private static GaugeNeedle targetAfrNeedle;
+	private static GaugeNeedle rpmNeedle;
 
-	private ProgressDialog progress;
+	private static ProgressDialog progress;
 	
-	private Handler refreshHandler = new Handler();
+	private static Handler refreshHandler = new Handler();
 	private ConnectionHandler connectionHandler = new ConnectionHandler();
-	private ConnectedThread connected;
+	private static ConnectedThread connected;
 		
 	private final BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();;
 	
 	private ArrayAdapter<String> devices;
-	private ArrayAdapter<String> dataArray;
+	private static ArrayAdapter<String> dataArray;
 
-	private StringBuffer dataBuffer = new StringBuffer(512);
+	private static StringBuffer dataBuffer = new StringBuffer(512);
 	
-	private float targetAFR = 0f;
-	private int lastRPM = 0;
-	private short lastRegister = 0;
-	private long lastUpdateInMillis = 0;
+	private static float targetAFR = 0f;
+	private static int lastRPM = 0;
+	private static short lastRegister = 0;
+	private static long lastUpdateInMillis = 0;
 	
 	private static SharedPreferences prefs ;
+	private static Context ctx;
 	
-	private int tempUomPref = 1;
-	private boolean afrNotEqualTargetPref = false;
-	private float afrNotEqualTargetTolerance = 5f;
-	private boolean waterTempPref = false;
-	private float minimumWaterTemp = 0f;
-	private float maximumWaterTemp = 210f;
+	private static int tempUomPref = 1;
+	private static boolean afrNotEqualTargetPref = false;
+	private static float afrNotEqualTargetTolerance = 5f;
+	private static boolean waterTempPref = false;
+	private static float minimumWaterTemp = 0f;
+	private static float maximumWaterTemp = 210f;
 	private String remoteMacAddr = "";
 	private String remoteName = "";
 	private boolean autoConnect = false;
 	
-	private boolean afrAlarmLogging = false;
-	private final LogItems afrAlarmLogItems = new LogItems();
+	private static boolean afrAlarmLogging = false;
+	private final static LogItems afrAlarmLogItems = new LogItems();
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -167,7 +169,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         
         setContentView(R.layout.activity_main);
         
-    	prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        ctx = getApplicationContext();
+    	prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
     	
         adaptiveFragment = getFragmentManager().findFragmentById(R.id.frag_adaptive);
         gaugesFragment = getFragmentManager().findFragmentById(R.id.frag_gauges);
@@ -339,7 +342,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		disconnect();
 	}
 
-	final Runnable RefreshRunnable = new Runnable() {
+	final static Runnable RefreshRunnable = new Runnable() {
 
 		public void run() {
 
@@ -369,7 +372,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         }
     };
 
-	private class ConnectionHandler extends Handler {
+	private static class ConnectionHandler extends Handler {
 
 		@Override
 		public void handleMessage(Message message) {
@@ -394,7 +397,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	        	case CONNECTION_ERROR:
 					disconnect();
 
-					AlertDialog alert = new AlertDialog.Builder(MainActivity.this).create();
+					AlertDialog alert = new AlertDialog.Builder(ctx).create();
 					alert.setTitle(message.getData().getString("title"));
 					alert.setMessage("\n" + message.getData().getString("message") + "\n");
 					alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
@@ -431,7 +434,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		}	
     }   
     
-    private void processFortyNinetySixResponse(final String data) {
+    private static void processFortyNinetySixResponse(final String data) {
     	
 		final String[] buf = data.substring(data.indexOf(SIX_REGISTERS), data.length()).split(" ");
 
@@ -538,7 +541,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		}
     }
     
-    private void processOneRegisterResponse(final String data) {
+    private static void processOneRegisterResponse(final String data) {
     	
 		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
 			
@@ -588,7 +591,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		}
     }
     
-	private void setLearningFlags(String[] buf) {
+	private static void setLearningFlags(String[] buf) {
 		
 		imgFWait.setBackgroundColor(Color.TRANSPARENT);
 		imgFRpm.setBackgroundColor(Color.TRANSPARENT);
@@ -613,11 +616,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			imgILoad.setBackgroundColor(Color.GREEN);
 	}
 	
-    private int getBit(final int item, final int position) {   
+    private static int getBit(final int item, final int position) {   
     	return (item >> position) & 1;
     }
     
-    private String getTemperatureSymbol() {
+    private static String getTemperatureSymbol() {
     	switch (tempUomPref) {
     		case 1:
     			return "F";
@@ -629,7 +632,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 				return "C";
     	}
     }
-    private int getTemperatureValue(String in) {
+    private static int getTemperatureValue(String in) {
     	
     	final int temp = Integer.parseInt(in, 16);
     	
@@ -645,16 +648,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	}
     }
     
-    private void clearDataBuffer() {
-    	synchronized(this) {
+    private static void clearDataBuffer() {
+    	synchronized(ctx) {
 //			final String ret = dataBuffer.toString();
 			dataBuffer.setLength(0);
 //			return ret.trim();
     	}
     }
 
-    private final StringBuffer setDataBuffer(final byte[] data, final int length) {
-    	synchronized(this) {
+    private final static StringBuffer setDataBuffer(final byte[] data, final int length) {
+    	synchronized(ctx) {
 	        for (int x = 0; x < length; x++) {
 	        	dataBuffer.append(String.format("%X ", data[x]));
 	        }
@@ -708,7 +711,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	doConnect.start();
     }
     
-    private void disconnect() {
+    private static void disconnect() {
     	
     	refreshHandler.removeCallbacks(RefreshRunnable);
 		if (menuConnect != null) menuConnect.setTitle(R.string.menu_connect);
