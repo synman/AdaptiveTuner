@@ -19,7 +19,12 @@
     </style>
   </head>
   <body>
-$ 1.04
+$ 1.05
+  % Version 1.05
+  _ 2012-09-27
+  ! Faster COMMS!
+  	* Refactored data reception logic -- huge refresh rate boost
+  	* Changed Ignition and Fuel Waiting background colors to (dark) yellow rather than red as they are not error conditions
   % Version 1.04
   _ 2012-09-24
   ! Honeycomb Navigation Tabs!

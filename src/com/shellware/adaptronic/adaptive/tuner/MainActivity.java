@@ -86,14 +86,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private static final short REGISTER_4146 = 4146;
 	private static final int SINGLE_REGISTER_LENGTH = 7;
 
+	private static final String DEVICE_ADDR_AND_MODE_HEADER = "1 3 ";
 	private static final String SIX_REGISTERS = "1 3 C ";
 	private static final String ONE_REGISTER = "1 3 2 ";
 	
-	private static final int SHORT_PAUSE = 125;
 	private static final int LONG_PAUSE = 250;
 	
 	private static final int AFR_MIN = 970;
 	private static final int AFR_MAX = 1970;
+
+	private View mActionBarView;
+	private Fragment adaptiveFragment;
+	private Fragment gaugesFragment;
 	
 //	private TextView txtData;
 	private ListView lvDevices;
@@ -117,6 +121,13 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	
 	private ImageView imgIat;
 	
+	private GaugeNeedle waterNeedle;
+	private GaugeNeedle iatNeedle;
+	private GaugeNeedle mapNeedle;
+	private GaugeNeedle afrNeedle;
+	private GaugeNeedle targetAfrNeedle;
+	private GaugeNeedle rpmNeedle;
+
 	private ProgressDialog progress;
 	
 	private Handler refreshHandler = new Handler();
@@ -133,6 +144,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private float targetAFR = 0f;
 	private int lastRPM = 0;
 	private short lastRegister = 0;
+	private long lastUpdateInMillis = 0;
 	
 	private static SharedPreferences prefs ;
 	
@@ -149,17 +161,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private boolean afrAlarmLogging = false;
 	private final LogItems afrAlarmLogItems = new LogItems();
 	
-	private View mActionBarView;
-	private Fragment adaptiveFragment;
-	private Fragment gaugesFragment;
-	
-	private GaugeNeedle waterNeedle;
-	private GaugeNeedle iatNeedle;
-	private GaugeNeedle mapNeedle;
-	private GaugeNeedle afrNeedle;
-	private GaugeNeedle targetAfrNeedle;
-	private GaugeNeedle rpmNeedle;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -208,8 +209,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         dataArray.add("AFR\n --.-");
         dataArray.add("TAFR\n --.-");
         dataArray.add("WAT\n ---\u00B0");
-        
-        gridData.setAdapter(dataArray);
+ 
+        gridData.setAdapter(dataArray);   
         
         lvDevices.setOnItemClickListener(DevicesClickListener);
         
@@ -225,13 +226,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         waterNeedle.setMaxValue(240);
         waterNeedle.setMinDegrees(-50);
         waterNeedle.setMaxDegrees(55);
-
-        // moved to onresume
-//        iatNeedle.setPivotPoint(.5f);
-//        iatNeedle.setMinValue(0);
-//        iatNeedle.setMaxValue(200);
-//        iatNeedle.setMinDegrees(-180);
-//        iatNeedle.setMaxDegrees(90);
 
         afrNeedle.setPivotPoint(.5f);
         afrNeedle.setMinValue(AFR_MIN);
@@ -276,6 +270,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	remoteMacAddr = prefs.getString("prefs_remote_mac", "");    	
     	autoConnect = prefs.getBoolean("prefs_auto_connect", false);
     	
+    	// need to set gauge scale based on uom selected
     	switch (tempUomPref) {
     		case 0:
     	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_CELCIUS);
@@ -338,234 +333,36 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		disconnect();
 	}
 
-	final Runnable RefreshRunnable = new Runnable()
-    {
-        public void run() 
-        {
-        	final String data = getDataBuffer();
-        	
-        	// first check that we've got the right device and mode
-        	if (data.length() > 0 && data.startsWith("1 3 ")) {
-        		// RPM, MAP, MAT, WAT, AUXT, & AFR - 6 16 bit integers (twelve bytes)
-        		if (data.contains(SIX_REGISTERS) && data.length() >= REGISTER_4096_LENGTH) {
-        			final String[] buf = data.substring(data.indexOf(SIX_REGISTERS), data.length()).split(" ");
+	final Runnable RefreshRunnable = new Runnable() {
 
-        			if (ModbusRTU.validCRC(buf, REGISTER_4096_LENGTH)) {   
-    					imgStatus.setBackgroundColor(Color.GREEN);
-	            		dataArray.clear();
-	            		
-	            		final int rpm = Integer.parseInt(buf[3] + buf[4], 16);
-	            		final int map = Integer.parseInt(buf[5] + buf[6], 16);
-	            		final int mat = getTemperatureValue(buf[7] + buf[8]);
+		public void run() {
 
-	            		final int wat = getTemperatureValue(buf[9] + buf[10]);
-		        		
-		        		final float afr = Integer.parseInt(buf[14], 16) / 10f;
-		        		final float referenceAfr = Integer.parseInt(buf[13], 16) / 10f;
-		        		
-		        		iatNeedle.setValue(mat);
-		        		waterNeedle.setValue(Integer.parseInt(buf[9] + buf[10], 16) * 9 / 5 + 32);
-		        		mapNeedle.setValue(map);
-		        		
-		        		{
-			        		float afrVal = afr * 100;
-			        		float targetAfrVal = targetAFR * 100;
-			        		
-			        		if (afrVal > AFR_MAX) afrVal = AFR_MAX;
-			        		if (afrVal < AFR_MIN) afrVal = AFR_MIN;
-			        		
-			        		if (targetAfrVal > AFR_MAX) targetAfrVal = AFR_MAX;
-			        		if (targetAfrVal < AFR_MIN) targetAfrVal = AFR_MIN;
-	
-			        		afrNeedle.setValue(AFR_MAX - afrVal + AFR_MIN);
-			        		targetAfrNeedle.setValue(AFR_MAX - targetAfrVal + AFR_MIN);
-		        		}
-		        		
-		        		if (rpm >= 200) lastRPM = rpm;
-		        		dataArray.add(String.format("RPM\n%d", lastRPM));
-		        		rpmNeedle.setValue(lastRPM);
-		        		
-		        		dataArray.add(String.format("MAP\n%d kPa", map));
-		        		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
-		        		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
-		        		dataArray.add("TAFR\n" +  (targetAFR != 0f ? String.format("%.1f", targetAFR) : "--.-"));
-		        		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
-
-		        		// alarm stuff
-		        		if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) {
-			        		// water temperature
-		        			gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
-			        		if (waterTempPref) {
-			        			if (wat < minimumWaterTemp) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
-			        			if (wat > maximumWaterTemp) gridData.getChildAt(5).setBackgroundColor(Color.RED);
-			        		}
-
-			        		// afr vs target alarm
-	        				gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
-			        		if (afrNotEqualTargetPref) {
-			        			final float threshold = targetAFR * (afrNotEqualTargetTolerance * .01f);
-			        			if (Math.abs(targetAFR - afr) >= threshold ) {
-			        				if (afr > targetAFR) {
-			        					gridData.getChildAt(3).setBackgroundColor(Color.RED);
-			        				} else {
-			        					gridData.getChildAt(3).setBackgroundColor(Color.BLUE);
-			        				}
-			        				
-			        				if (afrAlarmLogging) {
-			        					LogItem newItem = afrAlarmLogItems.newLogItem();
-			        					newItem.setAfr(afr);
-			        					newItem.setReferenceAfr(referenceAfr);
-			        					newItem.setMap(map);
-			        					newItem.setMat(mat);
-			        					newItem.setRpm(rpm);
-			        					newItem.setTargetAfr(targetAFR);
-			        					newItem.setWat(wat);
-			        					
-			        					afrAlarmLogItems.getItems().add(newItem);
-			        					
-			        					if (!menuShareLog.isVisible()) {
-//			        						menuSaveLog.setVisible(true);
-			        						menuShareLog.setVisible(true);
-			        					}
-			        				}
-			        			}
-			        		}
-		        		}
-		        		
-		        		if (connected != null && connected.isAlive()) {
-		        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4140)); 
-			            	lastRegister = REGISTER_4140;
-		        		}
-		                refreshHandler.postDelayed(this, SHORT_PAUSE);
-
-		                if (DEBUG_MODE) Log.d(TAG, "Processed 4096 response: " + data);
-		                return;
-        			} else {
-    					if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister);
-        			}
-	        	} else {
-	        		// Learning Flags and Target AFR - one 16 bit integer (two bytes)
-	        		if (data.contains(ONE_REGISTER) && data.length() >= SINGLE_REGISTER_LENGTH) {
-	        			final String[] buf = data.substring(data.indexOf("1 3 2 "), data.length()).split(" ");
- 			
-	        			if (ModbusRTU.validCRC(buf, SINGLE_REGISTER_LENGTH)) { 
-        					imgStatus.setBackgroundColor(Color.GREEN);
-	        				
-	        				switch (lastRegister) {
-		        				case REGISTER_4140:	// target AFR
-		        					targetAFR = Integer.parseInt(buf[3] + buf[4], 16) / 10f;
-		        					
-					        		if (connected != null && connected.isAlive()) {
-					        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4146)); 
-						            	lastRegister = REGISTER_4146;
-					        		}
-
-					        		refreshHandler.postDelayed(this, SHORT_PAUSE);	
-					        		if (DEBUG_MODE) Log.d(TAG, "Processed 4140 response: " + data);
-		    		                return;
-		    		                
-		        				case REGISTER_4146:	// learning flags
-		        					setLearningFlags(buf);
-			        				 
-					        		if (connected != null && connected.isAlive()) {
-					        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4096_PLUS_FIVE, (short) 6)); 
-						            	lastRegister = REGISTER_4096_PLUS_FIVE;
-					        		}
-					        		
-					        		refreshHandler.postDelayed(this, LONG_PAUSE);
-			        				 if (DEBUG_MODE) Log.d(TAG, "Processed 4146 response: " + data);
-			        				 
-			        				 return;
-			        				 
-		        				default:
-		        					// should never get here
-		        					Log.d(TAG, "should have never got here");
-	        				}
-        				} else {
-        					if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister);
-        				}
-	        		}
-	        	}
-        	}
-        	
         	// last time slice of data is trash -- discard it and try again
-        	if (DEBUG_MODE) Log.d(TAG, lastRegister + " response discarded: " + data);
-			imgStatus.setBackgroundColor(Color.RED);
-			
-			switch (lastRegister) {
-        		case REGISTER_4096_PLUS_FIVE:
-	        		if (connected != null && connected.isAlive()) {
-	        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6)); 
-	        		}
-                    refreshHandler.postDelayed(this, LONG_PAUSE * 2);
-                    break;
-        		default:
-	        		if (connected != null && connected.isAlive()) {
-	        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister)); 
-	        		}
-        			refreshHandler.postDelayed(this,  SHORT_PAUSE * 2);
-        	}
-        }
-		
-		private void setLearningFlags(String[] buf) {
-			
-			imgFWait.setBackgroundColor(Color.TRANSPARENT);
-			imgFRpm.setBackgroundColor(Color.TRANSPARENT);
-			imgFLoad.setBackgroundColor(Color.TRANSPARENT);
-			
-			imgIWait.setBackgroundColor(Color.TRANSPARENT);
-			imgIRpm.setBackgroundColor(Color.TRANSPARENT);
-			imgILoad.setBackgroundColor(Color.TRANSPARENT);
-			
-			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 0) > 0) 
-				 imgFWait.setBackgroundColor(Color.RED);
-			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 1) > 0) 
-				 imgFRpm.setBackgroundColor(Color.GREEN);
-			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 2) > 0) 
-				 imgFLoad.setBackgroundColor(Color.GREEN);
+        	if (System.currentTimeMillis() - lastUpdateInMillis > LONG_PAUSE) {
 
-			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 3) > 0) 
-				 imgIWait.setBackgroundColor(Color.RED);
-			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 4) > 0) 
-				 imgIRpm.setBackgroundColor(Color.GREEN);
-			 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 5) > 0) 
-				imgILoad.setBackgroundColor(Color.GREEN);
-		}
-		
-	    private int getBit(final int item, final int position) {   
-	    	return (item >> position) & 1;
-	    }
-	    
-	    private String getTemperatureSymbol() {
-	    	switch (tempUomPref) {
-	    		case 1:
-	    			return "F";
-	    		case 2:
-	    			return "K";
-	    		case 3:
-	    			return "N";
-    			default:
-    				return "C";
-	    	}
-	    }
-	    private int getTemperatureValue(String in) {
-	    	
-	    	final int temp = Integer.parseInt(in, 16);
-	    	
-	    	switch (tempUomPref) {
-	    		case 1:
-	    			return temp * 9 / 5 + 32; 
-	    		case 2:
-	    			return (int) (temp + 273.15);
-	    		case 3:
-	    			return temp * 33 / 100;
-	    		default:
-	    			return temp;
-	    				
-	    	}
-	    }
+        		clearDataBuffer();
+        		if (DEBUG_MODE) Log.d(TAG, lastRegister + " response discarded");
+				imgStatus.setBackgroundColor(Color.RED);
+				
+				switch (lastRegister) {
+	        		case REGISTER_4096_PLUS_FIVE:
+		        		if (connected != null && connected.isAlive()) {
+		        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6)); 
+		        		}
+	                    break;
+	        		default:
+		        		if (connected != null && connected.isAlive()) {
+		        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister)); 
+		        		}
+	        	}
+				
+				lastUpdateInMillis = System.currentTimeMillis();
+        	}
+        	
+    		refreshHandler.postDelayed(this, LONG_PAUSE);
+        }
     };
-    
+
 	private class ConnectionHandler extends Handler {
 
 		@Override
@@ -579,7 +376,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		    		lastRegister = REGISTER_4096_PLUS_FIVE;
 					connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6));     		
 		    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
-		    		
+	            	lastUpdateInMillis = System.currentTimeMillis();
+
 	        		Editor edit = prefs.edit();
 	        		edit.putString("prefs_remote_name", message.getData().getString("name"));
 	        		edit.putString("prefs_remote_mac", message.getData().getString("addr"));
@@ -588,6 +386,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
+					disconnect();
+
 					AlertDialog alert = new AlertDialog.Builder(MainActivity.this).create();
 					alert.setTitle(message.getData().getString("title"));
 					alert.setMessage("\n" + message.getData().getString("message") + "\n");
@@ -599,32 +399,260 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 							});
 					alert.show();
 					
-					disconnect();
 					break;
 					
 	        	case DATA_READY:
-	    			byte[] data = message.getData().getByteArray("data");
+	    			byte[] msg = message.getData().getByteArray("data");
 	    			int length = message.getData().getInt("length");
 	    			
-	    			if (length > 0) setDataBuffer(data, length);			
+	    			if (length > 0) { 
+	    	        	final String data = setDataBuffer(msg, length).toString();
+	    	        	
+	    	        	// first check that we've got the right device and mode
+	    	        	if (data.length() > 0 && data.startsWith(DEVICE_ADDR_AND_MODE_HEADER)) {
+	    	        		// RPM, MAP, MAT, WAT, AUXT, & AFR - 6 16 bit integers (twelve bytes)
+	    	        		if (data.contains(SIX_REGISTERS) && data.length() >= REGISTER_4096_LENGTH) {
+	    	        			processFortyNinetySixResponse(data);
+	    		        	} else {
+	    		        		// Learning Flags and Target AFR - one 16 bit integer (two bytes)
+	    		        		if (data.contains(ONE_REGISTER) && data.length() >= SINGLE_REGISTER_LENGTH) {
+	    		        			processOneRegisterResponse(data);
+	    		        		}
+	    		        	}
+	    	        	}
+    	        	}
 			}
 		}	
     }   
     
-    private String getDataBuffer() {
+    private void processFortyNinetySixResponse(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(SIX_REGISTERS), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, REGISTER_4096_LENGTH)) {   
+			imgStatus.setBackgroundColor(Color.GREEN);
+    		dataArray.clear();
+    		
+    		final int rpm = Integer.parseInt(buf[3] + buf[4], 16);
+    		final int map = Integer.parseInt(buf[5] + buf[6], 16);
+    		final int mat = getTemperatureValue(buf[7] + buf[8]);
+    		final int wat = getTemperatureValue(buf[9] + buf[10]);
+    		
+    		final float afr = Integer.parseInt(buf[14], 16) / 10f;
+    		final float referenceAfr = Integer.parseInt(buf[13], 16) / 10f;
+    		
+    		iatNeedle.setValue(mat);
+    		waterNeedle.setValue(Integer.parseInt(buf[9] + buf[10], 16) * 9 / 5 + 32);
+    		mapNeedle.setValue(map);
+    		
+    		{
+        		float afrVal = afr * 100;
+        		float targetAfrVal = targetAFR * 100;
+        		
+        		if (afrVal > AFR_MAX) afrVal = AFR_MAX;
+        		if (afrVal < AFR_MIN) afrVal = AFR_MIN;
+        		
+        		if (targetAfrVal > AFR_MAX) targetAfrVal = AFR_MAX;
+        		if (targetAfrVal < AFR_MIN) targetAfrVal = AFR_MIN;
+
+        		afrNeedle.setValue(AFR_MAX - afrVal + AFR_MIN);
+        		targetAfrNeedle.setValue(AFR_MAX - targetAfrVal + AFR_MIN);
+    		}
+    		
+    		if (rpm >= 200) lastRPM = rpm;
+    		dataArray.add(String.format("RPM\n%d", lastRPM));
+    		rpmNeedle.setValue(lastRPM);
+    		
+    		dataArray.add(String.format("MAP\n%d kPa", map));
+    		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
+    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
+    		dataArray.add("TAFR\n" +  (targetAFR != 0f ? String.format("%.1f", targetAFR) : "--.-"));
+    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
+
+    		// alarm stuff
+    		if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) {
+        		// water temperature
+    			gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
+        		if (waterTempPref) {
+        			if (wat < minimumWaterTemp) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
+        			if (wat > maximumWaterTemp) gridData.getChildAt(5).setBackgroundColor(Color.RED);
+        		}
+
+        		// afr vs target alarm
+				gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
+        		if (afrNotEqualTargetPref) {
+        			final float threshold = targetAFR * (afrNotEqualTargetTolerance * .01f);
+        			if (Math.abs(targetAFR - afr) >= threshold ) {
+        				if (afr > targetAFR) {
+        					gridData.getChildAt(3).setBackgroundColor(Color.RED);
+        				} else {
+        					gridData.getChildAt(3).setBackgroundColor(Color.BLUE);
+        				}
+        				
+        				if (afrAlarmLogging) {
+        					LogItem newItem = afrAlarmLogItems.newLogItem();
+        					newItem.setAfr(afr);
+        					newItem.setReferenceAfr(referenceAfr);
+        					newItem.setMap(map);
+        					newItem.setMat(mat);
+        					newItem.setRpm(rpm);
+        					newItem.setTargetAfr(targetAFR);
+        					newItem.setWat(wat);
+        					
+        					afrAlarmLogItems.getItems().add(newItem);
+        					
+        					if (!menuShareLog.isVisible()) {
+//        						menuSaveLog.setVisible(true);
+        						menuShareLog.setVisible(true);
+        					}
+        				}
+        			}
+        		}
+    		}
+    		
+    		if (connected != null && connected.isAlive()) {
+            	clearDataBuffer();
+    			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4140)); 
+            	lastRegister = REGISTER_4140;
+            	lastUpdateInMillis = System.currentTimeMillis();
+    		}
+
+            if (DEBUG_MODE) Log.d(TAG, "Processed 4096 response: " + data);
+            return;
+		} else {
+			if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister);
+			imgStatus.setBackgroundColor(Color.RED);
+			
+    		if (connected != null && connected.isAlive()) {
+    			clearDataBuffer();
+    			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6)); 
+        		lastUpdateInMillis = System.currentTimeMillis();
+    		}
+
+		}
+    }
+    
+    private void processOneRegisterResponse(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
+			
+		if (ModbusRTU.validCRC(buf, SINGLE_REGISTER_LENGTH)) { 
+			imgStatus.setBackgroundColor(Color.GREEN);
+			
+			switch (lastRegister) {
+				case REGISTER_4140:	// target AFR
+					targetAFR = Integer.parseInt(buf[3] + buf[4], 16) / 10f;
+					
+	        		if (connected != null && connected.isAlive()) {
+		            	clearDataBuffer();
+	        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4146)); 
+		            	lastRegister = REGISTER_4146;
+		            	lastUpdateInMillis = System.currentTimeMillis();
+	        		}
+
+	        		if (DEBUG_MODE) Log.d(TAG, "Processed 4140 response: " + data);
+	                return;
+	                
+				case REGISTER_4146:	// learning flags
+					setLearningFlags(buf);
+    				 
+	        		if (connected != null && connected.isAlive()) {
+		            	clearDataBuffer();
+	        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4096_PLUS_FIVE, (short) 6)); 
+		            	lastRegister = REGISTER_4096_PLUS_FIVE;
+		            	lastUpdateInMillis = System.currentTimeMillis();
+	        		}
+	        		
+    				 if (DEBUG_MODE) Log.d(TAG, "Processed 4146 response: " + data);    				 
+    				 return;
+    				 
+				default:
+					// should never get here
+					Log.d(TAG, "should have never got here");
+			}
+		} else {
+			if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister);
+			imgStatus.setBackgroundColor(Color.RED);
+			
+    		if (connected != null && connected.isAlive()) {
+    			clearDataBuffer();
+    			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister)); 
+        		lastUpdateInMillis = System.currentTimeMillis();
+    		}
+		}
+    }
+    
+	private void setLearningFlags(String[] buf) {
+		
+		imgFWait.setBackgroundColor(Color.TRANSPARENT);
+		imgFRpm.setBackgroundColor(Color.TRANSPARENT);
+		imgFLoad.setBackgroundColor(Color.TRANSPARENT);
+		
+		imgIWait.setBackgroundColor(Color.TRANSPARENT);
+		imgIRpm.setBackgroundColor(Color.TRANSPARENT);
+		imgILoad.setBackgroundColor(Color.TRANSPARENT);
+		
+		 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 0) > 0) 
+			 imgFWait.setBackgroundColor(Color.parseColor("#FFCC00"));
+		 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 1) > 0) 
+			 imgFRpm.setBackgroundColor(Color.GREEN);
+		 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 2) > 0) 
+			 imgFLoad.setBackgroundColor(Color.GREEN);
+
+		 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 3) > 0) 
+			 imgIWait.setBackgroundColor(Color.parseColor("#FFCC00"));
+		 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 4) > 0) 
+			 imgIRpm.setBackgroundColor(Color.GREEN);
+		 if (getBit(Integer.parseInt(buf[3] + buf[4], 16), 5) > 0) 
+			imgILoad.setBackgroundColor(Color.GREEN);
+	}
+	
+    private int getBit(final int item, final int position) {   
+    	return (item >> position) & 1;
+    }
+    
+    private String getTemperatureSymbol() {
+    	switch (tempUomPref) {
+    		case 1:
+    			return "F";
+    		case 2:
+    			return "K";
+    		case 3:
+    			return "N";
+			default:
+				return "C";
+    	}
+    }
+    private int getTemperatureValue(String in) {
+    	
+    	final int temp = Integer.parseInt(in, 16);
+    	
+    	switch (tempUomPref) {
+    		case 1:
+    			return temp * 9 / 5 + 32; 
+    		case 2:
+    			return (int) (temp + 273.15);
+    		case 3:
+    			return temp * 33 / 100;
+    		default:
+    			return temp;
+    	}
+    }
+    
+    private void clearDataBuffer() {
     	synchronized(this) {
-			final String ret = dataBuffer.toString();
+//			final String ret = dataBuffer.toString();
 			dataBuffer.setLength(0);
-			return ret.trim();
+//			return ret.trim();
     	}
     }
 
-    private void setDataBuffer(final byte[] data, final int length) {
+    private final StringBuffer setDataBuffer(final byte[] data, final int length) {
     	synchronized(this) {
 	        for (int x = 0; x < length; x++) {
-//	        	dataBuffer.append(myFormatter.format(data[x]));
 	        	dataBuffer.append(String.format("%X ", data[x]));
 	        }
+        	return dataBuffer;
     	}
     }
     

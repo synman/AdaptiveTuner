@@ -75,7 +75,6 @@ public class ConnectedThread extends Thread {
                 
                 // Send the obtained bytes to the UI activity
 		        Bundle b = new Bundle();
-		        
 
 		        b.putShort("handle", MainActivity.DATA_READY);
 		        b.putByteArray("data", buffer);
