@@ -21,6 +21,7 @@
      android:layout_width="match_parent"
      android:layout_height="match_parent"
      android:layout_gravity="center"
+     android:background="@drawable/shape_gradient_background"
      tools:context=".fragments.GaugesFragment" >
 
 	<RelativeLayout
@@ -166,4 +167,72 @@
 		    android:src="@drawable/needle_middle" 
 		    android:scaleType="fitXY"/>
 	</RelativeLayout>
+	
+  	 <RelativeLayout android:visibility="invisible"
+  	     android:layout_width="210dp"
+  	     android:layout_height="80dp"
+  	     android:layout_centerInParent="true"
+  	     android:background="@drawable/shape_gradient_background" >
+
+  	     <TextView 
+  	         android:layout_width="wrap_content"
+  	         android:layout_height="wrap_content"
+  	         android:layout_marginTop="5dp"
+  	         android:text="@string/prefs_alert_water_temperature"
+  	         android:textAppearance="?android:attr/textAppearanceMedium"
+  	         android:layout_alignParentTop="true"
+  	         android:layout_centerHorizontal="true" />
+  	     
+  	     <RelativeLayout
+  	         android:layout_width="180dp"
+  	         android:layout_height="30dp"
+  	         android:layout_centerInParent="true">
+  	         
+	  	     <RelativeLayout
+	  	         android:layout_width="90dp"
+	  	         android:layout_height="10dp"
+	  	         android:layout_centerVertical="true"
+	  	         android:background="@drawable/shape_gradient_blue_to_green" />
+	  	     	  	     
+	  	     <RelativeLayout
+	  	         android:layout_width="90dp"
+	  	         android:layout_height="10dp"
+	  	         android:layout_alignParentRight="true"
+	  	         android:layout_centerVertical="true"
+	  	         android:background="@drawable/shape_gradient_green_to_red" />
+
+	  	     <com.shellware.adaptronic.adaptive.tuner.gauges.GaugeSlider
+	  	         android:id="@+id/watslider"
+	  	         android:layout_width="20dp"
+	  	         android:layout_height="30dp"
+	  	         android:layout_marginRight="-40dp"
+	  	         android:src="@drawable/slider" />
+		</RelativeLayout>
+ 
+    	<TextView
+  	         android:layout_width="wrap_content"
+  	         android:layout_height="wrap_content"
+  	         android:layout_centerVertical="true"
+			 android:typeface="monospace"
+  	         android:layout_marginLeft="25dp"/>
+  	     
+  	     <TextView 
+  	         android:layout_width="wrap_content"
+  	         android:layout_height="wrap_content"
+  	         android:layout_marginRight="10dp"
+			 android:typeface="monospace"
+  	         android:layout_alignParentRight="true"
+  	         android:layout_centerVertical="true"/>
+  	     
+  	     <TextView
+  	         android:layout_width="wrap_content"
+  	         android:layout_height="wrap_content"
+  	         android:layout_alignParentBottom="true"
+  	         android:layout_centerHorizontal="true"
+  	         android:layout_marginBottom="10dp"
+  	         android:background="@drawable/shape_textview_border"
+  	         android:textAppearance="?android:attr/textAppearanceMedium"
+  	         android:typeface="monospace" />	 
+   	 </RelativeLayout>
+   	 
 </RelativeLayout>

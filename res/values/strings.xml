@@ -54,9 +54,9 @@
     <string name="prefs_alert_afrnottarget_tolerance_pref">AFR Tolerance</string>
     <string name="prefs_afr_alarm_loging">AFR Alert Logging</string>
     <string name="prefs_alert_temperature_category">Temperature Alerts</string>
-    <string name="prefs_alert_water_temperature">Water Tempertuare</string>    
-	<string name="prefs_alert_water_temperature_minimum">Minimum Water Tempertuare</string>
-	<string name="prefs_alert_water_temperature_maximum">Maximum Water Tempertuare</string>
+    <string name="prefs_alert_water_temperature">Water Temperature</string>    
+	<string name="prefs_alert_water_temperature_minimum">Minimum Water Temperature</string>
+	<string name="prefs_alert_water_temperature_maximum">Maximum Water Temperature</string>
 	
 	<string name="afr_gauge">AFR Gauge</string>
 	<string name="map_gauge">MAP Gauge</string>
