@@ -342,7 +342,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		disconnect();
 	}
 
-	final static Runnable RefreshRunnable = new Runnable() {
+	private final static Runnable RefreshRunnable = new Runnable() {
 
 		public void run() {
 
