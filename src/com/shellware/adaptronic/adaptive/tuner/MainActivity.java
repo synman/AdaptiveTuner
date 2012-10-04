@@ -39,6 +39,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -49,11 +50,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -67,6 +70,12 @@ import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
 import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
+import com.steema.teechart.TChart;
+import com.steema.teechart.axis.AxisLabelItem;
+import com.steema.teechart.styles.PaletteStyle;
+import com.steema.teechart.styles.Surface;
+import com.steema.teechart.themes.ThemesList;
+import com.steema.teechart.tools.Rotate;
 
 public class MainActivity extends Activity implements ActionBar.TabListener {
 	
@@ -80,18 +89,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private static final byte SLAVE_ADDRESS = 0x01;
 	private static final byte HOLDING_REGISTER = 0x03;
 	
-	private static final short REGISTER_4096_PLUS_FIVE = 4096;
-	private static final int REGISTER_4096_LENGTH = 17;
+	private static final short REGISTER_4096_PLUS_SEVEN = 4096;
+	private static final int REGISTER_4096_LENGTH = 21;
 	
-	private static final short REGISTER_4140 = 4140;
-	private static final short REGISTER_4146 = 4146;
-	private static final int SINGLE_REGISTER_LENGTH = 7;
+	private static final short REGISTER_4140_PLUS_SIX = 4140;
+	private static final int REGISTER_4140_LENGTH = 19;
 
-	private static final String DEVICE_ADDR_AND_MODE_HEADER = "1 3 ";
-	private static final String SIX_REGISTERS = "1 3 C ";
-	private static final String ONE_REGISTER = "1 3 2 ";
+	private static final String DEVICE_ADDR_AND_MODE_HEADER = "01 03 ";
+	private static final String SEVEN_REGISTERS = "01 03 0E ";
+	private static final String EIGHT_REGISTERS = "01 03 10 ";
+	private static final String SIXTEEN_REGISTERS = "01 03 20";
 	
-	private static final int LONG_PAUSE = 250;
+	private static final int LONG_PAUSE = 100;
 	
 	private static final int AFR_MIN = 970;
 	private static final int AFR_MAX = 1970;
@@ -99,19 +108,20 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private View mActionBarView;
 	private Fragment adaptiveFragment;
 	private Fragment gaugesFragment;
+	private Fragment fuelFragment;
 	
-//	private TextView txtData;
+	private static TextView txtData;
 	private ListView lvDevices;
 	private RelativeLayout layoutDevices;
 	
 	private Menu myMenu;
 	private static MenuItem menuConnect;
-//	private MenuItem menuSaveLog;
 	private static MenuItem menuShareLog;
 	
 	private static GridView gridData;
 	private static ImageView imgStatus;
 	
+	private static TextView txtFuelLearn;
 	private static ImageView imgIWait;
 	private static ImageView imgIRpm;
 	private static ImageView imgILoad;
@@ -144,7 +154,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	
 	private static float targetAFR = 0f;
 	private static int lastRPM = 0;
-	private static short lastRegister = 0;
+	private static int tps = 0;
+	private static boolean closedLoop = false;
+	private static long updatesReceived = 0;
+	private static long totalTimeMillis = 0;
+	
+	private static short lastRegister = 4096;
 	private static long lastUpdateInMillis = 0;
 	
 	private static SharedPreferences prefs ;
@@ -163,22 +178,39 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private static boolean afrAlarmLogging = false;
 	private final static LogItems afrAlarmLogItems = new LogItems();
 	
+	private static TChart chart;
+	private static Surface ser;
+	
+	private static boolean mapMode = false;
+	private static short mapOffset = 0;
+	private static StringBuffer mapData = new StringBuffer(1280);
+	
+	
+	@Override
+	public void onAttachedToWindow() {
+	    super.onAttachedToWindow();
+	    Window window = getWindow();
+	    window.setFormat(PixelFormat.RGBA_8888);
+	}
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.activity_main);
         
-        ctx = getApplicationContext();
+        ctx = this;
     	prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
     	
         adaptiveFragment = getFragmentManager().findFragmentById(R.id.frag_adaptive);
         gaugesFragment = getFragmentManager().findFragmentById(R.id.frag_gauges);
+        fuelFragment = getFragmentManager().findFragmentById(R.id.frag_fuel);
         
         ActionBar bar = getActionBar();
         
         bar.addTab(bar.newTab().setText(R.string.tab_adaptive).setTabListener(this), false);        
         bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this), false);
+        bar.addTab(bar.newTab().setText("Fuel Map").setTabListener(this), false);
 
         mActionBarView = getLayoutInflater().inflate(
                 R.layout.action_bar_custom, null);
@@ -188,10 +220,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         bar.setDisplayShowHomeEnabled(true);
 
-//        txtData = (TextView) findViewById(R.id.txtData);
+        txtData = (TextView) findViewById(R.id.txtData);
         lvDevices = (ListView) findViewById(R.id.lvDevices);
         layoutDevices = (RelativeLayout) findViewById(R.id.layoutDevices);
         imgStatus = (ImageView) findViewById(R.id.imgStatus);
+        
+        txtFuelLearn = (TextView) findViewById(R.id.fuellearn);
         
         imgIWait = (ImageView) findViewById(R.id.imgIWait);
 		imgIRpm = (ImageView) findViewById(R.id.imgIRpm);
@@ -258,6 +292,43 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         if (cl.firstRun()) {
             cl.getLogDialog().show();
         }
+        
+		LinearLayout group = (LinearLayout) findViewById(R.id.linearLayoutTchart);
+		chart = new TChart(this);
+		chart.setAutoRepaint(false);
+		
+		group.addView(chart);
+
+		ThemesList.applyTheme(chart.getChart(), 1);
+		
+		chart.removeAllSeries();
+		ser = new Surface(chart.getChart());
+	
+		chart.getAspect().setView3D(true);
+		ser.setIrregularGrid(true);
+		
+		ser.setUseColorRange(false);
+		ser.setUsePalette(true);
+		ser.setPaletteStyle(PaletteStyle.RAINBOW);
+		
+		chart.getPanel().setBorderRound(7);
+		
+		chart.getAspect().setView3D(true);
+		chart.getAspect().setChart3DPercent(100);
+		chart.getAspect().setOrthogonal(false);
+		chart.getAspect().setZoom(75);				
+		chart.getAspect().setRotation(350);
+		chart.getAspect().setElevation(350);
+		chart.getAspect().setPerspective(37);
+		
+		chart.getAxes().getDepth().setVisible(true);
+		chart.getLegend().setVisible(false);
+		chart.getHeader().setText("Fuel Map #1 (VE)");
+		chart.getHeader().getFont().setSize(18);
+		chart.getHeader().getFont().setBold(true);
+		
+		ser.setColor(com.steema.teechart.drawing.Color.darkGray);		
+		new Rotate(chart.getChart());
     }
     
     @Override
@@ -304,7 +375,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	
     	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false);    	
     	if (menuShareLog != null) {
-//    		menuSaveLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
     		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
     	}
 
@@ -312,14 +382,13 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	FragmentTransaction ft = getFragmentManager().beginTransaction();
     	ft.hide(adaptiveFragment);
     	ft.hide(gaugesFragment);
+    	ft.hide(fuelFragment);
     	ft.commit();  
     	
     	ActionBar bar = getActionBar();
     	bar.selectTab(bar.getTabAt(prefs.getInt("prefs_last_tab", 1)));    
     	
     	if (connected != null && connected.isAlive()) {
-    		lastRegister = REGISTER_4096_PLUS_FIVE;
-			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6));     		
     		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
     	} else {
         	if (autoConnect && remoteMacAddr.length() > 0) {
@@ -348,24 +417,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
         	// last time slice of data is trash -- discard it and try again
         	if (System.currentTimeMillis() - lastUpdateInMillis > LONG_PAUSE) {
+        		if (DEBUG_MODE) Log.d(TAG, lastRegister + " response timed out: " + dataBuffer.toString());
 
-        		clearDataBuffer();
-        		if (DEBUG_MODE) Log.d(TAG, lastRegister + " response discarded");
-				imgStatus.setBackgroundColor(Color.RED);
+        		sendRequest();
 				
-				switch (lastRegister) {
-	        		case REGISTER_4096_PLUS_FIVE:
-		        		if (connected != null && connected.isAlive()) {
-		        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6)); 
-		        		}
-	                    break;
-	        		default:
-		        		if (connected != null && connected.isAlive()) {
-		        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister)); 
-		        		}
-	        	}
-				
-				lastUpdateInMillis = System.currentTimeMillis();
+				imgStatus.setBackgroundColor(Color.RED);				
         	}
         	
     		refreshHandler.postDelayed(this, LONG_PAUSE);
@@ -377,15 +433,15 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		@Override
 		public void handleMessage(Message message) {
 		
-	        if (progress != null && progress.isShowing()) progress.dismiss();
-
 	        switch (message.getData().getShort("handle")) {
 	        	case CONNECTED: 
+	    	        if (progress != null && progress.isShowing()) progress.dismiss();
 		    		menuConnect.setTitle(R.string.menu_disconnect);
-		    		lastRegister = REGISTER_4096_PLUS_FIVE;
-					connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6));     		
+		    		sendRequest(REGISTER_4096_PLUS_SEVEN);
+		    		totalTimeMillis = 0;
+		    		updatesReceived = 0;
+
 		    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
-	            	lastUpdateInMillis = System.currentTimeMillis();
 
 	        		Editor edit = prefs.edit();
 	        		edit.putString("prefs_remote_name", message.getData().getString("name"));
@@ -412,31 +468,181 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 					
 	        	case DATA_READY:
 	    			byte[] msg = message.getData().getByteArray("data");
-	    			int length = message.getData().getInt("length");
+	    			int msglength = message.getData().getInt("length");
 	    			
-	    			if (length > 0) { 
-	    	        	final String data = setDataBuffer(msg, length).toString();
+	    			if (msglength > 0) { 
+	    	        	final String data = setDataBuffer(msg, msglength).toString();
+	    	        	
+	    	        	// this could be a lot more efficient -- rethink all the data type conversions
+	    	        	final int datalength = data.trim().split(" ").length;
 	    	        	
 	    	        	// first check that we've got the right device and mode
-	    	        	if (data.length() > 0 && data.startsWith(DEVICE_ADDR_AND_MODE_HEADER)) {
+	    	        	if (datalength > 2 && data.contains(DEVICE_ADDR_AND_MODE_HEADER)) {
+	    	        		
+	    	        		if (mapMode) {
+    	        				progress.setMessage(String.format("Reading map values %d/512...", mapOffset));
+	    	        			
+	    	        			if (data.contains(SIXTEEN_REGISTERS) && datalength >= 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
+	    	        				populateAndPlotFuelMap(data);
+	    	        			}
+	    	        			
+	    	        			break;
+	    	        		}
+	    	        		
+	    	        		// do we have a bad message?
+	    	        		if (!(data.contains(EIGHT_REGISTERS) || data.contains(SEVEN_REGISTERS))) {
+	    	            		if (DEBUG_MODE) Log.d(TAG, lastRegister + " response discarded: " + data);
+	    	    				imgStatus.setBackgroundColor(Color.RED);				
+	    	        			sendRequest();
+	    	        			break;
+	    	        		}
+	    	        		
 	    	        		// RPM, MAP, MAT, WAT, AUXT, & AFR - 6 16 bit integers (twelve bytes)
-	    	        		if (data.contains(SIX_REGISTERS) && data.length() >= REGISTER_4096_LENGTH) {
-	    	        			processFortyNinetySixResponse(data);
+	    	        		if (data.contains(EIGHT_REGISTERS) && datalength >= REGISTER_4096_LENGTH) {
+	    	        			process4096Response(data);
 	    		        	} else {
-	    		        		// Learning Flags and Target AFR - one 16 bit integer (two bytes)
-	    		        		if (data.contains(ONE_REGISTER) && data.length() >= SINGLE_REGISTER_LENGTH) {
-	    		        			processOneRegisterResponse(data);
-	    		        		}
+    		        			if (data.contains(SEVEN_REGISTERS) && datalength >= REGISTER_4140_LENGTH) {
+    		        				process4140Response(data);
+    		        			}
 	    		        	}
 	    	        	}
     	        	}
 			}
 		}	
-    }   
-    
-    private static void processFortyNinetySixResponse(final String data) {
+    }
+	
+    private static void sendRequest() {
+    	sendRequest(lastRegister);
+    }
+	private static void sendRequest(final short register) {
     	
-		final String[] buf = data.substring(data.indexOf(SIX_REGISTERS), data.length()).split(" ");
+    	final long currentTimeInMillis = System.currentTimeMillis();
+    	final long elapsed = currentTimeInMillis - lastUpdateInMillis;
+    	totalTimeMillis+=elapsed;
+    	updatesReceived++;
+
+    	clearDataBuffer();
+    	
+    	short length;
+    	
+    	switch (register) {
+    		case REGISTER_4096_PLUS_SEVEN:
+    			length = 8;
+    			break;
+    		case REGISTER_4140_PLUS_SIX:
+    			length = 7;
+    			break;
+			default:
+				length = 16;
+				break;
+    	}
+    
+		if (connected != null & connected.isAlive()) {
+			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, register, length));
+			
+	    	lastUpdateInMillis = currentTimeInMillis;
+	    	lastRegister = register;
+		}
+	}
+	
+	private static void populateAndPlotFuelMap(final String data) {
+		
+		mapOffset+=16;
+		
+		String[] mapmap = data.trim().split(" ");
+		for (int x = 3; x < 35; x++) {
+			mapData.append(mapmap[x]);
+			mapData.append(" ");
+		}
+		
+		if (mapOffset < 512) {
+			sendRequest(mapOffset);
+			return;
+		}
+
+		String[] map = mapData.toString().trim().split(" ");
+		short cnt = 0;
+		
+		chart.setAutoRepaint(false);
+		ser.clear();
+	
+		for (int x = 0; x < 32; x++) {
+			for (int y = 0; y < 16; y++) {
+				double val = Double.parseDouble(String.format("%.0f", Integer.parseInt(map[cnt] + map[cnt+1], 16) / 128f));
+				val = val - 95;
+				ser.add(x, val, y);
+				if (DEBUG_MODE) Log.d(TAG, String.format("%d:%d = %.0f", x, y, val));
+				cnt = (short) (cnt + 2);
+			}
+		}	  
+		
+		for (int x = 0; x < chart.getAxes().getCount(); x++) {
+			chart.getAxes().getAxis(x).getLabels().getItems().clear();
+		}
+		
+		for (double x = 0; x < 32; x++) {
+			AxisLabelItem itm = chart.getAxes().getBottom().getLabels().getItems().add(x);
+			itm.getFont().setSize(10);
+			itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
+			itm.setText(String.format("%.0f", 300 * x));
+		}
+		
+		for (double x = 0; x < 16; x++) {
+			AxisLabelItem itm = chart.getAxes().getDepth().getLabels().getItems().add(x, x == 0 ? " " : String.format("%.0f", 13 * x));
+			itm.getFont().setSize(10);
+			itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
+		}
+
+		chart.getAxes().getBottom().getTitle().setText("Engine RPM");
+		chart.getAxes().getBottom().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
+		chart.getAxes().getBottom().getTitle().getFont().setSize(14);
+
+		chart.getAxes().getDepth().getTitle().setText("MAP (kPa)");
+		chart.getAxes().getDepth().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
+		chart.getAxes().getDepth().getTitle().getFont().setSize(14);
+		
+		chart.refreshControl();
+		chart.setAutoRepaint(true);
+		
+		progress.dismiss();
+		
+		lastRegister = REGISTER_4096_PLUS_SEVEN;		
+		mapMode = false;		
+	}
+	
+	private static void process4140Response(final String data) {
+		    	
+		final String[] buf = data.substring(data.indexOf(SEVEN_REGISTERS), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, REGISTER_4140_LENGTH)) {   
+			imgStatus.setBackgroundColor(Color.GREEN);
+
+			setLearningFlags(new String[] {"0", "0", "0", buf[15], buf[16]});
+			targetAFR = Integer.parseInt(buf[3] + buf[4], 16) / 10f;
+			closedLoop = (getBit(Integer.parseInt(buf[9] + buf[10], 16), 8) > 0); 
+			
+			if (closedLoop) {
+				txtFuelLearn.setBackgroundColor(Color.GREEN);
+			} else {
+				txtFuelLearn.setBackgroundColor(Color.TRANSPARENT);
+			}
+
+			txtData.setText(String.format("AVG: %d ms - TPS: %d%%", (int) totalTimeMillis / updatesReceived, tps));
+			
+            if (DEBUG_MODE) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
+			sendRequest(REGISTER_4096_PLUS_SEVEN);            
+            return;
+            
+		} else {
+			if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
+			imgStatus.setBackgroundColor(Color.RED);
+			sendRequest();
+		}
+	}
+	
+    private static void process4096Response(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(EIGHT_REGISTERS), data.length()).split(" ");
 
 		if (ModbusRTU.validCRC(buf, REGISTER_4096_LENGTH)) {   
 			imgStatus.setBackgroundColor(Color.GREEN);
@@ -449,6 +655,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		
     		final float afr = Integer.parseInt(buf[14], 16) / 10f;
     		final float referenceAfr = Integer.parseInt(buf[13], 16) / 10f;
+    		
+    		tps = Integer.parseInt(buf[17] + buf[18], 16);
     		
     		iatNeedle.setValue(mat);
     		waterNeedle.setValue(Integer.parseInt(buf[9] + buf[10], 16) * 9 / 5 + 32);
@@ -511,7 +719,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         					afrAlarmLogItems.getItems().add(newItem);
         					
         					if (!menuShareLog.isVisible()) {
-//        						menuSaveLog.setVisible(true);
         						menuShareLog.setVisible(true);
         					}
         				}
@@ -519,75 +726,14 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         		}
     		}
     		
-    		if (connected != null && connected.isAlive()) {
-            	clearDataBuffer();
-    			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4140)); 
-            	lastRegister = REGISTER_4140;
-            	lastUpdateInMillis = System.currentTimeMillis();
-    		}
-
-            if (DEBUG_MODE) Log.d(TAG, "Processed 4096 response: " + data);
+            if (DEBUG_MODE) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
+    		sendRequest(REGISTER_4140_PLUS_SIX);
             return;
+            
 		} else {
-			if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister);
+			if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
 			imgStatus.setBackgroundColor(Color.RED);
-			
-    		if (connected != null && connected.isAlive()) {
-    			clearDataBuffer();
-    			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister, (short) 6)); 
-        		lastUpdateInMillis = System.currentTimeMillis();
-    		}
-
-		}
-    }
-    
-    private static void processOneRegisterResponse(final String data) {
-    	
-		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
-			
-		if (ModbusRTU.validCRC(buf, SINGLE_REGISTER_LENGTH)) { 
-			imgStatus.setBackgroundColor(Color.GREEN);
-			
-			switch (lastRegister) {
-				case REGISTER_4140:	// target AFR
-					targetAFR = Integer.parseInt(buf[3] + buf[4], 16) / 10f;
-					
-	        		if (connected != null && connected.isAlive()) {
-		            	clearDataBuffer();
-	        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4146)); 
-		            	lastRegister = REGISTER_4146;
-		            	lastUpdateInMillis = System.currentTimeMillis();
-	        		}
-
-	        		if (DEBUG_MODE) Log.d(TAG, "Processed 4140 response: " + data);
-	                return;
-	                
-				case REGISTER_4146:	// learning flags
-					setLearningFlags(buf);
-    				 
-	        		if (connected != null && connected.isAlive()) {
-		            	clearDataBuffer();
-	        			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, REGISTER_4096_PLUS_FIVE, (short) 6)); 
-		            	lastRegister = REGISTER_4096_PLUS_FIVE;
-		            	lastUpdateInMillis = System.currentTimeMillis();
-	        		}
-	        		
-    				 if (DEBUG_MODE) Log.d(TAG, "Processed 4146 response: " + data);    				 
-    				 return;
-    				 
-				default:
-					// should never get here
-					Log.d(TAG, "should have never got here");
-			}
-		} else {
-			if (DEBUG_MODE) Log.d(TAG, "bad CRC for " + lastRegister);
-			imgStatus.setBackgroundColor(Color.RED);
-			
-    		if (connected != null && connected.isAlive()) {
-    			clearDataBuffer();
-    			connected.write(ModbusRTU.getRegister(SLAVE_ADDRESS, HOLDING_REGISTER, lastRegister)); 
-        		lastUpdateInMillis = System.currentTimeMillis();
-    		}
+    		sendRequest();
 		}
     }
     
@@ -650,16 +796,14 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     
     private static void clearDataBuffer() {
     	synchronized(ctx) {
-//			final String ret = dataBuffer.toString();
 			dataBuffer.setLength(0);
-//			return ret.trim();
     	}
     }
 
     private final static StringBuffer setDataBuffer(final byte[] data, final int length) {
     	synchronized(ctx) {
 	        for (int x = 0; x < length; x++) {
-	        	dataBuffer.append(String.format("%X ", data[x]));
+	        	dataBuffer.append(String.format("%02X ", data[x]));
 	        }
         	return dataBuffer;
     	}
@@ -699,7 +843,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		// do nothing
     	}
     	
-    	layoutDevices.setVisibility(View.VISIBLE);
+    	if (devices.getCount() > 0) layoutDevices.setVisibility(View.VISIBLE);
     }
     
     private void connect(final String name, final String macAddr) {
@@ -727,7 +871,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     }
     
     @SuppressWarnings("unused")
-	private void sleep(final int millis) {
+	private static void sleep(final int millis) {
     	try {
 			Thread.sleep(millis);
 		} catch (InterruptedException e) {
@@ -741,10 +885,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         
         myMenu = menu;
         menuShareLog = myMenu.findItem(R.id.menu_share);
-//    	menuSaveLog = myMenu.findItem(R.id.menu_save);
     	menuConnect = myMenu.findItem(R.id.menu_connect);
     	
-//		menuSaveLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());    	
 		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());  
 		
         return true;
@@ -767,11 +909,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	        case R.id.menu_share:
 	        	shareLog();
 	        	return true;
-	        	
-//	        case R.id.menu_save:
-//	        	saveLogAsFile(true);
-//	        	return true;
-	        	
+
 	        case R.id.menu_connect:
 	        	// bail if no bluetooth adapter
         		if (bt == null) return false;
@@ -795,39 +933,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
                 return super.onOptionsItemSelected(item);
         }
     } 
-	
-//	private void shareLog() {
-//		
-//		synchronized(this) {
-//			
-//			final StringBuffer sb = new StringBuffer(65535);
-//	
-//			// if we're logging save the log file
-//			if (afrAlarmLogging) {
-//				
-//				// write our header
-//				sb.append("timestamp, rpm, map, targetafr, afr, refafr, wat, mat\n");
-//				
-//				ArrayList<LogItem> items = afrAlarmLogItems.getItems();
-//				Iterator<LogItem> iterator = items.iterator();
-//				
-//				while (iterator.hasNext()) {
-//					final LogItem item = (LogItem) iterator.next();
-//					sb.append(item.getLogString());
-//				}
-//				
-//				afrAlarmLogItems.getItems().clear();	
-//				
-//				menuShareLog.setVisible(false);
-//				menuSaveLog.setVisible(false);
-//
-//				Intent sharingIntent = new Intent(Intent.ACTION_SEND);
-//				sharingIntent.setType("text/plain");
-//				sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, sb.toString());
-//				startActivity(Intent.createChooser(sharingIntent, getText(R.string.share_log)));
-//			}
-//		}
-//	}
 	
 	private void shareLog() {
 		
@@ -862,7 +967,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 					f.close();
 					
 					menuShareLog.setVisible(false);
-//					menuSaveLog.setVisible(false);
 					
 					Toast.makeText(getApplicationContext(), String.format("Log saved as %s%s%s", sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename), Toast.LENGTH_LONG).show();
 					if (DEBUG_MODE) Log.d(TAG, String.format("Log saved as %s%s%s", sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename));
@@ -891,6 +995,51 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			case 1:
 				ft.show(gaugesFragment);
 				break;  
+			case 2:
+				ft.show(fuelFragment);
+				
+//				chart.setAutoRepaint(false);
+//				
+//				short cnt = 0;				
+//				ser.clear();
+//						    	        				
+//				for (int x = 0; x < 32; x++) {
+//					for (int y = 0; y < 16; y++) {
+//						double val = REF_TAB[cnt];
+//    					ser.add(x, val,  y);
+//    					Log.d(TAG, String.format("%d:%d = %.0f", x, y, val));
+//    					cnt++;
+//    				}
+//    			}	 
+//				
+//				for (int x = 0; x < chart.getAxes().getCount(); x++) {
+//					chart.getAxes().getAxis(x).getLabels().getItems().clear();
+//				}
+//				
+//				for (double x = 0; x < 32; x++) {
+//					AxisLabelItem itm = chart.getAxes().getBottom().getLabels().getItems().add(x);
+//					itm.getFont().setSize(10);
+//					itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
+//					itm.setText(String.format("%.0f", 300 * x));
+//				}
+//				
+//				for (double x = 0; x < 16; x++) {
+//					AxisLabelItem itm = chart.getAxes().getDepth().getLabels().getItems().add(x, x == 0 ? " " : String.format("%.0f", 13 * x));
+//					itm.getFont().setSize(10);
+//					itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
+//				}
+//
+//				chart.getAxes().getBottom().getTitle().setText("Engine RPM");
+//				chart.getAxes().getBottom().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
+//				chart.getAxes().getBottom().getTitle().getFont().setSize(14);
+//
+//				chart.getAxes().getDepth().getTitle().setText("MAP (kPa)");
+//				chart.getAxes().getDepth().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
+//				chart.getAxes().getDepth().getTitle().getFont().setSize(14);
+//				
+//				chart.refreshControl();
+//				chart.setAutoRepaint(true);
+//				
 		}
 		
 	}
@@ -906,6 +1055,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			case 1:
 				ft.hide(gaugesFragment);
 				break;  
+			case 2:
+				ft.hide(fuelFragment);
 		}
 	}
 	
@@ -921,6 +1072,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			case 1:
 				ft.show(gaugesFragment);
 				break;  
+			case 2:
+				
+				if (connected != null && connected.isAlive()) {
+			    	progress = ProgressDialog.show(ctx, "Fuel Map" , "Reading map values 0/512...");
+
+			    	mapOffset = 0;
+			    	mapMode = true;
+			    	sendRequest(mapOffset);
+				}
+
+				ft.show(fuelFragment);
+				break;
 		}
 		
 		// we don't want to overwrite our pref if we're in onCreate
@@ -930,4 +1093,527 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			edit.commit();
 		}
 	}
+
+	@Override
+	public void onBackPressed() {
+
+		if (layoutDevices.getVisibility() == View.VISIBLE) { 
+			layoutDevices.setVisibility(View.INVISIBLE);
+		} else {
+			super.onBackPressed();
+		}
+	}
+	
+//	private static double[] REF_TAB = {5,
+//		5,
+//		5,
+//		13,
+//		17,
+//		21,
+//		26,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		5,
+//		5,
+//		5,
+//		13,
+//		17,
+//		21,
+//		26,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		5,
+//		5,
+//		5,
+//		5,
+//		10,
+//		15,
+//		20,
+//		25,
+//		30,
+//		30,
+//		30,
+//		30,
+//		30,
+//		55,
+//		55,
+//		55,
+//		5,
+//		5,
+//		5,
+//		6,
+//		12,
+//		18,
+//		24,
+//		29,
+//		37,
+//		40,
+//		43,
+//		45,
+//		55,
+//		60,
+//		60,
+//		60,
+//		5,
+//		5,
+//		5,
+//		5,
+//		20,
+//		16,
+//		44,
+//		41,
+//		40,
+//		43,
+//		46,
+//		49,
+//		60,
+//		65,
+//		65,
+//		65,
+//		14,
+//		14,
+//		15,
+//		15,
+//		16,
+//		22,
+//		23,
+//		29,
+//		27,
+//		46,
+//		50,
+//		54,
+//		65,
+//		69,
+//		69,
+//		69,
+//		26,
+//		26,
+//		21,
+//		29,
+//		30,
+//		28,
+//		36,
+//		29,
+//		28,
+//		47,
+//		54,
+//		58,
+//		69,
+//		74,
+//		74,
+//		74,
+//		39,
+//		39,
+//		42,
+//		20,
+//		27,
+//		23,
+//		24,
+//		33,
+//		40,
+//		40,
+//		57,
+//		63,
+//		74,
+//		74,
+//		79,
+//		79,
+//		36,
+//		36,
+//		29,
+//		49,
+//		44,
+//		50,
+//		36,
+//		38,
+//		39,
+//		46,
+//		61,
+//		67,
+//		74,
+//		77,
+//		80,
+//		83,
+//		57,
+//		57,
+//		49,
+//		42,
+//		53,
+//		44,
+//		37,
+//		36,
+//		47,
+//		56,
+//		56,
+//		67,
+//		75,
+//		78,
+//		81,
+//		84,
+//		47,
+//		47,
+//		47,
+//		43,
+//		44,
+//		38,
+//		39,
+//		39,
+//		50,
+//		48,
+//		50,
+//		64,
+//		69,
+//		78,
+//		81,
+//		84,
+//		28,
+//		28,
+//		30,
+//		42,
+//		47,
+//		33,
+//		47,
+//		46,
+//		49,
+//		55,
+//		63,
+//		66,
+//		70,
+//		79,
+//		81,
+//		84,
+//		51,
+//		51,
+//		51,
+//		49,
+//		47,
+//		41,
+//		51,
+//		50,
+//		49,
+//		59,
+//		60,
+//		64,
+//		76,
+//		79,
+//		81,
+//		84,
+//		25,
+//		25,
+//		25,
+//		61,
+//		52,
+//		50,
+//		55,
+//		52,
+//		51,
+//		58,
+//		62,
+//		68,
+//		74,
+//		79,
+//		82,
+//		84,
+//		45,
+//		45,
+//		45,
+//		53,
+//		54,
+//		60,
+//		59,
+//		50,
+//		51,
+//		54,
+//		73,
+//		71,
+//		78,
+//		80,
+//		82,
+//		84,
+//		35,
+//		35,
+//		35,
+//		60,
+//		61,
+//		61,
+//		66,
+//		47,
+//		80,
+//		65,
+//		72,
+//		75,
+//		79,
+//		81,
+//		83,
+//		85,
+//		23,
+//		23,
+//		23,
+//		60,
+//		62,
+//		64,
+//		69,
+//		67,
+//		84,
+//		75,
+//		78,
+//		79,
+//		80,
+//		82,
+//		84,
+//		86,
+//		19,
+//		19,
+//		19,
+//		60,
+//		62,
+//		67,
+//		72,
+//		81,
+//		87,
+//		78,
+//		78,
+//		78,
+//		80,
+//		83,
+//		85,
+//		87,
+//		12,
+//		12,
+//		12,
+//		64,
+//		63,
+//		71,
+//		75,
+//		78,
+//		80,
+//		76,
+//		78,
+//		79,
+//		81,
+//		84,
+//		86,
+//		89,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		78,
+//		78,
+//		77,
+//		77,
+//		79,
+//		82,
+//		85,
+//		87,
+//		90,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		79,
+//		80,
+//		83,
+//		85,
+//		88,
+//		91,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		79,
+//		80,
+//		83,
+//		86,
+//		89,
+//		92,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		80,
+//		81,
+//		84,
+//		87,
+//		90,
+//		94,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		80,
+//		81,
+//		85,
+//		88,
+//		92,
+//		95,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		80,
+//		82,
+//		85,
+//		89,
+//		93,
+//		96,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		81,
+//		82,
+//		86,
+//		90,
+//		94,
+//		97,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		81,
+//		83,
+//		87,
+//		91,
+//		95,
+//		99,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		81,
+//		83,
+//		88,
+//		92,
+//		96,
+//		100,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		82,
+//		84,
+//		88,
+//		93,
+//		97,
+//		101,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		82,
+//		85,
+//		89,
+//		93,
+//		98,
+//		102,
+//		12,
+//		12,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		82,
+//		85,
+//		90,
+//		94,
+//		99,
+//		104,
+//		5,
+//		5,
+//		12,
+//		60,
+//		62,
+//		71,
+//		77,
+//		80,
+//		80,
+//		80,
+//		83,
+//		86,
+//		90,
+//		95,
+//		100,
+//		105};	
 }

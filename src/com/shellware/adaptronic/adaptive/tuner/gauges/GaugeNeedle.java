@@ -18,13 +18,10 @@ package com.shellware.adaptronic.adaptive.tuner.gauges;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
-
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 
 public class GaugeNeedle extends ImageView {
 
@@ -74,7 +71,7 @@ public class GaugeNeedle extends ImageView {
 		startAnimation(rotateAnimation);
 		
 		lastValue = newValue;
-		if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, String.format("%s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
+//		if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, String.format("%s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
 	}
 	
 	public int getMinValue() {

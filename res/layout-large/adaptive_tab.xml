@@ -79,7 +79,7 @@
 		        android:layout_toRightOf="@id/ignitionFrame" >
 	
 			    <TextView
-			        android:id="@+id/TextView01"
+			        android:id="@+id/fuellearn"
 			        android:layout_width="wrap_content"
 			        android:layout_height="wrap_content"
 			        android:layout_centerHorizontal="true"
@@ -91,14 +91,14 @@
 			        android:id="@+id/imgFWait"
 			        android:layout_width="60dp"
 			        android:layout_height="60dp"
-			        android:layout_below="@+id/TextView01"
+			        android:layout_below="@+id/fuellearn"
 			        android:src="@drawable/iwait" />
 	
 			    <ImageView
 			        android:id="@+id/imgFRpm"
 			        android:layout_width="60dp"
 			        android:layout_height="60dp"
-			        android:layout_below="@+id/TextView01"
+			        android:layout_below="@+id/fuellearn"
 			        android:layout_marginLeft="25dp"
 			        android:layout_marginRight="25dp"
 			        android:layout_toRightOf="@+id/imgFWait"
@@ -108,7 +108,7 @@
 			        android:id="@+id/imgFLoad"
 			        android:layout_width="60dp"
 			        android:layout_height="60dp"
-			        android:layout_below="@+id/TextView01"
+			        android:layout_below="@+id/fuellearn"
 			        android:layout_toRightOf="@+id/imgFRpm"
 			        android:src="@drawable/iload" />
 			</RelativeLayout>

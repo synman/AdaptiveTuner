@@ -19,7 +19,14 @@
     </style>
   </head>
   <body>
-$ 1.05
+$ 1.06
+  % Version 1.06
+  _ 2012-10-3
+  ! 3D Fuel Map!
+  	* Additional data reception logic tuning -- down to 70ms
+  	* Incorporated a trial version of steema's Android charting library to illustrate Fuel Map #1 (must be VE)
+  	* TODO: Add support for duty cycle and ignition maps
+  	* TODO: Add edit capability for maps
   % Version 1.05
   _ 2012-09-27
   ! Faster COMMS!
