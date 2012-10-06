@@ -35,6 +35,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -144,7 +145,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private static Handler refreshHandler = new Handler();
 	private ConnectionHandler connectionHandler = new ConnectionHandler();
 	private static ConnectedThread connected;
-		
+	private static ConnectThread doConnect;
+	
 	private final BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();;
 	
 	private ArrayAdapter<String> devices;
@@ -393,8 +395,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	} else {
         	if (autoConnect && remoteMacAddr.length() > 0) {
         		disconnect();
-//        		new Handler().postDelayed(( new Runnable() { public void run() { connect(remoteName,  remoteMacAddr); } } ), 500);
-        		connect(remoteName,  remoteMacAddr);
+        		new Handler().postDelayed(( new Runnable() { public void run() { connect(remoteName,  remoteMacAddr); } } ), 1000);
+//        		connect(remoteName,  remoteMacAddr);
         	}
     	}
 	}
@@ -451,6 +453,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
+	    	        if (progress != null && progress.isShowing()) progress.dismiss();
+
 					disconnect();
 
 					AlertDialog alert = new AlertDialog.Builder(ctx).create();
@@ -604,7 +608,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		chart.refreshControl();
 		chart.setAutoRepaint(true);
 		
-		progress.dismiss();
+        if (progress != null && progress.isShowing()) progress.dismiss();
 		
 		lastRegister = REGISTER_4096_PLUS_SEVEN;		
 		mapMode = false;		
@@ -848,10 +852,24 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     
     private void connect(final String name, final String macAddr) {
     	
+    	if (progress != null && progress.isShowing()) return;
+    	
     	progress = ProgressDialog.show(this, "Bluetooth Connection" , "Connecting to " + name);
+    	progress.setCancelable(true);
+    	progress.setOnCancelListener(new OnCancelListener() {
+			public void onCancel(DialogInterface arg0) {
+				if (doConnect != null && doConnect.isAlive() ) {
+					doConnect.cancel();
+					try {
+						doConnect.join();
+					} catch (InterruptedException e) {
+						// do nothing
+					}
+				}
+			}});
     	
     	connected = new ConnectedThread(connectionHandler);    	
-    	ConnectThread doConnect = new ConnectThread(connectionHandler, name, macAddr, connected);
+    	doConnect = new ConnectThread(connectionHandler, name, macAddr, connected);
     	doConnect.start();
     }
     

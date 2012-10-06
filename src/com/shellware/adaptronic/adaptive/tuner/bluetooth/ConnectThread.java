@@ -16,6 +16,8 @@
  */
 package com.shellware.adaptronic.adaptive.tuner.bluetooth;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothAdapter;
@@ -40,6 +42,8 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
     	private BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();
     	private BluetoothDevice btd;
     	private BluetoothSocket bts;
+
+		private boolean cancelled;
     	
     	public ConnectThread(final Handler handler, final String deviceName, final String addr, ConnectedThread connectedThread) {
     		super();
@@ -60,38 +64,57 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 	        while (true) {
 		
 	        	try {            	
-//	    	        bt = BluetoothAdapter.getDefaultAdapter();
 	    	        btd = bt.getRemoteDevice(addr);        		
+	    	        
 	        	} catch (Exception ex) {
-	        		Log.d(MainActivity.TAG, "bluetooth adapter: " + ex.getMessage());
+					// bail if cancelled
+					if (cancelled) return;
+
+					Log.d(MainActivity.TAG, "bluetooth adapter: " + ex.getMessage());
+	        	}
+		        
+	        	try {
+		        	if (counter < 3) {
+						Log.d(MainActivity.TAG, "Trying createRfcommSocketToServiceRecord");
+						bts = btd.createRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		        			
+		        	} else {
+		        		if (counter < 6) {
+							Log.d(MainActivity.TAG, "Trying createRfcommSocket");							
+							Method m = btd.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
+				            bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1));		
+						} else {
+							if (counter < 9) {
+								Log.d(MainActivity.TAG, "Trying createInsecureRfcommSocketToServiceRecord");
+								bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		
+							} else {
+								Log.d(MainActivity.TAG, "Trying createInsecureRfcommSocket");
+								Method m = btd.getClass().getMethod("createInsecureRfcommSocket", new Class[] { int.class });
+								bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1)); // 1==RFCOMM channel cod (class of device)
+							}
+		        		}
+		        	}
+	        	} catch (Exception ex) {
+					if (cancelled) return;
+					Log.d(MainActivity.TAG, "createRfcommSocket failed: " + ex.getMessage());	        		
 	        	}
 		        
 		        try {
-		        	bt.cancelDiscovery();
-					bts = btd.createRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);
-				} catch (Exception e) {
-					// try an insecure connection
-					try {
-						bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);
-					} catch (Exception e1) {
-						// increment counter
-		        		Log.d(MainActivity.TAG, "bluetooth connect: " + e.getMessage());
-						counter++;
-					}
-				}
-		        
-		        try {
+//		        	bt.cancelDiscovery();
 					bts.connect();
 					break;
 				} catch (Exception e) {
+					// bail if cancelled
+					if (cancelled) return;
+					
 					counter++;
+					Log.d(MainActivity.TAG, "BT connect failed: " + e.getMessage());
 					
 			        // bail if we've tried 10 times
-			        if (counter >= 10) {
+			        if (counter >= 12) {
 				        
 				        b.putShort("handle", MainActivity.CONNECTION_ERROR);
 				        b.putString("title", name);
-				        b.putString("message", "Connection attempt failed");
+				        b.putString("message", String.format("Unable to connect to %s: %s", name.trim(), e.getMessage()));
 				        msg.setData(b);
 				        
 				        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Unable to connect - " + e.getMessage());
@@ -112,5 +135,19 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 	        
 	        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Connected");
 	        handler.sendMessage(msg);
+		}
+		
+		public void cancel() {
+			cancelled = true;
+			
+			if (bts != null) {
+				try {
+					bts.close();
+				} catch (IOException e) {
+					// do nothing
+				}
+			}
+			
+			this.interrupt();
 		}
     }
