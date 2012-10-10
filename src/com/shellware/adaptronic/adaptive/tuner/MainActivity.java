@@ -83,10 +83,8 @@ import com.steema.teechart.tools.Rotate;
 public class MainActivity extends Activity implements ActionBar.TabListener {
 	
 	public static final String TAG = "Adaptive";
-//EVAN
-	//public static final boolean DEBUG_MODE = false;
-	public static final boolean DEBUG_MODE = true;
-//END EVAN
+	public static final boolean DEBUG_MODE = false;
+	
 	public static final short CONNECTION_ERROR = 1;
 	public static final short DATA_READY = 2;
 	public static final short CONNECTED = 3;
