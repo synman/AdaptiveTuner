@@ -65,7 +65,7 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 		
 	        	try {            	
 	    	        btd = bt.getRemoteDevice(addr);        		
-	    	        
+
 	        	} catch (Exception ex) {
 					// bail if cancelled
 					if (cancelled) return;
@@ -79,17 +79,17 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 						bts = btd.createRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		        			
 		        	} else {
 		        		if (counter < 6) {
-							Log.d(MainActivity.TAG, "Trying createRfcommSocket");							
-							Method m = btd.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
-				            bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1));		
+							Log.d(MainActivity.TAG, "Trying createInsecureRfcommSocketToServiceRecord");
+							bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		
 						} else {
 							if (counter < 9) {
-								Log.d(MainActivity.TAG, "Trying createInsecureRfcommSocketToServiceRecord");
-								bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		
-							} else {
 								Log.d(MainActivity.TAG, "Trying createInsecureRfcommSocket");
 								Method m = btd.getClass().getMethod("createInsecureRfcommSocket", new Class[] { int.class });
 								bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1)); // 1==RFCOMM channel cod (class of device)
+							} else {
+								Log.d(MainActivity.TAG, "Trying createRfcommSocket");							
+								Method m = btd.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
+					            bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1));		
 							}
 		        		}
 		        	}
@@ -99,7 +99,7 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 	        	}
 		        
 		        try {
-//		        	bt.cancelDiscovery();
+		        	bt.cancelDiscovery();
 					bts.connect();
 					break;
 				} catch (Exception e) {
@@ -109,8 +109,8 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 					counter++;
 					Log.d(MainActivity.TAG, "BT connect failed: " + e.getMessage());
 					
-			        // bail if we've tried 10 times
-			        if (counter >= 12) {
+			        // bail if we've tried 15 times
+			        if (counter >= 15) {
 				        
 				        b.putShort("handle", MainActivity.CONNECTION_ERROR);
 				        b.putString("title", name);

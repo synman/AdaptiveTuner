@@ -28,7 +28,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-
 public class ConnectedThread extends Thread {
 	
     private BluetoothSocket mmSocket;
@@ -128,10 +127,21 @@ public class ConnectedThread extends Thread {
  
     /* Call this from the main activity to shutdown the connection */
     public void cancel() {
-        try {
-        	disconnecting = true;
-            mmSocket.close();
-        } catch (IOException e) { }
+    	disconnecting = true;
+    	
+        if (mmInStream != null) {
+            try {mmInStream.close();} catch (Exception e) {}
+            mmInStream = null;
+        }
+
+        if (mmOutStream != null) {
+                try {mmOutStream.close();} catch (Exception e) {}
+                mmOutStream = null;
+        }
+
+        if (mmSocket != null) {
+                try {mmSocket.close();} catch (Exception e) {}
+                mmSocket = null;
+        }
     }
-    
 }

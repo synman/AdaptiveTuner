@@ -42,6 +42,8 @@ public class LogItems {
 		private int map = 0;
 		private int wat = 0;
 		private int mat = 0;
+		private int tps = 0;
+		
 		private float afr = 0f;
 		private float referenceAfr = 0f;
 		private float targetAfr = 0f;
@@ -136,16 +138,23 @@ public class LogItems {
 		public void setReferenceAfr(float referenceAfr) {
 			this.referenceAfr = referenceAfr;
 		}
-		
+		public int getTps() {
+			return tps;
+		}
+		public void setTps(int tps) {
+			this.tps = tps;
+		}
+
 		public String getLogString() {
 			
-			final String str = String.format("%d, %d, %d, %.1f, %.1f, %.1f, %d, %d\n", 
+			final String str = String.format("%d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d\n", 
 												timestamp,
 												rpm,
 												map,
 												targetAfr,
 												afr,
 												referenceAfr,
+												tps,
 												wat,
 												mat);
 			
@@ -155,13 +164,14 @@ public class LogItems {
 		
 		public byte[] getLogBytes() {
 			
-			final String str = String.format("%d, %d, %d, %.1f, %.1f, %.1f, %d, %d\n", 
+			final String str = String.format("%d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d\n", 
 												timestamp,
 												rpm,
 												map,
 												targetAfr,
 												afr,
 												referenceAfr,
+												tps,
 												wat,
 												mat);
 			

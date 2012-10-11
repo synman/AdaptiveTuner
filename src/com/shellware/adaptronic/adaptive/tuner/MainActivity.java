@@ -27,7 +27,6 @@ import java.util.Set;
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
@@ -352,12 +351,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_CELCIUS);
     	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_CELCIUS);
 
-    	        iatNeedle.setPivotPoint(.5f);
-    	        iatNeedle.setMinValue(0);
     	        iatNeedle.setMaxValue(100);
-    	        iatNeedle.setMinDegrees(-180);
-    	        iatNeedle.setMaxDegrees(90);
-
     	        imgIat.setImageResource(R.drawable.iatgauge_celcius);
     	        break;
 
@@ -365,22 +359,22 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_FAHRENHEIT);
     	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_FAHRENHEIT);
     	    	
-    	        iatNeedle.setPivotPoint(.5f);
-    	        iatNeedle.setMinValue(0);
     	        iatNeedle.setMaxValue(200);
-    	        iatNeedle.setMinDegrees(-180);
-    	        iatNeedle.setMaxDegrees(90);
-
     	        imgIat.setImageResource(R.drawable.iatgauge);
     	        break;
     	}
-    	
+
+        iatNeedle.setPivotPoint(.5f);
+        iatNeedle.setMinValue(0);
+        iatNeedle.setMinDegrees(-180);
+        iatNeedle.setMaxDegrees(90);
+
     	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false);    	
     	if (menuShareLog != null) {
     		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
     	}
 
-    	// ensure both fragments are hidden
+    	// ensure all fragments are hidden
     	FragmentTransaction ft = getFragmentManager().beginTransaction();
     	ft.hide(adaptiveFragment);
     	ft.hide(gaugesFragment);
@@ -457,17 +451,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
 					disconnect();
 
-					AlertDialog alert = new AlertDialog.Builder(ctx).create();
-					alert.setTitle(message.getData().getString("title"));
-					alert.setMessage("\n" + message.getData().getString("message") + "\n");
-					alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
-							new DialogInterface.OnClickListener() {	
-								public void onClick(DialogInterface dialog, int which) {
-									dialog.dismiss();
-								}
-							});
-					alert.show();
+//					AlertDialog alert = new AlertDialog.Builder(ctx).create();
+//					alert.setTitle(message.getData().getString("title"));
+//					alert.setMessage("\n" + message.getData().getString("message") + "\n");
+//					alert.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", 
+//							new DialogInterface.OnClickListener() {	
+//								public void onClick(DialogInterface dialog, int which) {
+//									dialog.dismiss();
+//								}
+//							});
+//					alert.show();
 					
+					Toast.makeText(ctx, message.getData().getString("message"), Toast.LENGTH_LONG).show();
+
 					break;
 					
 	        	case DATA_READY:
@@ -501,7 +497,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	    	        			break;
 	    	        		}
 	    	        		
-	    	        		// RPM, MAP, MAT, WAT, AUXT, & AFR - 6 16 bit integers (twelve bytes)
+	    	        		// RPM, MAP, MAT, WAT, AUXT, AFR, TPS - 8 16 bit integers (sixteen bytes)
 	    	        		if (data.contains(EIGHT_REGISTERS) && datalength >= REGISTER_4096_LENGTH) {
 	    	        			process4096Response(data);
 	    		        	} else {
@@ -719,6 +715,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         					newItem.setRpm(rpm);
         					newItem.setTargetAfr(targetAFR);
         					newItem.setWat(wat);
+        					newItem.setTps(tps);
         					
         					afrAlarmLogItems.getItems().add(newItem);
         					
@@ -877,6 +874,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	
     	refreshHandler.removeCallbacks(RefreshRunnable);
 		if (menuConnect != null) menuConnect.setTitle(R.string.menu_connect);
+		imgStatus.setBackgroundColor(Color.TRANSPARENT);				
     	
 		try {
 	    	if (connected != null && connected.isAlive()) {
@@ -969,7 +967,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 					FileOutputStream f = new FileOutputStream(file);
 					
 					// write our header
-					f.write("timestamp, rpm, map, targetafr, afr, refafr, wat, mat\n".getBytes());
+					f.write("timestamp, rpm, map, targetafr, afr, refafr, tps, wat, mat\n".getBytes());
 					
 					ArrayList<LogItem> items = afrAlarmLogItems.getItems();
 					Iterator<LogItem> iterator = items.iterator();
@@ -1015,49 +1013,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 				break;  
 			case 2:
 				ft.show(fuelFragment);
-				
-//				chart.setAutoRepaint(false);
-//				
-//				short cnt = 0;				
-//				ser.clear();
-//						    	        				
-//				for (int x = 0; x < 32; x++) {
-//					for (int y = 0; y < 16; y++) {
-//						double val = REF_TAB[cnt];
-//    					ser.add(x, val,  y);
-//    					Log.d(TAG, String.format("%d:%d = %.0f", x, y, val));
-//    					cnt++;
-//    				}
-//    			}	 
-//				
-//				for (int x = 0; x < chart.getAxes().getCount(); x++) {
-//					chart.getAxes().getAxis(x).getLabels().getItems().clear();
-//				}
-//				
-//				for (double x = 0; x < 32; x++) {
-//					AxisLabelItem itm = chart.getAxes().getBottom().getLabels().getItems().add(x);
-//					itm.getFont().setSize(10);
-//					itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
-//					itm.setText(String.format("%.0f", 300 * x));
-//				}
-//				
-//				for (double x = 0; x < 16; x++) {
-//					AxisLabelItem itm = chart.getAxes().getDepth().getLabels().getItems().add(x, x == 0 ? " " : String.format("%.0f", 13 * x));
-//					itm.getFont().setSize(10);
-//					itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
-//				}
-//
-//				chart.getAxes().getBottom().getTitle().setText("Engine RPM");
-//				chart.getAxes().getBottom().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
-//				chart.getAxes().getBottom().getTitle().getFont().setSize(14);
-//
-//				chart.getAxes().getDepth().getTitle().setText("MAP (kPa)");
-//				chart.getAxes().getDepth().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
-//				chart.getAxes().getDepth().getTitle().getFont().setSize(14);
-//				
-//				chart.refreshControl();
-//				chart.setAutoRepaint(true);
-//				
 		}
 		
 	}
@@ -1090,8 +1045,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			case 1:
 				ft.show(gaugesFragment);
 				break;  
-			case 2:
-				
+			case 2:				
 				if (connected != null && connected.isAlive()) {
 			    	progress = ProgressDialog.show(ctx, "Fuel Map" , "Reading map values 0/512...");
 
@@ -1121,517 +1075,4 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			super.onBackPressed();
 		}
 	}
-	
-//	private static double[] REF_TAB = {5,
-//		5,
-//		5,
-//		13,
-//		17,
-//		21,
-//		26,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		5,
-//		5,
-//		5,
-//		13,
-//		17,
-//		21,
-//		26,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		5,
-//		5,
-//		5,
-//		5,
-//		10,
-//		15,
-//		20,
-//		25,
-//		30,
-//		30,
-//		30,
-//		30,
-//		30,
-//		55,
-//		55,
-//		55,
-//		5,
-//		5,
-//		5,
-//		6,
-//		12,
-//		18,
-//		24,
-//		29,
-//		37,
-//		40,
-//		43,
-//		45,
-//		55,
-//		60,
-//		60,
-//		60,
-//		5,
-//		5,
-//		5,
-//		5,
-//		20,
-//		16,
-//		44,
-//		41,
-//		40,
-//		43,
-//		46,
-//		49,
-//		60,
-//		65,
-//		65,
-//		65,
-//		14,
-//		14,
-//		15,
-//		15,
-//		16,
-//		22,
-//		23,
-//		29,
-//		27,
-//		46,
-//		50,
-//		54,
-//		65,
-//		69,
-//		69,
-//		69,
-//		26,
-//		26,
-//		21,
-//		29,
-//		30,
-//		28,
-//		36,
-//		29,
-//		28,
-//		47,
-//		54,
-//		58,
-//		69,
-//		74,
-//		74,
-//		74,
-//		39,
-//		39,
-//		42,
-//		20,
-//		27,
-//		23,
-//		24,
-//		33,
-//		40,
-//		40,
-//		57,
-//		63,
-//		74,
-//		74,
-//		79,
-//		79,
-//		36,
-//		36,
-//		29,
-//		49,
-//		44,
-//		50,
-//		36,
-//		38,
-//		39,
-//		46,
-//		61,
-//		67,
-//		74,
-//		77,
-//		80,
-//		83,
-//		57,
-//		57,
-//		49,
-//		42,
-//		53,
-//		44,
-//		37,
-//		36,
-//		47,
-//		56,
-//		56,
-//		67,
-//		75,
-//		78,
-//		81,
-//		84,
-//		47,
-//		47,
-//		47,
-//		43,
-//		44,
-//		38,
-//		39,
-//		39,
-//		50,
-//		48,
-//		50,
-//		64,
-//		69,
-//		78,
-//		81,
-//		84,
-//		28,
-//		28,
-//		30,
-//		42,
-//		47,
-//		33,
-//		47,
-//		46,
-//		49,
-//		55,
-//		63,
-//		66,
-//		70,
-//		79,
-//		81,
-//		84,
-//		51,
-//		51,
-//		51,
-//		49,
-//		47,
-//		41,
-//		51,
-//		50,
-//		49,
-//		59,
-//		60,
-//		64,
-//		76,
-//		79,
-//		81,
-//		84,
-//		25,
-//		25,
-//		25,
-//		61,
-//		52,
-//		50,
-//		55,
-//		52,
-//		51,
-//		58,
-//		62,
-//		68,
-//		74,
-//		79,
-//		82,
-//		84,
-//		45,
-//		45,
-//		45,
-//		53,
-//		54,
-//		60,
-//		59,
-//		50,
-//		51,
-//		54,
-//		73,
-//		71,
-//		78,
-//		80,
-//		82,
-//		84,
-//		35,
-//		35,
-//		35,
-//		60,
-//		61,
-//		61,
-//		66,
-//		47,
-//		80,
-//		65,
-//		72,
-//		75,
-//		79,
-//		81,
-//		83,
-//		85,
-//		23,
-//		23,
-//		23,
-//		60,
-//		62,
-//		64,
-//		69,
-//		67,
-//		84,
-//		75,
-//		78,
-//		79,
-//		80,
-//		82,
-//		84,
-//		86,
-//		19,
-//		19,
-//		19,
-//		60,
-//		62,
-//		67,
-//		72,
-//		81,
-//		87,
-//		78,
-//		78,
-//		78,
-//		80,
-//		83,
-//		85,
-//		87,
-//		12,
-//		12,
-//		12,
-//		64,
-//		63,
-//		71,
-//		75,
-//		78,
-//		80,
-//		76,
-//		78,
-//		79,
-//		81,
-//		84,
-//		86,
-//		89,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		78,
-//		78,
-//		77,
-//		77,
-//		79,
-//		82,
-//		85,
-//		87,
-//		90,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		79,
-//		80,
-//		83,
-//		85,
-//		88,
-//		91,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		79,
-//		80,
-//		83,
-//		86,
-//		89,
-//		92,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		80,
-//		81,
-//		84,
-//		87,
-//		90,
-//		94,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		80,
-//		81,
-//		85,
-//		88,
-//		92,
-//		95,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		80,
-//		82,
-//		85,
-//		89,
-//		93,
-//		96,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		81,
-//		82,
-//		86,
-//		90,
-//		94,
-//		97,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		81,
-//		83,
-//		87,
-//		91,
-//		95,
-//		99,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		81,
-//		83,
-//		88,
-//		92,
-//		96,
-//		100,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		82,
-//		84,
-//		88,
-//		93,
-//		97,
-//		101,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		82,
-//		85,
-//		89,
-//		93,
-//		98,
-//		102,
-//		12,
-//		12,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		82,
-//		85,
-//		90,
-//		94,
-//		99,
-//		104,
-//		5,
-//		5,
-//		12,
-//		60,
-//		62,
-//		71,
-//		77,
-//		80,
-//		80,
-//		80,
-//		83,
-//		86,
-//		90,
-//		95,
-//		100,
-//		105};	
 }
