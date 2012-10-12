@@ -40,6 +40,7 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -68,6 +69,7 @@ import com.shellware.adaptronic.adaptive.tuner.changelog.ChangeLog;
 import com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle;
 import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
 import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
+import com.shellware.adaptronic.adaptive.tuner.usb.UsbConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 import com.steema.teechart.TChart;
@@ -383,6 +385,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	
     	ActionBar bar = getActionBar();
     	bar.selectTab(bar.getTabAt(prefs.getInt("prefs_last_tab", 1)));    
+ 
+//EVAN    	
+        String action = getIntent().getAction();
+
+        if (Intent.ACTION_MAIN.equals(action) || UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
+        	if (DEBUG_MODE) Log.d(TAG, "USB Device Attached");
+        	        	
+        	connected = UsbConnectedThread.checkConnectedUsbDevice(this, connectionHandler);
+        }
+//END EVAN    	
     	
     	if (connected != null && connected.isAlive()) {
     		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);

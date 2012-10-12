@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Adaptronic Select e420d Basic -->
+	<usb-device vendor-id="4292" product-id="34189" />  
+</resources>
