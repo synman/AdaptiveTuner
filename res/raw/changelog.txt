@@ -19,6 +19,14 @@
     </style>
   </head>
   <body>
+$ 1.1.0
+  % Version 1.1.0
+  _ 2012-10-11
+  ! USB Host Mode Connectivity by Evan H. Dekker
+  	* Merged to master branch
+  	* Honeycomb 3.1+ only
+  	* TODO: Add support for duty cycle and ignition maps
+  	* TODO: Add edit capability for maps
 $ 1.06
   % Version 1.06
   _ 2012-10-3
