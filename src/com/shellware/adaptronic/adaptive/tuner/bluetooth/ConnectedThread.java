@@ -35,7 +35,10 @@ public class ConnectedThread extends Thread {
     private InputStream mmInStream;
     private OutputStream mmOutStream;
     
-	private final Handler handler;
+//EVAN    
+//	private final Handler handler;
+	protected final Handler handler;
+//END EVAN
 	
 	private String name;
 	
