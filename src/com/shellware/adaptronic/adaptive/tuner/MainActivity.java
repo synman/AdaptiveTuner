@@ -33,14 +33,17 @@ import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.IntentFilter;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -148,6 +151,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private ConnectionHandler connectionHandler = new ConnectionHandler();
 	private static ConnectedThread connected;
 	private static ConnectThread doConnect;
+	
+//EVAN
+	private IntentFilter mUsbDetachedFilter = new IntentFilter();
+//END EVAN	
 	
 	private final BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();;
 	
@@ -333,6 +340,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		
 		ser.setColor(com.steema.teechart.drawing.Color.darkGray);		
 		new Rotate(chart.getChart());
+		
+//EVAN
+		mUsbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        registerReceiver(mUsbReceiver, mUsbDetachedFilter);
+//END EVAN		
+		
     }
     
     @Override
@@ -399,6 +412,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         	if (DEBUG_MODE) Log.d(TAG, "USB Device Attached");
         	        	
         	connected = UsbConnectedThread.checkConnectedUsbDevice(this, connectionHandler);
+        	
+        	if (connected != null) {
+        		lastUpdateInMillis = System.currentTimeMillis();
+        	}
         }
 //END EVAN    	
     	
@@ -422,9 +439,33 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     @Override
 	protected void onDestroy() {
 		super.onDestroy();
+//EVAN
+		unregisterReceiver(mUsbReceiver);
+//END EVAN		
+		
 		disconnect();
 	}
 
+//EVAN
+    BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction())) { 
+            	if (DEBUG_MODE) Log.d(TAG, "USB Device Detached");
+            	            	
+            	if (connected instanceof UsbConnectedThread) {
+            		if (((UsbConnectedThread)connected).isUsbDevice((UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE))) {
+            			if (DEBUG_MODE) Log.d(TAG, "Adaptronic ECU Detached");
+            			disconnect();
+            			connected = null;
+            			
+            			imgStatus.setBackgroundColor(Color.TRANSPARENT);
+            		}
+            	}
+            }
+        }
+    };    
+//END EVAN    
+    
 	private final static Runnable RefreshRunnable = new Runnable() {
 
 		public void run() {
@@ -536,8 +577,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     	final long elapsed = currentTimeInMillis - lastUpdateInMillis;
     	totalTimeMillis+=elapsed;
     	updatesReceived++;
-
-    	clearDataBuffer();
+    	
+     	clearDataBuffer();
     	
     	short length;
     	
@@ -886,7 +927,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     }
     
     private static void disconnect() {
-    	
     	refreshHandler.removeCallbacks(RefreshRunnable);
 		if (menuConnect != null) menuConnect.setTitle(R.string.menu_connect);
     	
