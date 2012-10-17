@@ -156,7 +156,7 @@ public class UsbConnectedThread extends ConnectedThread {
 		byte[] buffer = new byte[512];
 		int bytes;
 		
-		while (true) {
+		while (!disconnecting) {
 			bytes = mConnection.bulkTransfer(mInEndpoint, buffer, buffer.length, 5);
 			
 			if (bytes == -1) {
@@ -197,12 +197,14 @@ public class UsbConnectedThread extends ConnectedThread {
 	}
 	
 	public void cancel() {
-		mConnection.close();
+		disconnecting = true;
+	}
+	
+	public boolean isUsbDevice(UsbDevice usbDevice) {
+		return mUsbDevice.getDeviceId() == usbDevice.getDeviceId();
 	}
 	
 	private static void connectionError(String name, String message, Handler handler) {
- //   	if (disconnecting) break;
-
         Bundle b = new Bundle();
         
         b.putShort("handle", MainActivity.CONNECTION_ERROR);
