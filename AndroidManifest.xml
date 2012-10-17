@@ -17,8 +17,7 @@
         android:theme="@android:style/Theme.Holo" >
         <activity
             android:name=".MainActivity"
-            android:label="@string/title_activity_main" android:screenOrientation="landscape"
-            android:launchMode="singleInstance">
+            android:label="@string/title_activity_main" android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,8 +27,9 @@
             <intent-filter>
 		    	<action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
 		    </intent-filter>		
-            
+              
 			<meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/device_filter" />
+			
         </activity>
         <activity android:name=".preferences.AdaptivePreferences" android:screenOrientation="landscape" android:theme="@android:style/Theme.Holo"></activity>
     </application>
