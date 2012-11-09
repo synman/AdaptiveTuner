@@ -41,7 +41,7 @@ public class ConnectedThread extends Thread {
 	
 	private String name;
 	
-	private boolean disconnecting = false;
+	protected boolean disconnecting = false;
 
 	public ConnectedThread(Handler handler) {
         this.handler = handler;
