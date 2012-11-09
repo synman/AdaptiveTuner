@@ -18,4 +18,7 @@ AdaptiveTuner
 
 Adaptronic Select ECU Tuning Aid for Android.
 
-Adaptive Tuner displays key gauge data: RPM, MAP, MAT, WAT, and AFR.  It additionally presents the status of the 6 Adaptive Mode Learning State flags using a big visual graphic for each, alleviating the need to wire up LEDs if you use Adaptive Closed Loop for learning.
+Adaptive Tuner displays key gauge data: RPM, MAP, MAT, WAT, and AFR.  It 
+additionally presents the status of the 6 Adaptive Mode Learning State 
+flags using a big visual graphic for each, alleviating the need to wire 
+up LEDs if you use Adaptive Closed Loop for learning.

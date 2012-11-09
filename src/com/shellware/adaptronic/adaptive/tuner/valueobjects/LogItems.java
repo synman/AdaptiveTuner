@@ -158,25 +158,11 @@ public class LogItems {
 												wat,
 												mat);
 			
-			return str;
-												
+			return str;										
 		}
 		
 		public byte[] getLogBytes() {
-			
-			final String str = String.format("%d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d\n", 
-												timestamp,
-												rpm,
-												map,
-												targetAfr,
-												afr,
-												referenceAfr,
-												tps,
-												wat,
-												mat);
-			
-			return str.getBytes();
-												
+			return getLogString().getBytes();			
 		}
 	}
 }

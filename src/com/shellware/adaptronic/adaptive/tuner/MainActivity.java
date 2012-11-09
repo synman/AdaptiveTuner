@@ -48,20 +48,26 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ViewFlipper;
 
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectThread;
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
@@ -72,14 +78,8 @@ import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
 import com.shellware.adaptronic.adaptive.tuner.usb.UsbConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
-import com.steema.teechart.TChart;
-import com.steema.teechart.axis.AxisLabelItem;
-import com.steema.teechart.styles.PaletteStyle;
-import com.steema.teechart.styles.Surface;
-import com.steema.teechart.themes.ThemesList;
-import com.steema.teechart.tools.Rotate;
 
-public class MainActivity extends Activity implements ActionBar.TabListener {
+public class MainActivity extends Activity implements ActionBar.TabListener, OnClickListener {
 	
 	public static final String TAG = "Adaptive";
 	public static final boolean DEBUG_MODE = false;
@@ -159,6 +159,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private static int lastRPM = 0;
 	private static int tps = 0;
 	private static boolean closedLoop = false;
+	
 	private static long updatesReceived = 0;
 	private static long totalTimeMillis = 0;
 	
@@ -181,14 +182,31 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private static boolean afrAlarmLogging = false;
 	private final static LogItems afrAlarmLogItems = new LogItems();
 	
-	private static TChart chart;
-	private static Surface ser;
+//	private static TChart chart;
+//	private static Surface ser;
 	
 	private static boolean mapMode = false;
 	private static short mapOffset = 0;
 	private static StringBuffer mapData = new StringBuffer(1280);
 	
+	private GridView fuelGrid1;
+	private GridView fuelGrid2;
+	private GridView fuelGrid3;
+	private GridView fuelGrid4;
 	
+	private ArrayAdapter<String> fuelData1;
+	private ArrayAdapter<String> fuelData2;
+	private ArrayAdapter<String> fuelData3;
+	private ArrayAdapter<String> fuelData4;
+	
+	private static final int SWIPE_MIN_DISTANCE = 120;
+	private static final int SWIPE_MAX_OFF_PATH = 250;
+	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+
+	private GestureDetector gestureDetector;
+	View.OnTouchListener gestureListener;
+	
+		
 	@Override
 	public void onAttachedToWindow() {
 	    super.onAttachedToWindow();
@@ -296,42 +314,80 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
             cl.getLogDialog().show();
         }
         
-		LinearLayout group = (LinearLayout) findViewById(R.id.linearLayoutTchart);
-		chart = new TChart(this);
-		chart.setAutoRepaint(false);
-		
-		group.addView(chart);
-
-		ThemesList.applyTheme(chart.getChart(), 1);
-		
-		chart.removeAllSeries();
-		ser = new Surface(chart.getChart());
-	
-		chart.getAspect().setView3D(true);
-		ser.setIrregularGrid(true);
-		
-		ser.setUseColorRange(false);
-		ser.setUsePalette(true);
-		ser.setPaletteStyle(PaletteStyle.RAINBOW);
-		
-		chart.getPanel().setBorderRound(7);
-		
-		chart.getAspect().setView3D(true);
-		chart.getAspect().setChart3DPercent(100);
-		chart.getAspect().setOrthogonal(false);
-		chart.getAspect().setZoom(75);				
-		chart.getAspect().setRotation(350);
-		chart.getAspect().setElevation(350);
-		chart.getAspect().setPerspective(37);
-		
-		chart.getAxes().getDepth().setVisible(true);
-		chart.getLegend().setVisible(false);
-		chart.getHeader().setText("Fuel Map #1 (VE)");
-		chart.getHeader().getFont().setSize(18);
-		chart.getHeader().getFont().setBold(true);
-		
-		ser.setColor(com.steema.teechart.drawing.Color.darkGray);		
-		new Rotate(chart.getChart());
+//		LinearLayout group = (LinearLayout) findViewById(R.id.linearLayoutTchart);
+//		chart = new TChart(this);
+//		chart.setAutoRepaint(false);
+//		
+//		group.addView(chart);
+//
+//		ThemesList.applyTheme(chart.getChart(), 1);
+//		
+//		chart.removeAllSeries();
+//		ser = new Surface(chart.getChart());
+//	
+//		chart.getAspect().setView3D(true);
+//		ser.setIrregularGrid(true);
+//		
+//		ser.setUseColorRange(false);
+//		ser.setUsePalette(true);
+//		ser.setPaletteStyle(PaletteStyle.RAINBOW);
+//		
+//		chart.getPanel().setBorderRound(7);
+//		
+//		chart.getAspect().setView3D(true);
+//		chart.getAspect().setChart3DPercent(100);
+//		chart.getAspect().setOrthogonal(false);
+//		chart.getAspect().setZoom(75);				
+//		chart.getAspect().setRotation(350);
+//		chart.getAspect().setElevation(350);
+//		chart.getAspect().setPerspective(37);
+//		
+//		chart.getAxes().getDepth().setVisible(true);
+//		chart.getLegend().setVisible(false);
+//		chart.getHeader().setText("Fuel Map #1 (VE)");
+//		chart.getHeader().getFont().setSize(18);
+//		chart.getHeader().getFont().setBold(true);
+//		
+//		ser.setColor(com.steema.teechart.drawing.Color.darkGray);		
+//		new Rotate(chart.getChart());
+        
+        fuelGrid1 = (GridView) findViewById(R.id.gridFuel1);
+        fuelData1 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        fuelGrid1.setAdapter(fuelData1);
+        
+        fuelGrid2 = (GridView) findViewById(R.id.gridFuel2);
+        fuelData2 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        fuelGrid2.setAdapter(fuelData2);
+        
+        fuelGrid3 = (GridView) findViewById(R.id.gridFuel3);
+        fuelData3 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        fuelGrid3.setAdapter(fuelData3);
+        
+        fuelGrid4 = (GridView) findViewById(R.id.gridFuel4);
+        fuelData4 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        fuelGrid4.setAdapter(fuelData4);
+        
+        GridView[] fuelGrids = {fuelGrid1, fuelGrid2, fuelGrid3, fuelGrid4};
+        
+        // Gesture detection
+        gestureDetector = new GestureDetector(new MyGestureDetector());
+        gestureListener = new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                return gestureDetector.onTouchEvent(event);
+            }
+        };
+        
+//        fuelGrid1.setOnClickListener(this);    
+        fuelGrid1.setOnTouchListener(gestureListener);
+        
+//        fuelGrid2.setOnClickListener(this);    
+        fuelGrid2.setOnTouchListener(gestureListener);
+        
+//        fuelGrid3.setOnClickListener(this);    
+        fuelGrid3.setOnTouchListener(gestureListener);
+        
+//        fuelGrid4.setOnClickListener(this);    
+        fuelGrid4.setOnTouchListener(gestureListener);
     }
     
     @Override
@@ -575,46 +631,46 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		String[] map = mapData.toString().trim().split(" ");
 		short cnt = 0;
 		
-		chart.setAutoRepaint(false);
-		ser.clear();
-	
-		for (int x = 0; x < 32; x++) {
-			for (int y = 0; y < 16; y++) {
-				double val = Double.parseDouble(String.format("%.0f", Integer.parseInt(map[cnt] + map[cnt+1], 16) / 128f));
-				val = val - 95;
-				ser.add(x, val, y);
-				if (DEBUG_MODE) Log.d(TAG, String.format("%d:%d = %.0f", x, y, val));
-				cnt = (short) (cnt + 2);
-			}
-		}	  
-		
-		for (int x = 0; x < chart.getAxes().getCount(); x++) {
-			chart.getAxes().getAxis(x).getLabels().getItems().clear();
-		}
-		
-		for (double x = 0; x < 32; x++) {
-			AxisLabelItem itm = chart.getAxes().getBottom().getLabels().getItems().add(x);
-			itm.getFont().setSize(10);
-			itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
-			itm.setText(String.format("%.0f", 300 * x));
-		}
-		
-		for (double x = 0; x < 16; x++) {
-			AxisLabelItem itm = chart.getAxes().getDepth().getLabels().getItems().add(x, x == 0 ? " " : String.format("%.0f", 13 * x));
-			itm.getFont().setSize(10);
-			itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
-		}
-
-		chart.getAxes().getBottom().getTitle().setText("Engine RPM");
-		chart.getAxes().getBottom().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
-		chart.getAxes().getBottom().getTitle().getFont().setSize(14);
-
-		chart.getAxes().getDepth().getTitle().setText("MAP (kPa)");
-		chart.getAxes().getDepth().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
-		chart.getAxes().getDepth().getTitle().getFont().setSize(14);
-		
-		chart.refreshControl();
-		chart.setAutoRepaint(true);
+//		chart.setAutoRepaint(false);
+//		ser.clear();
+//	
+//		for (int x = 0; x < 32; x++) {
+//			for (int y = 0; y < 16; y++) {
+//				double val = Double.parseDouble(String.format("%.0f", Integer.parseInt(map[cnt] + map[cnt+1], 16) / 128f));
+//				val = val - 95;
+//				ser.add(x, val, y);
+//				if (DEBUG_MODE) Log.d(TAG, String.format("%d:%d = %.0f", x, y, val));
+//				cnt = (short) (cnt + 2);
+//			}
+//		}	  
+//		
+//		for (int x = 0; x < chart.getAxes().getCount(); x++) {
+//			chart.getAxes().getAxis(x).getLabels().getItems().clear();
+//		}
+//		
+//		for (double x = 0; x < 32; x++) {
+//			AxisLabelItem itm = chart.getAxes().getBottom().getLabels().getItems().add(x);
+//			itm.getFont().setSize(10);
+//			itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
+//			itm.setText(String.format("%.0f", 300 * x));
+//		}
+//		
+//		for (double x = 0; x < 16; x++) {
+//			AxisLabelItem itm = chart.getAxes().getDepth().getLabels().getItems().add(x, x == 0 ? " " : String.format("%.0f", 13 * x));
+//			itm.getFont().setSize(10);
+//			itm.getFont().setColor(com.steema.teechart.drawing.Color.white);
+//		}
+//
+//		chart.getAxes().getBottom().getTitle().setText("Engine RPM");
+//		chart.getAxes().getBottom().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
+//		chart.getAxes().getBottom().getTitle().getFont().setSize(14);
+//
+//		chart.getAxes().getDepth().getTitle().setText("MAP (kPa)");
+//		chart.getAxes().getDepth().getTitle().getFont().setColor(com.steema.teechart.drawing.Color.white);
+//		chart.getAxes().getDepth().getTitle().getFont().setSize(14);
+//		
+//		chart.refreshControl();
+//		chart.setAutoRepaint(true);
 		
         if (progress != null && progress.isShowing()) progress.dismiss();
 		
@@ -1065,7 +1121,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			    	mapMode = true;
 			    	sendRequest(mapOffset);
 				}
+				
+				fuelData1.clear();
+				fuelData2.clear();
+				fuelData3.clear();
+				fuelData4.clear();
 
+				for (int x = 0; x < 128; x++) {
+					fuelData1.add(String.format("%d", x));
+					fuelData2.add(String.format("%d", x + 128));
+					fuelData3.add(String.format("%d", x + 256));
+					fuelData4.add(String.format("%d", x + 384));
+				}	  
+			
 				ft.show(fuelFragment);
 				break;
 		}
@@ -1087,4 +1155,50 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			super.onBackPressed();
 		}
 	}
+
+	public void onClick(View arg0) {
+//        Filter f = (Filter) v.getTag();
+//        FilterFullscreenActivity.show(this, input, f);
+	}
+	
+    class MyGestureDetector extends SimpleOnGestureListener {
+
+        final private ViewFlipper vf = (ViewFlipper) findViewById(R.id.gridFlipper);
+        
+        final private Animation animFlipInForeward = AnimationUtils.loadAnimation(ctx, R.anim.flipin);
+        final private Animation animFlipOutForeward = AnimationUtils.loadAnimation(ctx, R.anim.flipout);
+        final private Animation animFlipInBackward = AnimationUtils.loadAnimation(ctx, R.anim.flipin_reverse);
+        final private Animation animFlipOutBackward = AnimationUtils.loadAnimation(ctx, R.anim.flipout_reverse);
+        
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            try {
+                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH) return false;
+                
+                // right to left swipe
+                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+//                    Toast.makeText(ctx, "Left Swipe", Toast.LENGTH_SHORT).show();
+
+//                    vf.setAnimation(AnimationUtils.loadAnimation(ctx, android.R.anim.slide_out_right));
+                    vf.setInAnimation(animFlipInForeward);
+                    vf.setOutAnimation(animFlipOutForeward);
+                    
+                    vf.showNext();
+                    
+                }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+//                    Toast.makeText(ctx, "Right Swipe", Toast.LENGTH_SHORT).show();
+                    
+//                    vf.setAnimation(AnimationUtils.loadAnimation(ctx, android.R.anim.slide_in_left));
+                    vf.setInAnimation(animFlipInBackward);
+                    vf.setOutAnimation(animFlipOutBackward);
+                    
+                    vf.showPrevious();                    
+                }
+            } catch (Exception e) {
+                // nothing
+            }
+            return false;
+        }
+
+    }
 }

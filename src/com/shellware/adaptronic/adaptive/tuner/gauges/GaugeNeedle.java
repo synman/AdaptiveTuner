@@ -16,6 +16,8 @@
  */
 package com.shellware.adaptronic.adaptive.tuner.gauges;
 
+import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.animation.Animation;
@@ -65,7 +67,7 @@ public class GaugeNeedle extends ImageView {
 			  Animation.RELATIVE_TO_SELF, pivotPoint);
 
 		rotateAnimation.setInterpolator(new LinearInterpolator());
-		rotateAnimation.setDuration(100);
+		rotateAnimation.setDuration(0);
 		rotateAnimation.setFillAfter(true);	
 	
 		startAnimation(rotateAnimation);

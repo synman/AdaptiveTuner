@@ -16,13 +16,73 @@
  *
  */
  -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 android:orientation="vertical"
 android:layout_width="fill_parent" android:layout_height="wrap_content">
+
     <LinearLayout android:id="@+id/linearLayout1" android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:baselineAligned="false">
         <TextView android:text="                 " android:id="@+id/textView1" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
     </LinearLayout>
 <LinearLayout android:orientation="vertical" android:layout_height="fill_parent" android:layout_width="fill_parent" android:id="@+id/linearLayoutChart">
     <LinearLayout android:id="@+id/linearLayoutTchart" android:layout_height="wrap_content" android:layout_width="fill_parent"></LinearLayout>
 </LinearLayout>
-</LinearLayout>
+
+<WebView
+    android:id="@+id/webView1"
+    android:layout_width="fill_parent"
+    android:layout_height="match_parent" />
+
+</LinearLayout> -->
+
+ <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:tools="http://schemas.android.com/tools"
+     android:layout_width="match_parent"
+     android:layout_height="match_parent"
+     android:layout_gravity="center"
+     android:background="@drawable/shape_gradient_background"
+     tools:context=".fragments.FuelFragment" >
+
+     <ViewFlipper
+         android:id="@+id/gridFlipper"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content" >
+
+	     <GridView
+	         android:id="@+id/gridFuel1"
+	         android:layout_width="wrap_content"
+	         android:layout_height="wrap_content"
+	         android:fadingEdge="horizontal|vertical"
+	         android:numColumns="9"
+	         android:scrollbars="horizontal|vertical" >
+	     </GridView>
+
+	     <GridView
+	         android:id="@+id/gridFuel2"
+	         android:layout_width="wrap_content"
+	         android:layout_height="wrap_content"
+	         android:fadingEdge="horizontal|vertical"
+	         android:numColumns="9"
+	         android:scrollbars="horizontal|vertical" >
+	     </GridView>
+
+   	     <GridView
+	         android:id="@+id/gridFuel3"
+	         android:layout_width="wrap_content"
+	         android:layout_height="wrap_content"
+	         android:fadingEdge="horizontal|vertical"
+	         android:numColumns="9"
+	         android:scrollbars="horizontal|vertical" >
+	     </GridView>
+
+   	     <GridView
+	         android:id="@+id/gridFuel4"
+	         android:layout_width="wrap_content"
+	         android:layout_height="wrap_content"
+	         android:fadingEdge="horizontal|vertical"
+	         android:numColumns="9"
+	         android:scrollbars="horizontal|vertical" >
+	     </GridView>
+
+     </ViewFlipper>
+     
+</RelativeLayout>
