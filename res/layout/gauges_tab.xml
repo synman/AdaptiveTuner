@@ -26,8 +26,8 @@
 
 	<RelativeLayout
 	    android:id="@+id/afrmeter"
-	    android:layout_width="110dp"
-	    android:layout_height="110dp"
+	    android:layout_width="160dp"
+	    android:layout_height="160dp"
 		android:layout_centerInParent="true" >
 
 	    <ImageView
@@ -58,10 +58,10 @@
 	   	    
 	<RelativeLayout
 	    android:id="@+id/mapmeter"
-	    android:layout_width="110dp"
-	    android:layout_height="110dp"
+	    android:layout_width="125dp"
+	    android:layout_height="125dp"
 	    android:layout_alignParentTop="true"
-	    android:layout_marginRight="20dp"
+	    android:layout_marginRight="60dp"
 	    android:layout_marginTop="10dp"
 	    android:layout_toLeftOf="@id/afrmeter" >
 
@@ -87,9 +87,9 @@
 	<RelativeLayout
   	 	android:id="@+id/tachometer"
 	    android:layout_alignParentTop="true"
-	    android:layout_width="110dp"
-	    android:layout_height="110dp"
-      	android:layout_marginLeft="20dp"  
+	    android:layout_width="125dp"
+	    android:layout_height="125dp"
+      	android:layout_marginLeft="60dp"  
  	    android:layout_marginTop="10dp"
  	    android:layout_toRightOf="@id/afrmeter" >
 
@@ -114,11 +114,11 @@
 	
     <RelativeLayout
         android:id="@+id/watermeter"
-        android:layout_width="110dp"
-        android:layout_height="110dp"
+        android:layout_width="125dp"
+        android:layout_height="125dp"
         android:layout_alignParentBottom="true"
 		android:layout_marginBottom="10dp"
-        android:layout_marginRight="20dp"
+        android:layout_marginRight="60dp"
         android:layout_toLeftOf="@id/afrmeter" >
    	    	
 	    <ImageView
@@ -142,10 +142,10 @@
 	
    	<RelativeLayout
    	    android:id="@+id/intakemeter"
-   	    android:layout_width="110dp"
-   	    android:layout_height="110dp"
+   	    android:layout_width="125dp"
+   	    android:layout_height="125dp"
    	    android:layout_alignParentBottom="true"
-   	    android:layout_marginLeft="20dp"
+   	    android:layout_marginLeft="60dp"
    	    android:layout_marginBottom="10dp"
    	    android:layout_toRightOf="@id/afrmeter" >
 

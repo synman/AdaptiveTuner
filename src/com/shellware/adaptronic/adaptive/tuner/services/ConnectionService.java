@@ -74,7 +74,7 @@ public class ConnectionService extends Service {
 	private static final String DEVICE_ADDR_AND_MODE_HEADER = "01 03 ";
 	private static final String SEVEN_REGISTERS = "01 03 0E ";
 	private static final String EIGHT_REGISTERS = "01 03 10 ";
-	private static final String SIXTEEN_REGISTERS = "01 03 20";
+//	private static final String SIXTEEN_REGISTERS = "01 03 20";
 	
 	private static final int LONG_PAUSE = 100;
 	private static final int NOTIFICATION_ID = 1;
@@ -98,6 +98,7 @@ public class ConnectionService extends Service {
 	
 	private static short lastRegister = 4096;
 	private static long lastUpdateInMillis = 0;
+	private static boolean dataNotAvailable = true;
 	
 	private static int tempUomPref = 1;
 	private static boolean afrAlarmLogging = false;
@@ -217,7 +218,7 @@ public class ConnectionService extends Service {
 
         		sendRequest();
 				
-//				imgStatus.setBackgroundColor(Color.RED);				
+        		dataNotAvailable = true;
         	}
         	
     		refreshHandler.postDelayed(this, LONG_PAUSE);
@@ -279,7 +280,7 @@ public class ConnectionService extends Service {
 	    	        		// do we have a bad message?
 	    	        		if (!(data.contains(EIGHT_REGISTERS) || data.contains(SEVEN_REGISTERS))) {
 	    	            		if (DEBUG) Log.d(TAG, lastRegister + " response discarded: " + data);
-//	    	    				imgStatus.setBackgroundColor(Color.RED);				
+	    	            		dataNotAvailable = true;
 	    	        			sendRequest();
 	    	        			break;
 	    	        		}
@@ -386,8 +387,8 @@ public class ConnectionService extends Service {
 		final String[] buf = data.substring(data.indexOf(SEVEN_REGISTERS), data.length()).split(" ");
 
 		if (ModbusRTU.validCRC(buf, REGISTER_4140_LENGTH)) {   
-//			imgStatus.setBackgroundColor(Color.GREEN);
-
+			dataNotAvailable = false;
+			
 			setLearningFlags(new String[] {"0", "0", "0", buf[15], buf[16]});
 			logItem.setTargetAfr(Integer.parseInt(buf[3] + buf[4], 16) / 10f);
 			logItem.setClosedLoop(getBit(Integer.parseInt(buf[9] + buf[10], 16), 8) > 0); 
@@ -398,7 +399,7 @@ public class ConnectionService extends Service {
             
 		} else {
 			if (DEBUG) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
-//			imgStatus.setBackgroundColor(Color.RED);
+			dataNotAvailable = true;
 			sendRequest();
 		}
 	}
@@ -408,8 +409,7 @@ public class ConnectionService extends Service {
 		final String[] buf = data.substring(data.indexOf(EIGHT_REGISTERS), data.length()).split(" ");
 
 		if (ModbusRTU.validCRC(buf, REGISTER_4096_LENGTH)) {   
-//			imgStatus.setBackgroundColor(Color.GREEN);
-//    		dataArray.clear();
+			dataNotAvailable = false;
     		
     		logItem.setRpm(Integer.parseInt(buf[3] + buf[4], 16));
     		logItem.setMap(Integer.parseInt(buf[5] + buf[6], 16));
@@ -435,7 +435,7 @@ public class ConnectionService extends Service {
             
 		} else {
 			if (DEBUG) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
-//			imgStatus.setBackgroundColor(Color.RED);
+			dataNotAvailable = true;
     		sendRequest();
 		}
     }
@@ -500,6 +500,10 @@ public class ConnectionService extends Service {
 
 	public LogItems getAfrAlarmLogItems() {
 		return afrAlarmLogItems;
+	}
+
+	public boolean isDataNotAvailable() {
+		return dataNotAvailable;
 	}
 
 	public State getState() {

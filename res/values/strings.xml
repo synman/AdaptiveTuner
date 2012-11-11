@@ -28,7 +28,9 @@
     <string name="device_list">Bluetooth Device List</string>
     <string name="ignition">Ignition Learning</string>
     <string name="fuel">Fuel Learning</string>
-    <string name="share_log">Share using</string>
+    
+    <string name="share_log_heading">Share using</string>
+    <string name="share_log_message" formatted="false">Log saved as %s%s%s</string>
     
     <string name="tab_adaptive">Adaptive Monitor</string>
     <string name="tab_gauges">Gauges Dashboard</string>

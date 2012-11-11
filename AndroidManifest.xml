@@ -38,7 +38,8 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main" 
-            android:screenOrientation="landscape" android:launchMode="singleInstance">
+            android:screenOrientation="landscape" 
+            android:launchMode="singleInstance">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -67,8 +68,7 @@
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE" />
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE" />
 			</intent-filter>
-		</service>
-		
+		</service>	
     </application>
 
 </manifest>

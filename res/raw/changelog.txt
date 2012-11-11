@@ -19,6 +19,20 @@
     </style>
   </head>
   <body>
+$ 1.1.5
+  % Version 1.1.5
+  _ 2012-11-11
+  ! Service Release (literally)
+  	* Merged to master branch
+  	* Honeycomb 3.1+ only
+  	* All reception logic moved to a stateful service
+  	* Removed fuel map data for now (work in progress)
+  	* Fixed a bug where USB logic was overwriting active Sockets
+  	* Implemented wake lock when MainActivity visible
+  	* Resized the gauges a smidge
+  	* TODO: USB support not verified
+  	* TODO: Add support for duty cycle and ignition maps
+  	* TODO: Add edit capability for maps
 $ 1.1.0
   % Version 1.1.0
   _ 2012-10-11

@@ -43,6 +43,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -60,6 +61,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
@@ -78,7 +80,6 @@ import com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle;
 import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService.State;
-import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 
 public class MainActivity extends Activity implements ActionBar.TabListener, OnClickListener {
@@ -96,49 +97,49 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private Fragment gaugesFragment;
 	private Fragment fuelFragment;
 	
-	private static TextView txtData;
+	private TextView txtData;
 	private ListView lvDevices;
 	private RelativeLayout layoutDevices;
 	
 	private Menu myMenu;
-	private static MenuItem menuConnect;
-	private static MenuItem menuShareLog;
+	private MenuItem menuConnect;
+	private MenuItem menuShareLog;
 	
-	private static GridView gridData;
-	private static ImageView imgStatus;
+	private GridView gridData;
+	private ImageView imgStatus;
 	
-	private static TextView txtFuelLearn;
-	private static ImageView imgIWait;
-	private static ImageView imgIRpm;
-	private static ImageView imgILoad;
+	private TextView txtFuelLearn;
+	private ImageView imgIWait;
+	private ImageView imgIRpm;
+	private ImageView imgILoad;
 	
-	private static ImageView imgFWait;
-	private static ImageView imgFRpm;
-	private static ImageView imgFLoad;
+	private ImageView imgFWait;
+	private ImageView imgFRpm;
+	private ImageView imgFLoad;
 	
 	private ImageView imgIat;
 	
-	private static GaugeNeedle waterNeedle;
-	private static GaugeNeedle iatNeedle;
-	private static GaugeNeedle mapNeedle;
-	private static GaugeNeedle afrNeedle;
-	private static GaugeNeedle targetAfrNeedle;
-	private static GaugeNeedle rpmNeedle;
+	private GaugeNeedle waterNeedle;
+	private GaugeNeedle iatNeedle;
+	private GaugeNeedle mapNeedle;
+	private GaugeNeedle afrNeedle;
+	private GaugeNeedle targetAfrNeedle;
+	private GaugeNeedle rpmNeedle;
 
-	private static ProgressDialog progress;
+	private ProgressDialog progress;
 	
-	private static Handler refreshHandler = new Handler();
+	private Handler refreshHandler = new Handler();
 
 	private final IntentFilter mUsbDetachedFilter = new IntentFilter();
 	private final BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();;
 	
 	private ArrayAdapter<String> devices;
-	private static ArrayAdapter<String> dataArray;
+	private ArrayAdapter<String> dataArray;
 
 	private static int lastRPM = 0;
 	
-	private static SharedPreferences prefs ;
-	private static Context ctx;
+	private SharedPreferences prefs ;
+	private Context ctx;
 	
 	private static int tempUomPref = 1;
 	private static boolean afrNotEqualTargetPref = false;
@@ -152,11 +153,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private static boolean shuttingDown = false;
 	
 	private static boolean afrAlarmLogging = false;
-	private final static LogItems afrAlarmLogItems = new LogItems();
 	
-	private static boolean mapMode = false;
-	private static short mapOffset = 0;
-	private static StringBuffer mapData = new StringBuffer(1280);
+//	private static boolean mapMode = false;
+//	private static short mapOffset = 0;
+//	private final StringBuffer mapData = new StringBuffer(1280);
 	
 	private GridView fuelGrid1;
 	private GridView fuelGrid2;
@@ -175,12 +175,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private GestureDetector gestureDetector;
 	View.OnTouchListener gestureListener;
 		
-	private static ConnectionService connectionService;
+	private ConnectionService connectionService;
 	private ServiceConnection connectionServiceConnection;
 	
 	private PowerManager pm;
 	private WakeLock wl;
 	
+	@Override
+	public void onAttachedToWindow() {
+	    super.onAttachedToWindow();
+	    Window window = getWindow();
+	    window.setFormat(PixelFormat.RGBA_8888);
+	}
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -297,7 +304,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         fuelData4 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         fuelGrid4.setAdapter(fuelData4);
         
-        GridView[] fuelGrids = {fuelGrid1, fuelGrid2, fuelGrid3, fuelGrid4};
+//        GridView[] fuelGrids = {fuelGrid1, fuelGrid2, fuelGrid3, fuelGrid4};
         
         // Gesture detection
         gestureDetector = new GestureDetector(new MyGestureDetector());
@@ -381,8 +388,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false); 
     	if (connectionService != null) connectionService.setAfrAlarmLogging(afrAlarmLogging);
     	
-    	if (menuShareLog != null) {
-    		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());
+    	if (menuShareLog != null && connectionService != null) {
+    		menuShareLog.setVisible(afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty());
     	}
 
     	// ensure all fragments are hidden
@@ -469,12 +476,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	    		return;
 			}
 			
+			// toggle our status image based on data reception
+			imgStatus.setBackgroundColor(connectionService.isDataNotAvailable() ? Color.RED : Color.GREEN);
+			
 			// show the log share menu option if logging is enabled
-			if (connectionService != null && !menuShareLog.isVisible() && connectionService.getAfrAlarmLogItems().getItems().size() > 0) {
-				menuShareLog.setVisible(true);
-			} else {
-				if (menuShareLog.isVisible()) menuShareLog.setVisible(false);
-			}
+	    	if (connectionService != null)
+	    		menuShareLog.setVisible(afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()); 
 			
 			// populate all data elements
     		dataArray.clear();
@@ -572,8 +579,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         }
     };
 
-    
-    private static String getTemperatureSymbol() {
+    private String getTemperatureSymbol() {
     	switch (tempUomPref) {
     		case 1:
     			return "F";
@@ -587,8 +593,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     }
     
     // necessary because currently the WAT gauge is scaled for F
-    private static int convertWat(final int temp) {
-    	
+    private int convertWat(final int temp) {	
     	switch (tempUomPref) {
     		case 1:
     			return temp;
@@ -677,7 +682,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         menuShareLog = myMenu.findItem(R.id.menu_share);
     	menuConnect = myMenu.findItem(R.id.menu_connect);
     	
-		menuShareLog.setVisible(afrAlarmLogging && !afrAlarmLogItems.getItems().isEmpty());  
+    	if (connectionService != null)
+    		menuShareLog.setVisible(afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty());  
 		
         return true;
     }
@@ -696,6 +702,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	        case R.id.menu_exit:
 	        	shuttingDown = true;
 	    		this.finish();
+	    		return true;
 	        	
 	        case R.id.menu_share:
 	        	shareLog();
@@ -714,7 +721,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	        		edit.putString("prefs_remote_mac", "");
 	        		edit.commit();
 	        	}
-	            return false;
+	            return true;
 	            
 	        case R.id.menu_prefs:
                 startActivity(new Intent(this, AdaptivePreferences.class));
@@ -727,53 +734,52 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	
 	private void shareLog() {
 		
-		synchronized(this) {
-			
-			// if we're logging save the log file
-			if (afrAlarmLogging) {		
-				try {
-					final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.csv'").format(new Date());
+		// if we're logging save the log file
+		if (afrAlarmLogging) {		
+			try {
+				final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.csv'").format(new Date());
 
-					File sdcard = Environment.getExternalStorageDirectory();
-					File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
-					dir.mkdirs();
-					
-					File file = new File(dir, filename);
-					FileOutputStream f = new FileOutputStream(file);
-					
-					// write our header
-					f.write("timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat\n".getBytes());
-					
-					ArrayList<LogItem> items = connectionService.getAfrAlarmLogItems().getItems();
-					Iterator<LogItem> iterator = items.iterator();
-					
-					while (iterator.hasNext()) {
-						final LogItem item = (LogItem) iterator.next();
-						f.write(item.getLogBytes());
-					}
-					
-					connectionService.getAfrAlarmLogItems().getItems().clear();
-					
-					f.flush();
-					f.close();
-					
-					menuShareLog.setVisible(false);
-					
-					Toast.makeText(getApplicationContext(), String.format("Log saved as %s%s%s", sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename), Toast.LENGTH_LONG).show();
-					if (DEBUG) Log.d(TAG, String.format("Log saved as %s%s%s", sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename));
-
-					Intent share = new Intent(Intent.ACTION_SEND);
-					share.setType("text/plain");
-					share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getPath()));
-					startActivity(Intent.createChooser(share, getText(R.string.share_log)));
-
-				} catch (Exception e) {
-					Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+				File sdcard = Environment.getExternalStorageDirectory();
+				File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
+				dir.mkdirs();
+				
+				File file = new File(dir, filename);
+				FileOutputStream f = new FileOutputStream(file);
+				
+				// write our header
+				f.write("timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat\n".getBytes());
+				
+				ArrayList<LogItem> items = connectionService.getAfrAlarmLogItems().getItems();
+				Iterator<LogItem> iterator = items.iterator();
+				
+				while (iterator.hasNext()) {
+					final LogItem item = (LogItem) iterator.next();
+					f.write(item.getLogBytes());
 				}
+				
+				connectionService.getAfrAlarmLogItems().getItems().clear();
+				
+				f.flush();
+				f.close();
+				
+				menuShareLog.setVisible(false);
+				
+				final String logLocation = String.format(getResources().getString(R.string.share_log_message), 
+														 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
+				
+				Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
+				if (DEBUG) Log.d(TAG, logLocation);
+
+				Intent share = new Intent(Intent.ACTION_SEND);
+				share.setType("text/plain");
+				share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getPath()));
+				startActivity(Intent.createChooser(share, getText(R.string.share_log_heading)));
+
+			} catch (Exception e) {
+				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 		}
 	}
-
 
 	public void onTabReselected(Tab tab, FragmentTransaction ft) {
 		

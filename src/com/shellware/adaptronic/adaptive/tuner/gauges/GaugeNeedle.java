@@ -16,16 +16,20 @@
  */
 package com.shellware.adaptronic.adaptive.tuner.gauges;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
-
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 
+import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+
 public class GaugeNeedle extends ImageView {
+
+	private static final String TAG = MainActivity.TAG;
+	private static final boolean DEBUG = MainActivity.DEBUG;
 
 	private final int NOT_SET_YET = Integer.MAX_VALUE;
 	
@@ -67,13 +71,14 @@ public class GaugeNeedle extends ImageView {
 			  Animation.RELATIVE_TO_SELF, pivotPoint);
 
 		rotateAnimation.setInterpolator(new LinearInterpolator());
-		rotateAnimation.setDuration(10);
+		rotateAnimation.setDuration(200);
 		rotateAnimation.setFillAfter(true);	
+		rotateAnimation.setFillEnabled(true);	
 	
 		startAnimation(rotateAnimation);
 		
 		lastValue = newValue;
-//		if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, String.format("%s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
+		if (DEBUG) Log.d(TAG, String.format("%s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
 	}
 	
 	public int getMinValue() {
