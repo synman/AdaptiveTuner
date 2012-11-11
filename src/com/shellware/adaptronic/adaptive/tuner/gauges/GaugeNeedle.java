@@ -67,7 +67,7 @@ public class GaugeNeedle extends ImageView {
 			  Animation.RELATIVE_TO_SELF, pivotPoint);
 
 		rotateAnimation.setInterpolator(new LinearInterpolator());
-		rotateAnimation.setDuration(0);
+		rotateAnimation.setDuration(10);
 		rotateAnimation.setFillAfter(true);	
 	
 		startAnimation(rotateAnimation);

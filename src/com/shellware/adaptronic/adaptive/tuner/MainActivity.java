@@ -49,6 +49,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -84,7 +86,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	public static final String TAG = "Adaptive";
 	public static final boolean DEBUG = true;
 
-	private static final int LONG_PAUSE = 100;
+	private static final int LONG_PAUSE = 200;
 
 	private static final int AFR_MIN = 970;
 	private static final int AFR_MAX = 1970;
@@ -175,6 +177,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 		
 	private static ConnectionService connectionService;
 	private ServiceConnection connectionServiceConnection;
+	
+	private PowerManager pm;
+	private WakeLock wl;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -302,22 +307,13 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
             }
         };
         
-//        fuelGrid1.setOnClickListener(this);    
         fuelGrid1.setOnTouchListener(gestureListener);
-        
-//        fuelGrid2.setOnClickListener(this);    
         fuelGrid2.setOnTouchListener(gestureListener);
-        
-//        fuelGrid3.setOnClickListener(this);    
         fuelGrid3.setOnTouchListener(gestureListener);
-        
-//        fuelGrid4.setOnClickListener(this);    
         fuelGrid4.setOnTouchListener(gestureListener);
 		
-//EVAN
 		mUsbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(mUsbReceiver, mUsbDetachedFilter);
-//END EVAN		
         
 		connectionServiceConnection = new ServiceConnection() {
 		    public void onServiceConnected(ComponentName className, IBinder service) {
@@ -331,13 +327,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 		    }
 		};
 		
-	    bindService(new Intent(this, 
-	            ConnectionService.class), connectionServiceConnection, Context.BIND_AUTO_CREATE);
+	    bindService(new Intent(this, ConnectionService.class), connectionServiceConnection, Context.BIND_AUTO_CREATE);
+	    
+		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK + PowerManager.ON_AFTER_RELEASE, getResources().getString(R.string.app_name));
     }
     
     @Override
 	protected void onResume() {
     	super.onResume();
+    	
+        // acquire wakelock
+        if (!wl.isHeld()) wl.acquire();
     	
     	// initialize our preferences
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
@@ -410,6 +411,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     protected void onPause() {
     	super.onPause();
     	
+        // release wakelock
+        if (wl.isHeld()) wl.release();
+
     	refreshHandler.removeCallbacks(RefreshRunnable);
     	if (!shuttingDown) startService(new Intent(ConnectionService.ACTION_UI_INACTIVE));
     }
@@ -465,6 +469,14 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	    		return;
 			}
 			
+			// show the log share menu option if logging is enabled
+			if (connectionService != null && !menuShareLog.isVisible() && connectionService.getAfrAlarmLogItems().getItems().size() > 0) {
+				menuShareLog.setVisible(true);
+			} else {
+				if (menuShareLog.isVisible()) menuShareLog.setVisible(false);
+			}
+			
+			// populate all data elements
     		dataArray.clear();
 			final LogItem item = connectionService.getLogItem();
 			
@@ -501,7 +513,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 			txtData.setText(String.format("AVG: %.0f ms - TPS: %d%%", connectionService.getAvgResponseMillis(), tps));
 
     		iatNeedle.setValue(mat);
-    		waterNeedle.setValue(wat);
+    		waterNeedle.setValue(convertWat(wat));
     		mapNeedle.setValue(map);
     		
     		float afrVal = afr * 100;
@@ -550,6 +562,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         		}
     		}
     		
+    		// dismiss the progress bar if it is visible
     		if (progress != null && progress.isShowing()) {
     			progress.dismiss();
     			if (menuConnect != null) menuConnect.setTitle(R.string.menu_disconnect);
@@ -573,28 +586,21 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	}
     }
     
-    //TODO create conversion for water gauge
-//    private static int getTemperatureValue(String in) {
-//    	
-//    	final int temp = Integer.parseInt(in, 16);
-//    	
-//    	switch (tempUomPref) {
-//    		case 1:
-//    			return temp * 9 / 5 + 32; 
-//    		case 2:
-//    			return (int) (temp + 273.15);
-//    		case 3:
-//    			return temp * 33 / 100;
-//    		default:
-//    			return temp;
-//    	}
-//    }
+    // necessary because currently the WAT gauge is scaled for F
+    private static int convertWat(final int temp) {
+    	
+    	switch (tempUomPref) {
+    		case 1:
+    			return temp;
+    		default:
+    			return (int) (temp * 1.8 + 32);
+    	}
+    }
     
     private OnItemClickListener DevicesClickListener = new OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {
 
-    	// Get the device MAC address, which is the last 17 chars in the View
-            final String[] info = ((TextView) v).getText().toString().split("\n");
+        	final String[] info = ((TextView) v).getText().toString().split("\n");
             final String name = info[0];
             final String address = info[1];
             
@@ -688,7 +694,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	        	return true;
 	        	
 	        case R.id.menu_exit:
-//	        	System.exit(0);
 	        	shuttingDown = true;
 	    		this.finish();
 	        	

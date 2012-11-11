@@ -71,6 +71,7 @@
     <string name="changelog_title">What\'s New in Adaptive Tuner</string>
     <string name="changelog_ok_button">OK</string>
     
+    <string name="service_name">Adaptive Tuner Connection Service</string>
     <string name="service_connecting">Connecting to %s. . .</string>
     <string name="service_bt_connected">Connected to %s</string>
     <string name="service_usb_connected">Connected via USB</string>

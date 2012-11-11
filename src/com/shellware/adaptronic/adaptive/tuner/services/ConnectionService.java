@@ -16,6 +16,8 @@
  */
 package com.shellware.adaptronic.adaptive.tuner.services;
 
+import java.lang.ref.WeakReference;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -83,13 +85,13 @@ public class ConnectionService extends Service {
 	private static SharedPreferences prefs;
 	
 	private static final Handler refreshHandler = new Handler();
-	private final ConnectionHandler connectionHandler = new ConnectionHandler();
+	private final ConnectionHandler connectionHandler = new ConnectionHandler(this);
 	
 	private static ConnectedThread connectedThread;
 	private static ConnectThread connectThread;
 	
     private static State state = State.DISCONNECTED;	
-	private boolean UI_THREAD_IS_ACTIVE = false;
+	private static boolean UI_THREAD_IS_ACTIVE = false;
 
 	private static long updatesReceived = 0;
 	private static long totalTimeMillis = 0;
@@ -121,7 +123,7 @@ public class ConnectionService extends Service {
 
         notifier.icon = R.drawable.ic_launcher;
         notifier.flags |= Notification.FLAG_ONGOING_EVENT;
-        notifier.tickerText = "Adaptronic Connection Service";
+        notifier.tickerText = getResources().getString(R.string.service_name);
 
     	prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     	
@@ -222,43 +224,33 @@ public class ConnectionService extends Service {
         }
     };
     
-	private class ConnectionHandler extends Handler {
+	private static class ConnectionHandler extends Handler {
+		
+		private final WeakReference<ConnectionService> theService;
+
+		ConnectionHandler(ConnectionService service) {
+			theService = new WeakReference<ConnectionService>(service);
+		}
 
 		@Override
 		public void handleMessage(Message message) {
+			
+			ConnectionService service = theService.get();
+			if (service == null) {
+				if (DEBUG) Log.d(TAG, "service reference is null");
+				return;
+			}
 		
 	        switch (message.getData().getShort("handle")) {
 	        	case CONNECTED:
 	        		final String name = message.getData().getString("name");
 	        		final String addr = message.getData().getString("addr");
 	        		
-	        		state = state == State.CONNECTING ? State.CONNECTED_BT : State.CONNECTED_USB;
-
-	        		sendRequest(REGISTER_4096_PLUS_SEVEN);
-		    		totalTimeMillis = 0;
-		    		updatesReceived = 0;
-
-		    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
-
-	        		Editor edit = prefs.edit();
-	        		
-	        		edit.putString("prefs_remote_name", name);
-	        		edit.putString("prefs_remote_mac", addr);
-	        		edit.commit();
-		    		
-	                notifier.tickerText = String.format(getResources().getString(R.string.service_bt_connected), name);
-
-	                if (!UI_THREAD_IS_ACTIVE) {
-	                    PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
-	                            new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
-
-	                    notifier.setLatestEventInfo(getApplicationContext(), getString(R.string.app_name), notifier.tickerText, pi);        
-	                }
-	                
+	        		service.connect(name, addr);
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
-					disconnect();
+					service.disconnect();
 					break;
 					
 	        	case DATA_READY:
@@ -339,6 +331,30 @@ public class ConnectionService extends Service {
 	    	lastUpdateInMillis = currentTimeInMillis;
 	    	lastRegister = register;
 		}
+	}
+	private void connect(final String name, final String addr) {
+		state = state == State.CONNECTING ? State.CONNECTED_BT : State.CONNECTED_USB;
+
+		sendRequest(REGISTER_4096_PLUS_SEVEN);
+		totalTimeMillis = 0;
+		updatesReceived = 0;
+
+		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
+
+		Editor edit = prefs.edit();
+		
+		edit.putString("prefs_remote_name", name);
+		edit.putString("prefs_remote_mac", addr);
+		edit.commit();
+
+		notifier.tickerText = String.format(getResources().getString(R.string.service_bt_connected), name);
+
+        if (!UI_THREAD_IS_ACTIVE) {
+            PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
+                    new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+            notifier.setLatestEventInfo(getApplicationContext(), getString(R.string.app_name), notifier.tickerText, pi);        
+        }
 	}
 	
     private void disconnect() {
