@@ -19,7 +19,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main" 
-            android:screenOrientation="landscape">
+            android:screenOrientation="landscape" android:launchMode="singleInstance">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,6 +37,19 @@
         <activity android:name=".preferences.AdaptivePreferences" 
             android:screenOrientation="landscape" 
             android:theme="@android:style/Theme.Holo" />
+        
+        <service 
+            android:name=".services.ConnectionService" 
+            android:exported="false">
+			<intent-filter>
+			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.CONNECT_BT" />
+ 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.CONNECT_USB" />
+ 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT" />
+ 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE" />
+ 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE" />
+			</intent-filter>
+		</service>
+		
     </application>
 
 </manifest>

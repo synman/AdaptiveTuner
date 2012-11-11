@@ -29,8 +29,12 @@ import android.os.Message;
 import android.util.Log;
 
 import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
     public class ConnectThread extends Thread {
+
+    	private static final String TAG = MainActivity.TAG;
+    	private static final boolean DEBUG = MainActivity.DEBUG;
 
     	private static final UUID UUID_RFCOMM_GENERIC = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
@@ -70,24 +74,24 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 					// bail if cancelled
 					if (cancelled) return;
 
-					Log.d(MainActivity.TAG, "bluetooth adapter: " + ex.getMessage());
+					Log.d(TAG, "bluetooth adapter: " + ex.getMessage());
 	        	}
 		        
 	        	try {
 		        	if (counter < 3) {
-						Log.d(MainActivity.TAG, "Trying createRfcommSocketToServiceRecord");
+						Log.d(TAG, "Trying createRfcommSocketToServiceRecord");
 						bts = btd.createRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		        			
 		        	} else {
 		        		if (counter < 6) {
-							Log.d(MainActivity.TAG, "Trying createInsecureRfcommSocketToServiceRecord");
+							Log.d(TAG, "Trying createInsecureRfcommSocketToServiceRecord");
 							bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		
 						} else {
 							if (counter < 9) {
-								Log.d(MainActivity.TAG, "Trying createInsecureRfcommSocket");
+								Log.d(TAG, "Trying createInsecureRfcommSocket");
 								Method m = btd.getClass().getMethod("createInsecureRfcommSocket", new Class[] { int.class });
 								bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1)); // 1==RFCOMM channel cod (class of device)
 							} else {
-								Log.d(MainActivity.TAG, "Trying createRfcommSocket");							
+								Log.d(TAG, "Trying createRfcommSocket");							
 								Method m = btd.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
 					            bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1));		
 							}
@@ -95,7 +99,7 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 		        	}
 	        	} catch (Exception ex) {
 					if (cancelled) return;
-					Log.d(MainActivity.TAG, "createRfcommSocket failed: " + ex.getMessage());	        		
+					Log.d(TAG, "createRfcommSocket failed: " + ex.getMessage());	        		
 	        	}
 		        
 		        try {
@@ -107,17 +111,17 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 					if (cancelled) return;
 					
 					counter++;
-					Log.d(MainActivity.TAG, "BT connect failed: " + e.getMessage());
+					Log.d(TAG, "BT connect failed: " + e.getMessage());
 					
 			        // bail if we've tried 15 times
 			        if (counter >= 15) {
 				        
-				        b.putShort("handle", MainActivity.CONNECTION_ERROR);
+				        b.putShort("handle", ConnectionService.CONNECTION_ERROR);
 				        b.putString("title", name);
 				        b.putString("message", String.format("Unable to connect to %s: %s", name.trim(), e.getMessage()));
 				        msg.setData(b);
 				        
-				        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Unable to connect - " + e.getMessage());
+				        if (DEBUG) Log.d(TAG, "Unable to connect - " + e.getMessage());
 				        handler.sendMessage(msg);
 				        return;
 			        }
@@ -127,13 +131,13 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
     		connectedThread.setSocket(bts);
     		connectedThread.start();
 
-	        b.putShort("handle", MainActivity.CONNECTED);
+	        b.putShort("handle", ConnectionService.CONNECTED);
 	        b.putString("name", name);
 	        b.putString("addr", addr);
 	        
 	        msg.setData(b);
 	        
-	        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Connected");
+	        if (DEBUG) Log.d(TAG, "Connected");
 	        handler.sendMessage(msg);
 		}
 		

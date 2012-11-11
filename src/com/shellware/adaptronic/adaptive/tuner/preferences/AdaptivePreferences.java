@@ -33,6 +33,9 @@ public class AdaptivePreferences extends PreferenceActivity {
     // Local Bluetooth adapter
     private static BluetoothAdapter bta = null;
     
+	private static final String TAG = MainActivity.TAG;
+	private static final boolean DEBUG = MainActivity.DEBUG;
+    
     public static final float MIN_WATER_TEMP_CELCIUS = 72f;
     public static final float MAX_WATER_TEMP_CELCIUS = 98f;
     
@@ -44,7 +47,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 //    	requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
     	super.onCreate(savedInstanceState);
         
-        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Preferences onCreate");
+        if (DEBUG) Log.d(TAG, "Preferences onCreate");
 
         // Get local Bluetooth adapter
         bta = BluetoothAdapter.getDefaultAdapter();
@@ -54,8 +57,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 
     	prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
     	edit = prefs.edit();
-        
-        //TODO: localize preferences title
+
         setTitle(R.string.prefs_title);
 		getActionBar().setDisplayHomeAsUpEnabled(true);
     }
@@ -78,7 +80,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 	protected void onResume() {
 		super.onResume();
 
-	    Log.d(MainActivity.TAG, "Preferences onResume");
+	    if (DEBUG) Log.d(TAG, "Preferences onResume");
 
 	}
 

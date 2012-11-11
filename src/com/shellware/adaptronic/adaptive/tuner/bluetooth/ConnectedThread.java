@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
@@ -30,6 +31,9 @@ import android.util.Log;
 
 public class ConnectedThread extends Thread {
 	
+	private static final String TAG = MainActivity.TAG;
+	private static final boolean DEBUG = MainActivity.DEBUG;
+
     private BluetoothSocket mmSocket;
     private InputStream mmInStream;
     private OutputStream mmOutStream;
@@ -67,18 +71,18 @@ public class ConnectedThread extends Thread {
                 // Read from the InputStream
                 bytes = mmInStream.read(buffer);
                                     
-		        if (MainActivity.DEBUG_MODE)  {
-	                Log.d(MainActivity.TAG, String.format("Received %d bytes", bytes));
+		        if (DEBUG)  {
+	                Log.d(TAG, String.format("Received %d bytes", bytes));
 	                
 //			        for (int x = 0; x < bytes; x++) {
-//			        	Log.d(MainActivity.TAG, String.format("%X", buffer[x]));
+//			        	Log.d(TAG, String.format("%X", buffer[x]));
 //			        }
 		        }
                 
                 // Send the obtained bytes to the UI activity
 		        Bundle b = new Bundle();
 
-		        b.putShort("handle", MainActivity.DATA_READY);
+		        b.putShort("handle", ConnectionService.DATA_READY);
 		        b.putByteArray("data", buffer);
 		        b.putInt("length", bytes);
 		        
@@ -92,14 +96,14 @@ public class ConnectedThread extends Thread {
 
     	        Bundle b = new Bundle();
     	        
-    	        b.putShort("handle", MainActivity.CONNECTION_ERROR);
+    	        b.putShort("handle", ConnectionService.CONNECTION_ERROR);
     	        b.putString("title", name);
     	        b.putString("message", "Connection lost");
     	        
     	        Message msg = new Message();
     	        msg.setData(b);
     	        
-    	        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Connection lost on read - " + e.getMessage()); 
+    	        if (DEBUG) Log.d(TAG, "Connection lost on read - " + e.getMessage()); 
     	        handler.sendMessage(msg);
 		        break;
             }
@@ -116,14 +120,14 @@ public class ConnectedThread extends Thread {
         	
 	        Bundle b = new Bundle();
 	        
-	        b.putShort("handle", MainActivity.CONNECTION_ERROR);
+	        b.putShort("handle", ConnectionService.CONNECTION_ERROR);
 	        b.putString("title", name);
 	        b.putString("message", "Connection lost");
 	        
 	        Message msg = new Message();
 	        msg.setData(b);
 	        
-	        if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "Connection lost on write - " + e.getMessage()); 
+	        if (DEBUG) Log.d(TAG, "Connection lost on write - " + e.getMessage()); 
 	        handler.sendMessage(msg);
         }
     }

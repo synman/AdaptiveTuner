@@ -19,7 +19,7 @@
  <resources>
 
     <string name="app_name">Adaptive Tuner</string>
-    <string name="menu_connect">Connect</string>
+    <string name="menu_connect">Bluetooth Connect</string>
     <string name="menu_disconnect">Disconnect</string>
     <string name="menu_refresh">Refresh</string>
     <string name="menu_exit">Quit</string>
@@ -71,5 +71,8 @@
     <string name="changelog_title">What\'s New in Adaptive Tuner</string>
     <string name="changelog_ok_button">OK</string>
     
-
+    <string name="service_connecting">Connecting to %s. . .</string>
+    <string name="service_usb_connected">Connected via USB</string>
+    <string name="service_disconnected">Disconnected</string>
+    
 </resources>

@@ -28,6 +28,9 @@ import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 
 public class GaugeSlider extends ImageView {
 
+	private static final String TAG = MainActivity.TAG;
+	private static final boolean DEBUG = MainActivity.DEBUG;
+
 	private int minValue = 0;
 	private int maxValue = 360;
 	
@@ -52,7 +55,7 @@ public class GaugeSlider extends ImageView {
 		if (usableUnits == 0) {
 			final RelativeLayout parent = (RelativeLayout) getParent();
 			usableUnits = parent.getWidth();
-			if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "slider usable: " + usableUnits);
+			if (DEBUG) Log.d(TAG, "slider usable: " + usableUnits);
 		}
 				
 		final float multiplier = usableUnits / (float) (maxValue - minValue);
@@ -62,7 +65,7 @@ public class GaugeSlider extends ImageView {
 		
 		setLayoutParams(params);
 		
-		if (MainActivity.DEBUG_MODE) Log.d(MainActivity.TAG, "slider : " + value + " - " + params.leftMargin);
+		if (DEBUG) Log.d(TAG, "slider : " + value + " - " + params.leftMargin);
 		this.setLayoutParams(params);
 		
 		final RelativeLayout frame = (RelativeLayout) getParent().getParent();
