@@ -1,5 +1,6 @@
 /*
- *
+ *   Copyright 2012 Shell M. Shrader
+ *   
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -81,7 +82,7 @@ import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 public class MainActivity extends Activity implements ActionBar.TabListener, OnClickListener {
 	
 	public static final String TAG = "Adaptive";
-	public static final boolean DEBUG = false;
+	public static final boolean DEBUG = true;
 
 	private static final int LONG_PAUSE = 100;
 
@@ -143,9 +144,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private static boolean waterTempPref = false;
 	private static float minimumWaterTemp = 0f;
 	private static float maximumWaterTemp = 210f;
-	private String remoteMacAddr = "";
-	private String remoteName = "";
-	private boolean autoConnect = false;
+	private static String remoteMacAddr = "";
+	private static String remoteName = "";
+	private static boolean autoConnect = false;
+	private static boolean shuttingDown = false;
 	
 	private static boolean afrAlarmLogging = false;
 	private final static LogItems afrAlarmLogItems = new LogItems();
@@ -394,17 +396,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	
         String action = getIntent().getAction();
 
-        if (Intent.ACTION_MAIN.equals(action) || UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
+//        if (Intent.ACTION_MAIN.equals(action) || UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
+        if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
         	if (DEBUG) Log.d(TAG, "USB Device Attached");
         	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
         }   	
 
-
-    	if (connectionService != null && connectionService.getState() == State.DISCONNECTED && autoConnect && remoteMacAddr.length() > 0) {
-    		disconnect();
-    		new Handler().postDelayed(( new Runnable() { public void run() { connect(remoteName,  remoteMacAddr); } } ), 1000);
-    	}
-    	
 		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
 		startService(new Intent(ConnectionService.ACTION_UI_ACTIVE));
 	}
@@ -414,19 +411,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	super.onPause();
     	
     	refreshHandler.removeCallbacks(RefreshRunnable);
-    	startService(new Intent(ConnectionService.ACTION_UI_INACTIVE));
+    	if (!shuttingDown) startService(new Intent(ConnectionService.ACTION_UI_INACTIVE));
     }
     
     @Override
 	protected void onDestroy() {
 		super.onDestroy();
-//EVAN
+
 		unregisterReceiver(mUsbReceiver);
-//END EVAN		
 		
-		disconnect();
-		
-		stopService(new Intent(this, ConnectionService.class));
+		if (shuttingDown) stopService(new Intent(this, ConnectionService.class));
     	unbindService(connectionServiceConnection);
 	}
 
@@ -443,12 +437,30 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         }
     };    
     
-	private final static Runnable RefreshRunnable = new Runnable() {
+	private final Runnable RefreshRunnable = new Runnable() {
 
 		public void run() {
 			
-			// bail if no service binding available
-			if (connectionService == null) {
+			// bail if no service binding available or not connected
+			if (connectionService == null || 
+					(connectionService != null && 
+					connectionService.getState() != State.CONNECTED_BT &&
+					connectionService.getState() != State.CONNECTED_USB)) {
+		    	
+    			if (menuConnect != null && menuConnect.getTitle().equals(getResources().getString(R.string.menu_disconnect))) {
+    				menuConnect.setTitle(R.string.menu_connect);
+    			}
+				
+    			if (connectionService != null && connectionService.getState() == State.DISCONNECTED) {
+    				if (progress != null && progress.isShowing()) {
+    					progress.dismiss();
+    				}
+    				if (autoConnect && remoteMacAddr.length() > 0) {
+			    		disconnect();
+			    		connect(remoteName,  remoteMacAddr);
+			    	}
+    			}
+    			
 	    		refreshHandler.postDelayed(this, LONG_PAUSE);
 	    		return;
 			}
@@ -538,7 +550,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         		}
     		}
     		
-    		if (connectionService.getState() != State.CONNECTING && progress != null && progress.isShowing()) {
+    		if (progress != null && progress.isShowing()) {
     			progress.dismiss();
     			if (menuConnect != null) menuConnect.setTitle(R.string.menu_disconnect);
     		}
@@ -619,18 +631,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	
     	if (progress != null && progress.isShowing()) return;
     	
-    	progress = ProgressDialog.show(this, "Bluetooth Connection" , "Connecting to " + name);
-    	progress.setCancelable(true);
-    	progress.setOnCancelListener(new OnCancelListener() {
-			public void onCancel(DialogInterface arg0) {
-				disconnect();
-			}});
-    	
     	Intent service = new Intent(ConnectionService.ACTION_CONNECT_BT);
     	service.putExtra("name", name);
     	service.putExtra("addr", macAddr);
     	
     	startService(service);
+    	
+    	progress = ProgressDialog.show(this, "Bluetooth Connection" , "Connecting to " + name);
+    	progress.setCancelable(true);
+    	progress.setOnCancelListener(new OnCancelListener() {
+			public void onCancel(DialogInterface arg0) {
+				disconnect();
+			}});    	
     }
     
     private void disconnect() {
@@ -677,6 +689,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	        	
 	        case R.id.menu_exit:
 //	        	System.exit(0);
+	        	shuttingDown = true;
 	    		this.finish();
 	        	
 	        case R.id.menu_share:

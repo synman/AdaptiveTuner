@@ -72,6 +72,7 @@
     <string name="changelog_ok_button">OK</string>
     
     <string name="service_connecting">Connecting to %s. . .</string>
+    <string name="service_bt_connected">Connected to %s</string>
     <string name="service_usb_connected">Connected via USB</string>
     <string name="service_disconnected">Disconnected</string>
     

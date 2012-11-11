@@ -1,3 +1,19 @@
+/*
+ *   Copyright 2012 Shell M. Shrader
+ *   
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package com.shellware.adaptronic.adaptive.tuner.services;
 
 import android.app.Notification;
@@ -105,7 +121,8 @@ public class ConnectionService extends Service {
 
         notifier.icon = R.drawable.ic_launcher;
         notifier.flags |= Notification.FLAG_ONGOING_EVENT;
-        
+        notifier.tickerText = "Adaptronic Connection Service";
+
     	prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     	
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
@@ -140,11 +157,10 @@ public class ConnectionService extends Service {
         
         // initiate a USB connection
         if (action.equals(ACTION_CONNECT_USB)) {
-            notifier.tickerText = "Adaptronic Connection Service";
-        	
-			connectedThread = UsbConnectedThread.checkConnectedUsbDevice(getApplicationContext(), connectionHandler);
+			final UsbConnectedThread usbThread = UsbConnectedThread.checkConnectedUsbDevice(getApplicationContext(), connectionHandler);
 			
-			if (connectedThread != null) {
+			if (usbThread != null) {
+				connectedThread = usbThread;
 				lastUpdateInMillis = System.currentTimeMillis();
 	        	state = State.CONNECTED_USB;
 	            notifier.tickerText = getResources().getString(R.string.service_usb_connected);
@@ -206,13 +222,16 @@ public class ConnectionService extends Service {
         }
     };
     
-	private static class ConnectionHandler extends Handler {
+	private class ConnectionHandler extends Handler {
 
 		@Override
 		public void handleMessage(Message message) {
 		
 	        switch (message.getData().getShort("handle")) {
 	        	case CONNECTED:
+	        		final String name = message.getData().getString("name");
+	        		final String addr = message.getData().getString("addr");
+	        		
 	        		state = state == State.CONNECTING ? State.CONNECTED_BT : State.CONNECTED_USB;
 
 	        		sendRequest(REGISTER_4096_PLUS_SEVEN);
@@ -222,17 +241,24 @@ public class ConnectionService extends Service {
 		    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
 
 	        		Editor edit = prefs.edit();
-	        		edit.putString("prefs_remote_name", message.getData().getString("name"));
-	        		edit.putString("prefs_remote_mac", message.getData().getString("addr"));
+	        		
+	        		edit.putString("prefs_remote_name", name);
+	        		edit.putString("prefs_remote_mac", addr);
 	        		edit.commit();
 		    		
+	                notifier.tickerText = String.format(getResources().getString(R.string.service_bt_connected), name);
+
+	                if (!UI_THREAD_IS_ACTIVE) {
+	                    PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
+	                            new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+	                    notifier.setLatestEventInfo(getApplicationContext(), getString(R.string.app_name), notifier.tickerText, pi);        
+	                }
+	                
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
-//	    	        if (progress != null && progress.isShowing()) progress.dismiss();
 					disconnect();
-//					Toast.makeText(getApplicationContext(), message.getData().getString("message"), Toast.LENGTH_LONG).show();
-
 					break;
 					
 	        	case DATA_READY:
@@ -315,10 +341,8 @@ public class ConnectionService extends Service {
 		}
 	}
 	
-    private static void disconnect() {
-    	refreshHandler.removeCallbacks(RefreshRunnable);
-//		if (menuConnect != null) menuConnect.setTitle(R.string.menu_connect);
-//		imgStatus.setBackgroundColor(Color.TRANSPARENT);				
+    private void disconnect() {
+    	refreshHandler.removeCallbacks(RefreshRunnable);			
     	
 		try {
 	    	if (connectedThread != null && connectedThread.isAlive()) {
@@ -329,6 +353,15 @@ public class ConnectionService extends Service {
 			// do nothing
 		}	
 		
+        notifier.tickerText = getResources().getString(R.string.service_disconnected);
+
+        if (!UI_THREAD_IS_ACTIVE) {
+            PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
+                    new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+            notifier.setLatestEventInfo(getApplicationContext(), getString(R.string.app_name), notifier.tickerText, pi);        
+        }
+        
     	state = State.DISCONNECTED;
     }
 
