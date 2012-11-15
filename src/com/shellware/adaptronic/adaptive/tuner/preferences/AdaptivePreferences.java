@@ -18,7 +18,6 @@ package com.shellware.adaptronic.adaptive.tuner.preferences;
 
 import java.util.List;
 
-import android.bluetooth.BluetoothAdapter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
@@ -47,7 +46,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 	private static Resources res;
 	
     // Local Bluetooth adapter
-    private static BluetoothAdapter bta = null;
+//    private static BluetoothAdapter bta = null;
     
 	private static final String TAG = MainActivity.TAG;
 	private static final boolean DEBUG = MainActivity.DEBUG;
@@ -66,7 +65,7 @@ public class AdaptivePreferences extends PreferenceActivity {
         if (DEBUG) Log.d(TAG, "Preferences onCreate");
 
         // Get local Bluetooth adapter
-        bta = BluetoothAdapter.getDefaultAdapter();
+//        bta = BluetoothAdapter.getDefaultAdapter();
 	    
         ctx = this;
         res = getResources();
@@ -161,6 +160,26 @@ public class AdaptivePreferences extends PreferenceActivity {
 			        autoConnectPref.setTitle(R.string.prefs_connection_auto_connect);
 				        
 		        connectionPrefCat.addPreference(autoConnectPref);
+		        
+			        CheckBoxPreference connectChargePref = new CheckBoxPreference(ctx);
+			        connectChargePref.setPersistent(true);
+			        connectChargePref.setKey("prefs_connect_on_charge");
+			        connectChargePref.setDefaultValue(false);
+			        connectChargePref.setSummaryOn(R.string.enabled);
+			        connectChargePref.setSummaryOff(R.string.disabled);
+			        connectChargePref.setTitle(R.string.prefs_connect_on_charge);
+				        
+		        connectionPrefCat.addPreference(connectChargePref);
+		        
+		        	CheckBoxPreference wakeLockPref = new CheckBoxPreference(ctx);
+			        wakeLockPref.setPersistent(true);
+			        wakeLockPref.setKey("prefs_wake_lock");
+			        wakeLockPref.setDefaultValue(true);
+			        wakeLockPref.setSummaryOn(R.string.enabled);
+			        wakeLockPref.setSummaryOff(R.string.disabled);
+			        wakeLockPref.setTitle(R.string.prefs_connection_keep_device_awake);
+				        
+		        connectionPrefCat.addPreference(wakeLockPref);		       
 		        		   
 	        setPreferenceScreen(generalPref);
         }

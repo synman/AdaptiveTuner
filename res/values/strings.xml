@@ -34,21 +34,20 @@
     
     <string name="tab_adaptive">Adaptive Monitor</string>
     <string name="tab_gauges">Gauges Dashboard</string>
+    <string name="tab_fuel_map">Fuel Map</string>
     
     <string name="menu_prefs">Preferences</string>
     <string name="prefs_title">Adaptive Tuner Preferences</string>
     <string name="prefs_general_pref">General Preferences</string>
     
-    <string name="prefs_uom_category">Units of Measure</string>
+    <string name="prefs_uom_category">Unit of Measure</string>
     <string name="prefs_uom_temp_dialog_title">Selected Temperature Unit of Measure</string>
     <string name="prefs_uom_temp_title">Temperature</string>
     
     <string name="prefs_connection_category">Connection Settings</string>
     <string name="prefs_connection_auto_connect">Automatic Connection on Startup</string>
-    
-    <string name="prefs_bt_category">Bluetooth Preferences</string>
-    <string name="prefs_bt_default_device">Default Device</string>
-    <string name="prefs_bt_auto_connect">Connect Automatically on Startup</string>
+    <string name="prefs_connect_on_charge">Auto Connect on Charge State</string>
+    <string name="prefs_connection_keep_device_awake">Keep Device Awake while Connected</string>
     
     <string name="prefs_alerts_pref">Alerts &amp; Logging</string>
     <string name="prefs_alert_afr_category">AFR Alerts</string>
@@ -65,6 +64,7 @@
 	<string name="tachometer">Tachometer</string>
 	<string name="water_gauge">Water Temperature Gauge</string>
 	<string name="iat_gauge">Intake Temperature Gauge</string>
+	<string name="tps_gauge">Throttle Position</string>
 		
 	<string name="enabled">Enabled</string>
     <string name="disabled">Disabled</string>

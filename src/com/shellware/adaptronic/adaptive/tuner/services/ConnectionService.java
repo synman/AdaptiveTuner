@@ -21,6 +21,7 @@ import java.lang.ref.WeakReference;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -28,6 +29,8 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -101,12 +104,16 @@ public class ConnectionService extends Service {
 	private static boolean dataNotAvailable = true;
 	
 	private static int tempUomPref = 1;
+	private static boolean wakeLock = true;
 	private static boolean afrAlarmLogging = false;
 	private static float afrNotEqualTargetTolerance = 5f;
 
 	private static StringBuffer dataBuffer = new StringBuffer(512);
 	private static LogItems.LogItem logItem = LogItems.newLogItem();
 
+	private PowerManager pm;
+	private WakeLock wl;
+	
 	@Override
 	public IBinder onBind(Intent arg0) {
 		return new ServiceBinder();
@@ -122,15 +129,22 @@ public class ConnectionService extends Service {
 	public void onCreate() {
 		super.onCreate();
 
-        notifier.icon = R.drawable.ic_launcher;
+        notifier.icon = R.drawable.ic_launcher_gs;
+//        notifier.largeIcon = convertToGrayscale(getResources().getDrawable(R.drawable.ic_launcher));
+//        notifier.largeIcon = ((BitmapDrawable) getResources().getDrawable(R.drawable.ic_launcher)).getBitmap();
+        
         notifier.flags |= Notification.FLAG_ONGOING_EVENT;
         notifier.tickerText = getResources().getString(R.string.service_name);
 
     	prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
     	
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
+    	wakeLock = prefs.getBoolean("prefs_wake_lock", true);
     	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false); 
     	afrNotEqualTargetTolerance = prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f);
+	    
+		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+		wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK + PowerManager.ON_AFTER_RELEASE, getResources().getString(R.string.app_name));
 	}
 	
 	@Override
@@ -167,6 +181,9 @@ public class ConnectionService extends Service {
 				lastUpdateInMillis = System.currentTimeMillis();
 	        	state = State.CONNECTED_USB;
 	            notifier.tickerText = getResources().getString(R.string.service_usb_connected);
+
+	            // acquire wakelock
+	            if (wakeLock && !wl.isHeld()) wl.acquire();
 			}
         }
         
@@ -299,7 +316,6 @@ public class ConnectionService extends Service {
 		}	
     }
 
-	
     private static void sendRequest() {
     	sendRequest(lastRegister);
     }
@@ -349,6 +365,9 @@ public class ConnectionService extends Service {
 		edit.commit();
 
 		notifier.tickerText = String.format(getResources().getString(R.string.service_bt_connected), name);
+		
+        // acquire wakelock
+        if (wakeLock && !wl.isHeld()) wl.acquire();
 
         if (!UI_THREAD_IS_ACTIVE) {
             PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
@@ -371,7 +390,10 @@ public class ConnectionService extends Service {
 		}	
 		
         notifier.tickerText = getResources().getString(R.string.service_disconnected);
-
+    	
+        // release wakelock
+        if (wl.isHeld()) wl.release();
+        
         if (!UI_THREAD_IS_ACTIVE) {
             PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
                     new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
@@ -440,8 +462,7 @@ public class ConnectionService extends Service {
 		}
     }
     
-	private static void setLearningFlags(String[] buf) {
-				
+	private static void setLearningFlags(String[] buf) {	
 		 logItem.setLearningFWait(getBit(Integer.parseInt(buf[3] + buf[4], 16), 0) > 0); 
 		 logItem.setLearningFRpm(getBit(Integer.parseInt(buf[3] + buf[4], 16), 1) > 0);
 		 logItem.setLearningFLoad(getBit(Integer.parseInt(buf[3] + buf[4], 16), 2) > 0); 
@@ -470,6 +491,16 @@ public class ConnectionService extends Service {
     			return temp;
     	}
     }
+    
+//    private Bitmap convertToGrayscale(Drawable drawable) {
+//        ColorMatrix matrix = new ColorMatrix();
+//        matrix.setSaturation(0);
+//
+//        ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
+//        drawable.setColorFilter(filter);
+//
+//        return ((BitmapDrawable) drawable).getBitmap();
+//    }
 	
     private static void clearDataBuffer() {
 		dataBuffer.setLength(0);
@@ -484,8 +515,19 @@ public class ConnectionService extends Service {
 
     public void setTempUomPref(final int val) {
 		tempUomPref = val;
-	}
+    }
     
+	public void setWakeLock(boolean val) {
+		wakeLock = val;
+		
+		if (state == State.CONNECTED_BT || state == State.CONNECTED_USB) {
+			if (!wakeLock && wl.isHeld()) 
+				wl.release();
+			else
+				if (wakeLock && !wl.isHeld()) wl.acquire();
+		}
+	}
+
 	public void setAfrAlarmLogging(final boolean val) {
 		afrAlarmLogging = val;
 	}

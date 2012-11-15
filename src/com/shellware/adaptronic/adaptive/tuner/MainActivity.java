@@ -50,8 +50,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -77,7 +75,9 @@ import android.widget.ViewFlipper;
 
 import com.shellware.adaptronic.adaptive.tuner.changelog.ChangeLog;
 import com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle;
+import com.shellware.adaptronic.adaptive.tuner.gauges.GaugeSlider;
 import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
+import com.shellware.adaptronic.adaptive.tuner.receivers.BatteryStatusReceiver;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService.State;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
@@ -85,7 +85,7 @@ import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 public class MainActivity extends Activity implements ActionBar.TabListener, OnClickListener {
 	
 	public static final String TAG = "Adaptive";
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 
 	private static final int LONG_PAUSE = 200;
 
@@ -125,12 +125,14 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private GaugeNeedle afrNeedle;
 	private GaugeNeedle targetAfrNeedle;
 	private GaugeNeedle rpmNeedle;
+	
+	private GaugeSlider tpsSlider;
 
 	private ProgressDialog progress;
 	
-	private Handler refreshHandler = new Handler();
+	private Handler refreshHandler;
 
-	private final IntentFilter mUsbDetachedFilter = new IntentFilter();
+	private final IntentFilter usbDetachedFilter = new IntentFilter();
 	private final BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();;
 	
 	private ArrayAdapter<String> devices;
@@ -142,6 +144,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private Context ctx;
 	
 	private static int tempUomPref = 1;
+	private static boolean wakeLock = true;
 	private static boolean afrNotEqualTargetPref = false;
 	private static float afrNotEqualTargetTolerance = 5f;
 	private static boolean waterTempPref = false;
@@ -178,8 +181,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private ConnectionService connectionService;
 	private ServiceConnection connectionServiceConnection;
 	
-	private PowerManager pm;
-	private WakeLock wl;
+	private BatteryStatusReceiver batteryStatusReceiver;
 	
 	@Override
 	public void onAttachedToWindow() {
@@ -205,7 +207,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         
         bar.addTab(bar.newTab().setText(R.string.tab_adaptive).setTabListener(this), false);        
         bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this), false);
-        bar.addTab(bar.newTab().setText("Fuel Map").setTabListener(this), false);
+        bar.addTab(bar.newTab().setText(R.string.tab_fuel_map).setTabListener(this), false);
 
         mActionBarView = getLayoutInflater().inflate(
                 R.layout.action_bar_custom, null);
@@ -252,6 +254,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         afrNeedle = (GaugeNeedle) findViewById(R.id.afrneedle);
         targetAfrNeedle = (GaugeNeedle) findViewById(R.id.targetafrneedle);
         rpmNeedle = (GaugeNeedle) findViewById(R.id.rpmneedle);
+        
+        tpsSlider = (GaugeSlider) findViewById(R.id.tpsslider);
 
         waterNeedle.setPivotPoint(.65f);
         waterNeedle.setMinValue(100);
@@ -282,6 +286,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         rpmNeedle.setMaxValue(9000);
         rpmNeedle.setMinDegrees(-130);
         rpmNeedle.setMaxDegrees(157); 
+        
+        tpsSlider.setMinValue(0);
+        tpsSlider.setMaxValue(100);
+        tpsSlider.setSuffix("%");
         
         ChangeLog cl = new ChangeLog(this);
         if (cl.firstRun()) {
@@ -319,9 +327,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         fuelGrid3.setOnTouchListener(gestureListener);
         fuelGrid4.setOnTouchListener(gestureListener);
 		
-		mUsbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        registerReceiver(mUsbReceiver, mUsbDetachedFilter);
+		usbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        registerReceiver(usbReceiver, usbDetachedFilter);
         
+	    batteryStatusReceiver = new BatteryStatusReceiver();
+	    registerReceiver(batteryStatusReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+
 		connectionServiceConnection = new ServiceConnection() {
 		    public void onServiceConnected(ComponentName className, IBinder service) {
 		        connectionService = ((ConnectionService.ServiceBinder) service).getService();
@@ -334,22 +345,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 		    }
 		};
 		
-	    bindService(new Intent(this, ConnectionService.class), connectionServiceConnection, Context.BIND_AUTO_CREATE);
-	    
-		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK + PowerManager.ON_AFTER_RELEASE, getResources().getString(R.string.app_name));
+	    bindService(new Intent(this, ConnectionService.class), connectionServiceConnection, Context.BIND_AUTO_CREATE);	    
     }
     
     @Override
 	protected void onResume() {
     	super.onResume();
     	
-        // acquire wakelock
-        if (!wl.isHeld()) wl.acquire();
-    	
     	// initialize our preferences
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
     	if (connectionService != null) connectionService.setTempUomPref(tempUomPref);
+    	
+    	wakeLock = prefs.getBoolean("prefs_wake_lock", true);
+    	if (connectionService != null) connectionService.setWakeLock(wakeLock);
     	
     	afrNotEqualTargetPref = prefs.getBoolean("prefs_afrnottarget_pref", false);
     	
@@ -410,18 +418,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
         }   	
 
+        refreshHandler = new Handler();
 		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
+		
 		startService(new Intent(ConnectionService.ACTION_UI_ACTIVE));
 	}
 
     @Override
     protected void onPause() {
     	super.onPause();
-    	
-        // release wakelock
-        if (wl.isHeld()) wl.release();
 
     	refreshHandler.removeCallbacks(RefreshRunnable);
+    	refreshHandler = null;
+    	
     	if (!shuttingDown) startService(new Intent(ConnectionService.ACTION_UI_INACTIVE));
     }
     
@@ -429,25 +438,13 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	protected void onDestroy() {
 		super.onDestroy();
 
-		unregisterReceiver(mUsbReceiver);
+		unregisterReceiver(usbReceiver);
+		unregisterReceiver(batteryStatusReceiver);
 		
 		if (shuttingDown) stopService(new Intent(this, ConnectionService.class));
     	unbindService(connectionServiceConnection);
 	}
 
-    BroadcastReceiver mUsbReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction()) &&
-            		connectionService != null && connectionService.getState() == State.CONNECTED_USB) {// &&
-//            		((UsbConnectedThread)connected).isUsbDevice((UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE))) {
-    			if (DEBUG) Log.d(TAG, "USB Device Detached");
-  
-    			disconnect();
-    			imgStatus.setBackgroundColor(Color.TRANSPARENT);
-    		}            	
-        }
-    };    
-    
 	private final Runnable RefreshRunnable = new Runnable() {
 
 		public void run() {
@@ -469,10 +466,13 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     				if (autoConnect && remoteMacAddr.length() > 0) {
 			    		disconnect();
 			    		connect(remoteName,  remoteMacAddr);
+			    		
+			    		// short circuit repetitive reconnect attempts
+			    		autoConnect = false;
 			    	}
     			}
     			
-	    		refreshHandler.postDelayed(this, LONG_PAUSE);
+        		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
 	    		return;
 			}
 			
@@ -517,13 +517,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 
 			txtFuelLearn.setBackgroundColor(closedLoop ? Color.GREEN : Color.TRANSPARENT);
 
-			txtData.setText(String.format("AVG: %.0f ms - TPS: %d%%", connectionService.getAvgResponseMillis(), tps));
+//			txtData.setText(String.format("AVG: %.0f ms - TPS: %d%%", connectionService.getAvgResponseMillis(), tps));
+			txtData.setText(String.format("AVG: %.0f ms", connectionService.getAvgResponseMillis()));
 
-    		iatNeedle.setValue(mat);
-    		waterNeedle.setValue(convertWat(wat));
-    		mapNeedle.setValue(map);
+			tpsSlider.setValue(tps);
+			
+			iatNeedle.setValue(mat); 
+			waterNeedle.setValue(convertWat(wat));
+			mapNeedle.setValue(map); 
     		
-    		float afrVal = afr * 100;
+			float afrVal = afr * 100;
     		float targetAfrVal = targetAfr * 100;
     		
     		if (afrVal > AFR_MAX) afrVal = AFR_MAX;
@@ -531,13 +534,17 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     		
     		if (targetAfrVal > AFR_MAX) targetAfrVal = AFR_MAX;
     		if (targetAfrVal < AFR_MIN) targetAfrVal = AFR_MIN;
+    		
+    		final float afrValF = afrVal;
+    		final float targetAfrValF = targetAfrVal;
 
-    		afrNeedle.setValue(AFR_MAX - afrVal + AFR_MIN);
-    		targetAfrNeedle.setValue(AFR_MAX - targetAfrVal + AFR_MIN);
-			
+			afrNeedle.setValue(AFR_MAX - afrValF + AFR_MIN);
+			targetAfrNeedle.setValue(AFR_MAX - targetAfrValF + AFR_MIN);
+    		
     		if (rpm >= 200) lastRPM = rpm;
     		dataArray.add(String.format("RPM\n%d", lastRPM));
-    		rpmNeedle.setValue(lastRPM);
+    		
+			rpmNeedle.setValue(lastRPM); 
 
     		dataArray.add(String.format("MAP\n%d kPa", map));
     		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
@@ -575,10 +582,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     			if (menuConnect != null) menuConnect.setTitle(R.string.menu_disconnect);
     		}
     		
-    		refreshHandler.postDelayed(this, LONG_PAUSE);
+    		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
         }
     };
-
+    
     private String getTemperatureSymbol() {
     	switch (tempUomPref) {
     		case 1:
@@ -601,6 +608,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     			return (int) (temp * 1.8 + 32);
     	}
     }
+    
+    BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction()) &&
+            		connectionService != null && connectionService.getState() == State.CONNECTED_USB) {// &&
+//            		((UsbConnectedThread)connected).isUsbDevice((UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE))) {
+    			if (DEBUG) Log.d(TAG, "USB Device Detached");
+  
+    			disconnect();
+    			imgStatus.setBackgroundColor(Color.TRANSPARENT);
+    		}            	
+        }
+    };    
     
     private OnItemClickListener DevicesClickListener = new OnItemClickListener() {
         public void onItemClick(AdapterView<?> av, View v, int arg2, long arg3) {

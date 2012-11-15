@@ -24,11 +24,84 @@
      android:background="@drawable/shape_gradient_background"
      tools:context=".fragments.GaugesFragment" >
 
+  	 <RelativeLayout
+  	     android:id="@+id/tpsmeter"
+  	     android:layout_width="200dp"
+  	     android:layout_height="60dp"
+  	     android:layout_marginTop="8dp"		
+  	     android:layout_centerHorizontal="true"
+  	     android:background="@drawable/shape_gradient_slider" >
+
+  	     <TextView 
+  	         android:layout_width="wrap_content"
+  	         android:layout_height="wrap_content"
+  	         android:layout_marginTop="4dp"
+  	         android:text="@string/tps_gauge"
+  	         android:textAppearance="?android:attr/textAppearanceSmall"
+  	         android:layout_alignParentTop="true"
+  	         android:layout_centerHorizontal="true" />
+  	     
+  	     <RelativeLayout
+  	         android:layout_width="140dp"
+  	         android:layout_height="25dp"
+  	         android:layout_centerInParent="true">
+  	         
+	  	     <RelativeLayout
+	  	         android:layout_width="70dp"
+	  	         android:layout_height="8dp"
+	  	         android:layout_centerVertical="true"
+	  	         android:background="@drawable/shape_gradient_blue_to_green" />
+	  	     	  	     
+	  	     <RelativeLayout
+	  	         android:layout_width="70dp"
+	  	         android:layout_height="8dp"
+	  	         android:layout_alignParentRight="true"
+	  	         android:layout_centerVertical="true"
+	  	         android:background="@drawable/shape_gradient_green_to_red" />
+
+	  	     <com.shellware.adaptronic.adaptive.tuner.gauges.GaugeSlider
+	  	         android:id="@+id/tpsslider"
+	  	         android:layout_width="15dp"
+	  	         android:layout_height="30dp"
+	  	         android:layout_marginRight="-40dp"
+	  	         android:src="@drawable/slider" />
+		</RelativeLayout>
+ 
+    	<TextView
+  	         android:layout_width="wrap_content"
+  	         android:layout_height="wrap_content"
+  	         android:layout_centerVertical="true"
+			 android:typeface="monospace"
+  	         android:textAppearance="?android:attr/textAppearanceSmall"
+  	         android:layout_marginLeft="20dp"/>
+  	     
+  	     <TextView 
+  	         android:layout_width="wrap_content"
+  	         android:layout_height="wrap_content"
+  	         android:layout_marginRight="5dp"
+			 android:typeface="monospace"
+  	         android:layout_alignParentRight="true"
+  	         android:textAppearance="?android:attr/textAppearanceSmall"
+  	         android:layout_centerVertical="true"/>
+  	     
+  	     <TextView
+  	         android:layout_width="wrap_content"
+  	         android:layout_height="wrap_content"
+  	         android:layout_alignParentBottom="true"
+  	         android:layout_centerHorizontal="true"
+  	         android:layout_marginBottom="5dp"
+  	         android:background="@drawable/shape_textview_border"
+  	         android:textAppearance="?android:attr/textAppearanceSmall"
+  	         android:typeface="monospace" />	 
+   	 </RelativeLayout>
+   	 
 	<RelativeLayout
 	    android:id="@+id/afrmeter"
 	    android:layout_width="160dp"
 	    android:layout_height="160dp"
-		android:layout_centerInParent="true" >
+	    android:layout_below="@id/tpsmeter"
+	    android:layout_centerInParent="true"
+	    android:layout_marginTop="@dimen/padding_large" >
 
 	    <ImageView
 	        android:id="@+id/afr"
@@ -167,72 +240,5 @@
 		    android:src="@drawable/needle_middle" 
 		    android:scaleType="fitXY"/>
 	</RelativeLayout>
-	
-  	 <RelativeLayout android:visibility="invisible"
-  	     android:layout_width="210dp"
-  	     android:layout_height="80dp"
-  	     android:layout_centerInParent="true"
-  	     android:background="@drawable/shape_gradient_background" >
-
-  	     <TextView 
-  	         android:layout_width="wrap_content"
-  	         android:layout_height="wrap_content"
-  	         android:layout_marginTop="5dp"
-  	         android:text="@string/prefs_alert_water_temperature"
-  	         android:textAppearance="?android:attr/textAppearanceMedium"
-  	         android:layout_alignParentTop="true"
-  	         android:layout_centerHorizontal="true" />
-  	     
-  	     <RelativeLayout
-  	         android:layout_width="180dp"
-  	         android:layout_height="30dp"
-  	         android:layout_centerInParent="true">
-  	         
-	  	     <RelativeLayout
-	  	         android:layout_width="90dp"
-	  	         android:layout_height="10dp"
-	  	         android:layout_centerVertical="true"
-	  	         android:background="@drawable/shape_gradient_blue_to_green" />
-	  	     	  	     
-	  	     <RelativeLayout
-	  	         android:layout_width="90dp"
-	  	         android:layout_height="10dp"
-	  	         android:layout_alignParentRight="true"
-	  	         android:layout_centerVertical="true"
-	  	         android:background="@drawable/shape_gradient_green_to_red" />
-
-	  	     <com.shellware.adaptronic.adaptive.tuner.gauges.GaugeSlider
-	  	         android:id="@+id/watslider"
-	  	         android:layout_width="20dp"
-	  	         android:layout_height="30dp"
-	  	         android:layout_marginRight="-40dp"
-	  	         android:src="@drawable/slider" />
-		</RelativeLayout>
- 
-    	<TextView
-  	         android:layout_width="wrap_content"
-  	         android:layout_height="wrap_content"
-  	         android:layout_centerVertical="true"
-			 android:typeface="monospace"
-  	         android:layout_marginLeft="25dp"/>
-  	     
-  	     <TextView 
-  	         android:layout_width="wrap_content"
-  	         android:layout_height="wrap_content"
-  	         android:layout_marginRight="10dp"
-			 android:typeface="monospace"
-  	         android:layout_alignParentRight="true"
-  	         android:layout_centerVertical="true"/>
-  	     
-  	     <TextView
-  	         android:layout_width="wrap_content"
-  	         android:layout_height="wrap_content"
-  	         android:layout_alignParentBottom="true"
-  	         android:layout_centerHorizontal="true"
-  	         android:layout_marginBottom="10dp"
-  	         android:background="@drawable/shape_textview_border"
-  	         android:textAppearance="?android:attr/textAppearanceMedium"
-  	         android:typeface="monospace" />	 
-   	 </RelativeLayout>
-   	 
+	 
 </RelativeLayout>

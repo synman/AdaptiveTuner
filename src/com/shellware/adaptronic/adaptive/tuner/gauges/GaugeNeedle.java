@@ -19,9 +19,6 @@ package com.shellware.adaptronic.adaptive.tuner.gauges;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.animation.Animation;
-import android.view.animation.LinearInterpolator;
-import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
 
 import com.shellware.adaptronic.adaptive.tuner.MainActivity;
@@ -34,7 +31,7 @@ public class GaugeNeedle extends ImageView {
 	private final int NOT_SET_YET = Integer.MAX_VALUE;
 	
 	private int offsetCenterInDegrees = NOT_SET_YET;
-	private float lastValue; 
+//	private float lastValue; 
 	
 	private int minValue = 0;
 	private int maxValue = 360;
@@ -66,18 +63,24 @@ public class GaugeNeedle extends ImageView {
 		if (newValue > maxDegrees + 20) return;
 		if (newValue < minDegrees - 20) return;
 
-		RotateAnimation rotateAnimation = new RotateAnimation(lastValue, newValue, 
-			  Animation.RELATIVE_TO_SELF, 0.5f, 
-			  Animation.RELATIVE_TO_SELF, pivotPoint);
-
-		rotateAnimation.setInterpolator(new LinearInterpolator());
-		rotateAnimation.setDuration(200);
-		rotateAnimation.setFillAfter(true);	
-		rotateAnimation.setFillEnabled(true);	
-	
-		startAnimation(rotateAnimation);
+//		final RotateAnimation rotateAnimation = new RotateAnimation(lastValue, newValue, 
+//																	  Animation.RELATIVE_TO_SELF, 0.5f, 
+//																	  Animation.RELATIVE_TO_SELF, pivotPoint);
+//
+//		rotateAnimation.setInterpolator(new LinearInterpolator());
+//		rotateAnimation.setDuration(100);
+//		
+//		rotateAnimation.setFillEnabled(true);	
+//		rotateAnimation.setFillAfter(true);
+//		
+//		startAnimation(rotateAnimation);
 		
-		lastValue = newValue;
+		setPivotY(getHeight() * pivotPoint);
+		setPivotX(getWidth() / 2);
+		
+		setRotation(newValue);
+				
+//		lastValue = newValue;
 		if (DEBUG) Log.d(TAG, String.format("%s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
 	}
 	
