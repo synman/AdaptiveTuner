@@ -35,6 +35,12 @@
 	        android:orderInCategory="100"
 	        android:showAsAction="never" />
     </group>
+   	<group>
+	    <item android:id="@+id/menu_usb_connect"
+	        android:title="@string/menu_usb_connect"
+	        android:orderInCategory="100"
+	        android:showAsAction="never" />
+    </group>
 	<group>
 	    <item android:id="@+id/menu_prefs"
 	        android:title="@string/menu_prefs"

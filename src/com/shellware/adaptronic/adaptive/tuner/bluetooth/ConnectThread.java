@@ -74,24 +74,24 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 					// bail if cancelled
 					if (cancelled) return;
 
-					Log.d(TAG, "bluetooth adapter: " + ex.getMessage());
+					if (DEBUG) Log.d(TAG, "bluetooth adapter: " + ex.getMessage());
 	        	}
 		        
 	        	try {
 		        	if (counter < 3) {
-						Log.d(TAG, "Trying createRfcommSocketToServiceRecord");
+						if (DEBUG) Log.d(TAG, "Trying createRfcommSocketToServiceRecord");
 						bts = btd.createRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		        			
 		        	} else {
 		        		if (counter < 6) {
-							Log.d(TAG, "Trying createInsecureRfcommSocketToServiceRecord");
+							if (DEBUG) Log.d(TAG, "Trying createInsecureRfcommSocketToServiceRecord");
 							bts = btd.createInsecureRfcommSocketToServiceRecord(UUID_RFCOMM_GENERIC);		
 						} else {
 							if (counter < 9) {
-								Log.d(TAG, "Trying createInsecureRfcommSocket");
+								if (DEBUG) Log.d(TAG, "Trying createInsecureRfcommSocket");
 								Method m = btd.getClass().getMethod("createInsecureRfcommSocket", new Class[] { int.class });
 								bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1)); // 1==RFCOMM channel cod (class of device)
 							} else {
-								Log.d(TAG, "Trying createRfcommSocket");							
+								if (DEBUG) Log.d(TAG, "Trying createRfcommSocket");							
 								Method m = btd.getClass().getMethod("createRfcommSocket", new Class[] {int.class});
 					            bts = (BluetoothSocket) m.invoke(btd, Integer.valueOf(1));		
 							}
@@ -99,7 +99,7 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 		        	}
 	        	} catch (Exception ex) {
 					if (cancelled) return;
-					Log.d(TAG, "createRfcommSocket failed: " + ex.getMessage());	        		
+					if (DEBUG) Log.d(TAG, "createRfcommSocket failed: " + ex.getMessage());	        		
 	        	}
 		        
 		        try {
@@ -111,7 +111,7 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 					if (cancelled) return;
 					
 					counter++;
-					Log.d(TAG, "BT connect failed: " + e.getMessage());
+					if (DEBUG) Log.d(TAG, "BT connect failed: " + e.getMessage());
 					
 			        // bail if we've tried 15 times
 			        if (counter >= 15) {

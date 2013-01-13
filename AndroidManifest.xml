@@ -18,8 +18,9 @@
  -->
  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shellware.adaptronic.adaptive.tuner"
-    android:versionCode="2002"
-    android:versionName="1.1.6" android:installLocation="preferExternal">
+    android:versionCode="2003"
+    android:versionName="1.1.7"
+    android:installLocation="preferExternal">
 
     <uses-sdk
         android:minSdkVersion="12"
@@ -37,8 +38,7 @@
         android:theme="@android:style/Theme.Holo" >
         <activity
             android:name=".MainActivity"
-            android:label="@string/title_activity_main" 
-            android:screenOrientation="landscape" 
+            android:label="@string/title_activity_main"  
             android:launchMode="singleInstance">
 
             <intent-filter>
@@ -55,7 +55,6 @@
         </activity>
         
         <activity android:name=".preferences.AdaptivePreferences" 
-            android:screenOrientation="landscape" 
             android:theme="@android:style/Theme.Holo" />
         
         <service 
@@ -67,6 +66,7 @@
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT" />
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE" />
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE" />
+ 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP" />
 			</intent-filter>
 		</service>	
     </application>

@@ -24,109 +24,115 @@
      android:background="@drawable/shape_gradient_background"
      tools:context=".fragments.GaugesFragment" >
 
-  	 <RelativeLayout
-  	     android:id="@+id/tpsmeter"
-  	     android:layout_width="200dp"
-  	     android:layout_height="60dp"
-  	     android:layout_marginTop="8dp"		
-  	     android:layout_centerHorizontal="true"
-  	     android:background="@drawable/shape_gradient_slider" >
-
-  	     <TextView 
-  	         android:layout_width="wrap_content"
-  	         android:layout_height="wrap_content"
-  	         android:layout_marginTop="4dp"
-  	         android:text="@string/tps_gauge"
-  	         android:textAppearance="?android:attr/textAppearanceSmall"
-  	         android:layout_alignParentTop="true"
-  	         android:layout_centerHorizontal="true" />
-  	     
-  	     <RelativeLayout
-  	         android:layout_width="140dp"
-  	         android:layout_height="25dp"
-  	         android:layout_centerInParent="true">
-  	         
+     <RelativeLayout
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_centerInParent="true">
+         
+	  	 <RelativeLayout
+	  	     android:id="@+id/tpsmeter"
+	  	     android:layout_width="200dp"
+	  	     android:layout_height="60dp"
+	  	     android:layout_marginTop="8dp"		
+	  	     android:layout_centerHorizontal="true"
+	  	     android:background="@drawable/shape_gradient_slider" >
+	
+	  	     <TextView 
+	  	         android:layout_width="wrap_content"
+	  	         android:layout_height="wrap_content"
+	  	         android:layout_marginTop="4dp"
+	  	         android:text="@string/tps_gauge"
+	  	         android:textAppearance="?android:attr/textAppearanceSmall"
+	  	         android:layout_alignParentTop="true"
+	  	         android:layout_centerHorizontal="true" />
+	  	     
 	  	     <RelativeLayout
-	  	         android:layout_width="70dp"
-	  	         android:layout_height="8dp"
+	  	         android:layout_width="140dp"
+	  	         android:layout_height="25dp"
+	  	         android:layout_centerInParent="true">
+	  	         
+		  	     <RelativeLayout
+		  	         android:layout_width="70dp"
+		  	         android:layout_height="8dp"
+		  	         android:layout_centerVertical="true"
+		  	         android:background="@drawable/shape_gradient_blue_to_green" />
+		  	     	  	     
+		  	     <RelativeLayout
+		  	         android:layout_width="70dp"
+		  	         android:layout_height="8dp"
+		  	         android:layout_alignParentRight="true"
+		  	         android:layout_centerVertical="true"
+		  	         android:background="@drawable/shape_gradient_green_to_red" />
+	
+		  	     <com.shellware.adaptronic.adaptive.tuner.gauges.GaugeSlider
+		  	         android:id="@+id/tpsslider"
+		  	         android:layout_width="15dp"
+		  	         android:layout_height="30dp"
+		  	         android:layout_marginRight="-40dp"
+		  	         android:src="@drawable/slider" />
+			</RelativeLayout>
+	 
+	    	<TextView
+	  	         android:layout_width="wrap_content"
+	  	         android:layout_height="wrap_content"
 	  	         android:layout_centerVertical="true"
-	  	         android:background="@drawable/shape_gradient_blue_to_green" />
-	  	     	  	     
-	  	     <RelativeLayout
-	  	         android:layout_width="70dp"
-	  	         android:layout_height="8dp"
+				 android:typeface="monospace"
+	  	         android:textAppearance="?android:attr/textAppearanceSmall"
+	  	         android:layout_marginLeft="20dp"/>
+	  	     
+	  	     <TextView 
+	  	         android:layout_width="wrap_content"
+	  	         android:layout_height="wrap_content"
+	  	         android:layout_marginRight="5dp"
+				 android:typeface="monospace"
 	  	         android:layout_alignParentRight="true"
-	  	         android:layout_centerVertical="true"
-	  	         android:background="@drawable/shape_gradient_green_to_red" />
-
-	  	     <com.shellware.adaptronic.adaptive.tuner.gauges.GaugeSlider
-	  	         android:id="@+id/tpsslider"
-	  	         android:layout_width="15dp"
-	  	         android:layout_height="30dp"
-	  	         android:layout_marginRight="-40dp"
-	  	         android:src="@drawable/slider" />
-		</RelativeLayout>
- 
-    	<TextView
-  	         android:layout_width="wrap_content"
-  	         android:layout_height="wrap_content"
-  	         android:layout_centerVertical="true"
-			 android:typeface="monospace"
-  	         android:textAppearance="?android:attr/textAppearanceSmall"
-  	         android:layout_marginLeft="20dp"/>
-  	     
-  	     <TextView 
-  	         android:layout_width="wrap_content"
-  	         android:layout_height="wrap_content"
-  	         android:layout_marginRight="5dp"
-			 android:typeface="monospace"
-  	         android:layout_alignParentRight="true"
-  	         android:textAppearance="?android:attr/textAppearanceSmall"
-  	         android:layout_centerVertical="true"/>
-  	     
-  	     <TextView
-  	         android:layout_width="wrap_content"
-  	         android:layout_height="wrap_content"
-  	         android:layout_alignParentBottom="true"
-  	         android:layout_centerHorizontal="true"
-  	         android:layout_marginBottom="5dp"
-  	         android:background="@drawable/shape_textview_border"
-  	         android:textAppearance="?android:attr/textAppearanceSmall"
-  	         android:typeface="monospace" />	 
-   	 </RelativeLayout>
-   	 
-	<RelativeLayout
-	    android:id="@+id/afrmeter"
-	    android:layout_width="160dp"
-	    android:layout_height="160dp"
-	    android:layout_below="@id/tpsmeter"
-	    android:layout_centerInParent="true"
-	    android:layout_marginTop="@dimen/padding_large" >
-
-	    <ImageView
-	        android:id="@+id/afr"
-	        android:layout_width="fill_parent"
-	        android:layout_height="fill_parent"
-	        android:layout_centerInParent="true"
-	        android:scaleType="fitXY"
-	        android:src="@drawable/afr" />
-	    	
-		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
-		    android:id="@+id/targetafrneedle"
-		    android:layout_width="fill_parent"
-		    android:layout_height="fill_parent"
+	  	         android:textAppearance="?android:attr/textAppearanceSmall"
+	  	         android:layout_centerVertical="true"/>
+	  	     
+	  	     <TextView
+	  	         android:layout_width="wrap_content"
+	  	         android:layout_height="wrap_content"
+	  	         android:layout_alignParentBottom="true"
+	  	         android:layout_centerHorizontal="true"
+	  	         android:layout_marginBottom="5dp"
+	  	         android:background="@drawable/shape_textview_border"
+	  	         android:textAppearance="?android:attr/textAppearanceSmall"
+	  	         android:typeface="monospace" />	 
+	   	 </RelativeLayout>
+	   	 
+		<RelativeLayout
+		    android:id="@+id/afrmeter"
+		    android:layout_width="160dp"
+		    android:layout_height="160dp"
+		    android:layout_below="@id/tpsmeter"
 		    android:layout_centerInParent="true"
-		    android:scaleType="fitXY"
-		    android:src="@drawable/needle_middle_yellow" />
-
-		<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
-		    android:id="@+id/afrneedle"
-		    android:layout_width="fill_parent"
-		    android:layout_height="fill_parent"
-		    android:layout_centerHorizontal="true"
-		    android:layout_centerVertical="true"
-		    android:src="@drawable/needle_middle" 
-		    android:scaleType="fitXY"/>
+		    android:layout_marginTop="@dimen/padding_large" >
+	
+		    <ImageView
+		        android:id="@+id/afr"
+		        android:layout_width="fill_parent"
+		        android:layout_height="fill_parent"
+		        android:layout_centerInParent="true"
+		        android:scaleType="fitXY"
+		        android:src="@drawable/afr" />
+		    	
+			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+			    android:id="@+id/targetafrneedle"
+			    android:layout_width="fill_parent"
+			    android:layout_height="fill_parent"
+			    android:layout_centerInParent="true"
+			    android:scaleType="fitXY"
+			    android:src="@drawable/needle_middle_yellow" />
+	
+			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+			    android:id="@+id/afrneedle"
+			    android:layout_width="fill_parent"
+			    android:layout_height="fill_parent"
+			    android:layout_centerHorizontal="true"
+			    android:layout_centerVertical="true"
+			    android:src="@drawable/needle_middle" 
+			    android:scaleType="fitXY"/>
+		</RelativeLayout>
 	</RelativeLayout>
 	   	    
 	<RelativeLayout
@@ -134,9 +140,9 @@
 	    android:layout_width="125dp"
 	    android:layout_height="125dp"
 	    android:layout_alignParentTop="true"
-	    android:layout_marginRight="60dp"
-	    android:layout_marginTop="10dp"
-	    android:layout_toLeftOf="@id/afrmeter" >
+	    android:layout_alignParentLeft="true"
+	    android:layout_marginLeft="30dp"
+	    android:layout_marginTop="10dp">
 
 	    <ImageView
 		    android:id="@+id/map"
@@ -160,11 +166,11 @@
 	<RelativeLayout
   	 	android:id="@+id/tachometer"
 	    android:layout_alignParentTop="true"
+	    android:layout_alignParentRight="true"
 	    android:layout_width="125dp"
 	    android:layout_height="125dp"
-      	android:layout_marginLeft="60dp"  
- 	    android:layout_marginTop="10dp"
- 	    android:layout_toRightOf="@id/afrmeter" >
+      	android:layout_marginRight="30dp"  
+ 	    android:layout_marginTop="10dp">
 
 	    <ImageView
 		    android:id="@+id/rpm"
@@ -190,9 +196,9 @@
         android:layout_width="125dp"
         android:layout_height="125dp"
         android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
 		android:layout_marginBottom="10dp"
-        android:layout_marginRight="60dp"
-        android:layout_toLeftOf="@id/afrmeter" >
+        android:layout_marginLeft="30dp">
    	    	
 	    <ImageView
 		    android:id="@+id/watertemp"
@@ -218,9 +224,9 @@
    	    android:layout_width="125dp"
    	    android:layout_height="125dp"
    	    android:layout_alignParentBottom="true"
-   	    android:layout_marginLeft="60dp"
-   	    android:layout_marginBottom="10dp"
-   	    android:layout_toRightOf="@id/afrmeter" >
+   	    android:layout_alignParentRight="true"
+   	    android:layout_marginRight="30dp"
+   	    android:layout_marginBottom="10dp">
 
 	    <ImageView
 		    android:id="@+id/iat"

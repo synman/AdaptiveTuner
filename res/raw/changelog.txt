@@ -19,6 +19,18 @@
     </style>
   </head>
   <body>
+$ 1.1.7
+  % Version 1.1.7
+  _ 2013-01-12
+  ! Bug Fixes &amp; Bulk Logging
+  	* Added Bulk Logging option to Preferences
+  	* Added "USB Connect" to Context Menu
+  	* Fixed AFR Alert Logging bug
+  	* Resized Gauges (layout-large) to better fit N7 density
+  	* Removed Landscape only display restriction
+  	* TODO: Finish fuel table 
+  	* Pushed to Master
+  	* Honeycomb 3.1+ only
 $ 1.1.6
   % Version 1.1.6
   _ 2012-11-12
@@ -59,7 +71,7 @@ $ 1.06
   _ 2012-10-3
   ! 3D Fuel Map!
   	* Additional data reception logic tuning -- down to 70ms 
-  	* Bluetooth RFCOMM discovery & connection improvements for MID PD-10 (and likely other) devices
+  	* Bluetooth RFCOMM discovery &amp; connection improvements for MID PD-10 (and likely other) devices
   	* Incorporated a trial version of steema's Android charting library to illustrate Fuel Map #1 (must be VE)
   	* TODO: Add support for duty cycle and ignition maps
   	* TODO: Add edit capability for maps
@@ -85,7 +97,7 @@ $ 1.06
   _ 2012-09-14
   ! Minor Enhancements
   	* Redesigned Icon
-  	* Added AFR & Temperature Alerts
+  	* Added AFR &amp; Temperature Alerts
   	* Added Changelog (you're reading it now)
   % Version 1.01
   _ 2012-09-14

@@ -52,11 +52,12 @@ public class ConnectionService extends Service {
         DISCONNECTED
     };
 
-    public final static String  ACTION_CONNECT_BT = "com.shellware.adaptronic.adaptive.tuner.action.CONNECT_BT";
-    public final static String ACTION_CONNECT_USB = "com.shellware.adaptronic.adaptive.tuner.action.CONNECT_USB";
-    public final static String  ACTION_DISCONNECT = "com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT";
-    public final static String ACTION_UI_INACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE";
-    public final static String   ACTION_UI_ACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE";
+    public final static String  	ACTION_CONNECT_BT = "com.shellware.adaptronic.adaptive.tuner.action.CONNECT_BT";
+    public final static String 	   ACTION_CONNECT_USB = "com.shellware.adaptronic.adaptive.tuner.action.CONNECT_USB";
+    public final static String  	ACTION_DISCONNECT = "com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT";
+    public final static String 	   ACTION_UI_INACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE";
+    public final static String   	 ACTION_UI_ACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE";
+    public final static String ACTION_UPDATE_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP";
 
 	public static final short CONNECTION_ERROR = 1;
 	public static final short DATA_READY = 2;
@@ -77,12 +78,17 @@ public class ConnectionService extends Service {
 	private static final String DEVICE_ADDR_AND_MODE_HEADER = "01 03 ";
 	private static final String SEVEN_REGISTERS = "01 03 0E ";
 	private static final String EIGHT_REGISTERS = "01 03 10 ";
-//	private static final String SIXTEEN_REGISTERS = "01 03 20";
+	private static final String SIXTEEN_REGISTERS = "01 03 20";
 	
 	private static final int LONG_PAUSE = 100;
 	private static final int NOTIFICATION_ID = 1;
 	
+	private static boolean mapMode = false;
+	private static short mapOffset = 0;
+	private final static StringBuffer mapData = new StringBuffer(1280);
+	
 	private final static LogItems afrAlarmLogItems = new LogItems();
+	private final static LogItems logAllItems = new LogItems();
 
 	private final Notification notifier = new Notification();
 	private static SharedPreferences prefs;
@@ -93,7 +99,7 @@ public class ConnectionService extends Service {
 	private static ConnectedThread connectedThread;
 	private static ConnectThread connectThread;
 	
-    private static State state = State.DISCONNECTED;	
+    public static State state = State.DISCONNECTED;	
 	private static boolean UI_THREAD_IS_ACTIVE = false;
 
 	private static long updatesReceived = 0;
@@ -107,9 +113,11 @@ public class ConnectionService extends Service {
 	private static boolean wakeLock = true;
 	private static boolean afrAlarmLogging = false;
 	private static float afrNotEqualTargetTolerance = 5f;
+	
+	private static boolean logAll = false;
 
 	private static StringBuffer dataBuffer = new StringBuffer(512);
-	private static LogItems.LogItem logItem = LogItems.newLogItem();
+	private static LogItems.LogItem logItem;
 
 	private PowerManager pm;
 	private WakeLock wl;
@@ -137,6 +145,9 @@ public class ConnectionService extends Service {
         notifier.tickerText = getResources().getString(R.string.service_name);
 
     	prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    	
+    	// initialize our logger
+    	logItem = new LogItems().newLogItem();
     	
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
     	wakeLock = prefs.getBoolean("prefs_wake_lock", true);
@@ -185,6 +196,15 @@ public class ConnectionService extends Service {
 	            // acquire wakelock
 	            if (wakeLock && !wl.isHeld()) wl.acquire();
 			}
+        }
+        
+        // map mode
+        if (action.equals(ACTION_UPDATE_FUEL_MAP)) {
+        	mapMode = true;
+        	mapOffset = 0;
+        	mapData.setLength(0);
+        	
+        	sendRequest(mapOffset);
         }
         
         // disconnect
@@ -284,15 +304,13 @@ public class ConnectionService extends Service {
 	    	        	// first check that we've got the right device and mode
 	    	        	if (datalength > 2 && data.contains(DEVICE_ADDR_AND_MODE_HEADER)) {
 	    	        		
-//	    	        		if (mapMode) {
-//    	        				progress.setMessage(String.format("Reading map values %d/512...", mapOffset));
-//	    	        			
-//	    	        			if (data.contains(SIXTEEN_REGISTERS) && datalength >= 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
-//	    	        				populateAndPlotFuelMap(data);
-//	    	        			}
-//	    	        			
-//	    	        			break;
-//	    	        		}
+	    	        		// if we're in map mode process any map data if it exists
+	    	        		if (mapMode) {
+	    	        			if (data.contains(SIXTEEN_REGISTERS) && datalength >= 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
+	    	        				populateFuelMap(data);
+	    	        			}
+	    	        			break;
+	    	        		}
 	    	        		
 	    	        		// do we have a bad message?
 	    	        		if (!(data.contains(EIGHT_REGISTERS) || data.contains(SEVEN_REGISTERS))) {
@@ -315,6 +333,29 @@ public class ConnectionService extends Service {
 			}
 		}	
     }
+	
+	private static void populateFuelMap(final String data) {
+
+		mapOffset+=16;
+
+		String[] mapmap = data.trim().split(" ");
+		
+		for (int x = 3; x < 35; x++) {
+			mapData.append(mapmap[x]);
+			mapData.append(" ");
+		}
+
+		if (mapOffset < 512) {
+			sendRequest(mapOffset);
+			return;
+		}
+
+		MainActivity.mapReady = true;
+
+		lastRegister = REGISTER_4096_PLUS_SEVEN;
+		mapMode = false;		
+	}
+	
 
     private static void sendRequest() {
     	sendRequest(lastRegister);
@@ -349,6 +390,7 @@ public class ConnectionService extends Service {
 	    	lastRegister = register;
 		}
 	}
+	
 	private void connect(final String name, final String addr) {
 		state = state == State.CONNECTING ? State.CONNECTED_BT : State.CONNECTED_USB;
 
@@ -447,8 +489,13 @@ public class ConnectionService extends Service {
     		if (afrAlarmLogging) {
     			final float threshold = logItem.getTargetAfr() * (afrNotEqualTargetTolerance * .01f);
     			if (Math.abs(logItem.getTargetAfr() - logItem.getAfr()) >= threshold ) {
-    				afrAlarmLogItems.getItems().add(logItem);
+    				afrAlarmLogItems.addLogItem(logItem);
     			}
+    		}
+    		
+    		// log all events?
+    		if (logAll) {
+    			logAllItems.addLogItem(logItem);
     		}
     		
             if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
@@ -550,6 +597,18 @@ public class ConnectionService extends Service {
 
 	public State getState() {
 		return state;
+	}
+	
+	public void setLogAll(boolean val) {
+		logAll = val;
+	}
+	
+	public LogItems getLogAllItems() {
+		return logAllItems;
+	}
+	
+	public StringBuffer getMapData() {
+		return mapData;
 	}
 
 	public float getAvgResponseMillis() {

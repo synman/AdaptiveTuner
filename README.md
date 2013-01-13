@@ -1,5 +1,10 @@
 
-Copyright 2012 Shell M. Shrader, Evan H. Dekker
+Copyright 2012-2013 Shell M. Shrader
+
+Contributors
+============
+Shell M. Shrader (Maintainer)
+Evan H. Dekker (initial OTG implementation)
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.

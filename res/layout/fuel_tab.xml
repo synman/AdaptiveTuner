@@ -47,21 +47,27 @@ android:layout_width="fill_parent" android:layout_height="wrap_content">
          android:layout_width="wrap_content"
          android:layout_height="wrap_content" >
 
-	     <GridView
-	         android:id="@+id/gridFuel1"
-	         android:layout_width="wrap_content"
-	         android:layout_height="wrap_content"
-	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="9"
-	         android:scrollbars="horizontal|vertical" >
-	     </GridView>
+         <RelativeLayout
+         	android:layout_width="wrap_content"
+         	android:layout_height="wrap_content">
 
+		     <GridView
+		         android:id="@+id/gridFuel1"
+		         android:layout_width="wrap_content"
+		         android:layout_height="wrap_content"
+		         android:fadingEdge="horizontal|vertical"
+		         android:numColumns="16"
+		         android:scrollbars="horizontal|vertical" >
+		     </GridView>
+		     
+		</RelativeLayout>
+		
 	     <GridView
 	         android:id="@+id/gridFuel2"
 	         android:layout_width="wrap_content"
 	         android:layout_height="wrap_content"
 	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="9"
+	         android:numColumns="16"
 	         android:scrollbars="horizontal|vertical" >
 	     </GridView>
 
@@ -70,7 +76,7 @@ android:layout_width="fill_parent" android:layout_height="wrap_content">
 	         android:layout_width="wrap_content"
 	         android:layout_height="wrap_content"
 	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="9"
+	         android:numColumns="16"
 	         android:scrollbars="horizontal|vertical" >
 	     </GridView>
 
@@ -79,7 +85,7 @@ android:layout_width="fill_parent" android:layout_height="wrap_content">
 	         android:layout_width="wrap_content"
 	         android:layout_height="wrap_content"
 	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="9"
+	         android:numColumns="16"
 	         android:scrollbars="horizontal|vertical" >
 	     </GridView>
 

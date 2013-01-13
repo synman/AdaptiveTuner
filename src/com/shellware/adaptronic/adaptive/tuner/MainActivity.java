@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Set;
 
 import android.app.ActionBar;
@@ -103,6 +104,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	
 	private Menu myMenu;
 	private MenuItem menuConnect;
+	private MenuItem menuUsbConnect;
 	private MenuItem menuShareLog;
 	
 	private GridView gridData;
@@ -155,11 +157,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private static boolean autoConnect = false;
 	private static boolean shuttingDown = false;
 	
-	private static boolean afrAlarmLogging = false;
+	private static boolean mapMode = false;
+	public static boolean mapReady = false;
 	
-//	private static boolean mapMode = false;
-//	private static short mapOffset = 0;
-//	private final StringBuffer mapData = new StringBuffer(1280);
+	private static boolean logAll = false;
+	private static boolean afrAlarmLogging = false;
 	
 	private GridView fuelGrid1;
 	private GridView fuelGrid2;
@@ -392,12 +394,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         iatNeedle.setMinValue(0);
         iatNeedle.setMinDegrees(-180);
         iatNeedle.setMaxDegrees(90);
+        
+        logAll = prefs.getBoolean("prefs_log_all", false);
+        if (connectionService != null) connectionService.setLogAll(logAll);
 
     	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false); 
     	if (connectionService != null) connectionService.setAfrAlarmLogging(afrAlarmLogging);
     	
     	if (menuShareLog != null && connectionService != null) {
-    		menuShareLog.setVisible(afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty());
+    		menuShareLog.setVisible((afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()) ||
+    								 (logAll && !connectionService.getLogAllItems().getItems().isEmpty()));
     	}
 
     	// ensure all fragments are hidden
@@ -412,7 +418,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	
         String action = getIntent().getAction();
 
-//        if (Intent.ACTION_MAIN.equals(action) || UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
         	if (DEBUG) Log.d(TAG, "USB Device Attached");
         	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
@@ -459,6 +464,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     				menuConnect.setTitle(R.string.menu_connect);
     			}
 				
+    			if (menuUsbConnect != null && menuUsbConnect.getTitle().equals(getResources().getString(R.string.menu_disconnect))) {
+    				menuUsbConnect.setTitle(R.string.menu_usb_connect);
+    			}
+				
     			if (connectionService != null && connectionService.getState() == State.DISCONNECTED) {
     				if (progress != null && progress.isShowing()) {
     					progress.dismiss();
@@ -481,8 +490,22 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 			
 			// show the log share menu option if logging is enabled
 	    	if (connectionService != null)
-	    		menuShareLog.setVisible(afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()); 
+	    		menuShareLog.setVisible((afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()) ||
+						 (logAll && !connectionService.getLogAllItems().getItems().isEmpty()));
 			
+	    	// show our fuel table fragment if an updated
+	    	// map is available (because we asked it for)
+	    	if (mapMode) {
+	    		if (mapReady) {
+	        		populateFuelTables(connectionService.getMapData());
+
+			    	mapMode = false;
+	        		mapReady = false;
+	    		}
+	    		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
+        		return;
+	    	}
+	    	
 			// populate all data elements
     		dataArray.clear();
 			final LogItem item = connectionService.getLogItem();
@@ -586,6 +609,25 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         }
     };
     
+	private void populateFuelTables(final StringBuffer data) {
+
+
+		String[] map = data.toString().trim().split(" ");
+		short cnt = 0;
+
+		for (int x = 0; x < 32; x++) {
+			for (int y = 0; y < 16; y++) {
+				double val = Double.parseDouble(String.format(Locale.US, "%.4f", Integer.parseInt(map[cnt] + map[cnt+1], 16) / 128f));
+				fuelData1.add(String.format("%.4f", val));
+				fuelData2.add(String.format("%.4f", val));
+				fuelData3.add(String.format("%.4f", val));
+				fuelData4.add(String.format("%.4f", val));
+				if (DEBUG) Log.d(TAG, String.format("%d:%d = %.4f", x, y, val));
+				cnt = (short) (cnt + 2);
+			}
+		}	  		
+	}
+	
     private String getTemperatureSymbol() {
     	switch (tempUomPref) {
     		case 1:
@@ -678,6 +720,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     
     private void disconnect() {
 		if (menuConnect != null) menuConnect.setTitle(R.string.menu_connect);
+		if (menuUsbConnect != null) menuUsbConnect.setTitle(R.string.menu_usb_connect);
+		
     	if (progress != null && progress.isShowing()) progress.dismiss();
 
     	imgStatus.setBackgroundColor(Color.TRANSPARENT);				
@@ -701,9 +745,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         myMenu = menu;
         menuShareLog = myMenu.findItem(R.id.menu_share);
     	menuConnect = myMenu.findItem(R.id.menu_connect);
+    	menuUsbConnect = myMenu.findItem(R.id.menu_usb_connect);
     	
+    	// show share button if logging
     	if (connectionService != null)
-    		menuShareLog.setVisible(afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty());  
+    		menuShareLog.setVisible((afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()) ||
+					 (logAll && !connectionService.getLogAllItems().getItems().isEmpty()));
 		
         return true;
     }
@@ -743,6 +790,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	        	}
 	            return true;
 	            
+	        case R.id.menu_usb_connect:
+	        	if (DEBUG) Log.d(TAG, "USB Connect Selected");
+	        	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
+	        	return true;
+	        	
 	        case R.id.menu_prefs:
                 startActivity(new Intent(this, AdaptivePreferences.class));
                 return true;
@@ -757,7 +809,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 		// if we're logging save the log file
 		if (afrAlarmLogging) {		
 			try {
-				final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.csv'").format(new Date());
+				final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.afr.csv'", Locale.US).format(new Date());
 
 				File sdcard = Environment.getExternalStorageDirectory();
 				File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
@@ -793,7 +845,53 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 				Intent share = new Intent(Intent.ACTION_SEND);
 				share.setType("text/plain");
 				share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getPath()));
-				startActivity(Intent.createChooser(share, getText(R.string.share_log_heading)));
+				startActivity(Intent.createChooser(share, getText(R.string.share_afr_log_heading)));
+
+			} catch (Exception e) {
+				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+			}
+		}
+		
+		//TODO: normalize log share code
+		if (logAll) {		
+			try {
+				final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.all.csv'", Locale.US).format(new Date());
+
+				File sdcard = Environment.getExternalStorageDirectory();
+				File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
+				dir.mkdirs();
+				
+				File file = new File(dir, filename);
+				FileOutputStream f = new FileOutputStream(file);
+				
+				// write our header
+				f.write("timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat\n".getBytes());
+				
+				ArrayList<LogItem> items = connectionService.getLogAllItems().getItems();
+				Iterator<LogItem> iterator = items.iterator();
+				
+				while (iterator.hasNext()) {
+					final LogItem item = (LogItem) iterator.next();
+					f.write(item.getLogBytes());
+				}
+				
+				connectionService.getLogAllItems().getItems().clear();
+				
+				f.flush();
+				f.close();
+				
+				menuShareLog.setVisible(false);
+				
+				final String logLocation = String.format(getResources().getString(R.string.share_log_message), 
+														 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
+				
+				Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
+				if (DEBUG) Log.d(TAG, logLocation);
+
+				Intent share = new Intent(Intent.ACTION_SEND);
+				share.setType("text/plain");
+				share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getPath()));
+				startActivity(Intent.createChooser(share, getText(R.string.share_log_all_heading)));
 
 			} catch (Exception e) {
 				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
@@ -847,27 +945,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 				ft.show(gaugesFragment);
 				break;  
 			case 2:				
-//				if (connected != null && connected.isAlive()) {
-//			    	progress = ProgressDialog.show(ctx, "Fuel Map" , "Reading map values 0/512...");
-//
-//			    	mapOffset = 0;
-//			    	mapMode = true;
-//			    	sendRequest(mapOffset);
-//				}
-				
-				fuelData1.clear();
-				fuelData2.clear();
-				fuelData3.clear();
-				fuelData4.clear();
+				if (ConnectionService.state != ConnectionService.State.DISCONNECTED) {
+					mapMode = true;
+			    	progress = ProgressDialog.show(ctx, "Fuel Map" , "Reading map values ...");
+		        	startService(new Intent(ConnectionService.ACTION_UPDATE_FUEL_MAP));	
 
-				for (int x = 0; x < 128; x++) {
-					fuelData1.add(String.format("%d", x));
-					fuelData2.add(String.format("%d", x + 128));
-					fuelData3.add(String.format("%d", x + 256));
-					fuelData4.add(String.format("%d", x + 384));
-				}	  
-			
-				ft.show(fuelFragment);
+		        	fuelData1.clear();
+					fuelData2.clear();
+					fuelData3.clear();
+					fuelData4.clear();
+	        		
+					ft.show(fuelFragment);
+				}
+				
 				break;
 		}
 		

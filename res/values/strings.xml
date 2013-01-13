@@ -20,16 +20,16 @@
 
     <string name="app_name">Adaptive Tuner</string>
     <string name="menu_connect">Bluetooth Connect</string>
+    <string name="menu_usb_connect">USB Connect</string>
     <string name="menu_disconnect">Disconnect</string>
-    <string name="menu_refresh">Refresh</string>
     <string name="menu_exit">Quit</string>
     <string name="title_activity_main">Adaptive Tuner</string>
-    <string name="large_text">Large Text</string>
     <string name="device_list">Bluetooth Device List</string>
     <string name="ignition">Ignition Learning</string>
     <string name="fuel">Fuel Learning</string>
     
-    <string name="share_log_heading">Share using</string>
+    <string name="share_afr_log_heading">Share AFR Alerts using</string>
+    <string name="share_log_all_heading">Share Log using</string>
     <string name="share_log_message" formatted="false">Log saved as %s%s%s</string>
     
     <string name="tab_adaptive">Adaptive Monitor</string>
@@ -46,18 +46,22 @@
     
     <string name="prefs_connection_category">Connection Settings</string>
     <string name="prefs_connection_auto_connect">Automatic Connection on Startup</string>
-    <string name="prefs_connect_on_charge">Auto Connect on Charge State</string>
+    <string name="prefs_connect_on_charge">Autoconnect on Dock/Charge</string>
+    <string name="prefs_connect_on_charge_wait_time">Time to wait before Connecting</string>
     <string name="prefs_connection_keep_device_awake">Keep Device Awake while Connected</string>
     
     <string name="prefs_alerts_pref">Alerts &amp; Logging</string>
     <string name="prefs_alert_afr_category">AFR Alerts</string>
     <string name="prefs_alert_afrnottarget">Actual AFR vs Target AFR</string>
     <string name="prefs_alert_afrnottarget_tolerance_pref">AFR Tolerance</string>
-    <string name="prefs_afr_alarm_loging">AFR Alert Logging</string>
+    <string name="prefs_afr_alarm_logging">AFR Alert Logging</string>
     <string name="prefs_alert_temperature_category">Temperature Alerts</string>
     <string name="prefs_alert_water_temperature">Water Temperature</string>    
 	<string name="prefs_alert_water_temperature_minimum">Minimum Water Temperature</string>
 	<string name="prefs_alert_water_temperature_maximum">Maximum Water Temperature</string>
+	
+	<string name="prefs_logging_category">General Logging</string>
+	<string name="prefs_logging_enabled">Log All Data</string>
 	
 	<string name="afr_gauge">AFR Gauge</string>
 	<string name="map_gauge">MAP Gauge</string>

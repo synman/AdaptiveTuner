@@ -171,6 +171,36 @@ public class AdaptivePreferences extends PreferenceActivity {
 				        
 		        connectionPrefCat.addPreference(connectChargePref);
 		        
+			        final SeekBarPreference connectChargeWaitPref = new SeekBarPreference(ctx);
+			        
+			        connectChargeWaitPref.setPersistent(false);
+			        connectChargeWaitPref.setTitle(R.string.prefs_connect_on_charge_wait_time);
+			        connectChargeWaitPref.setSuffix(" seconds");
+			        connectChargeWaitPref.setMinValue(1f);
+			        connectChargeWaitPref.setMaxValue(60);
+			        connectChargeWaitPref.setScale(1f);
+					connectChargeWaitPref.setSummary(String.format("%.0f seconds", prefs.getFloat("prefs_connect_on_charge_wait_time", 5f)));
+			        connectChargeWaitPref.setDefaultValue(prefs.getFloat("prefs_connect_on_charge_wait_time", 5f));
+			        connectChargeWaitPref.setEnabled(prefs.getBoolean("prefs_connect_on_charge", false));
+			        
+			        connectChargeWaitPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, Object arg1) {
+							connectChargeWaitPref.setSummary(String.format("%.0f seconds", (Float) arg1));
+							edit.putFloat("prefs_connect_on_charge_wait_time", (Float) arg1);
+							edit.commit();
+							return true;
+						}
+			        });	
+			        
+			        connectChargePref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, Object arg1) {
+							connectChargeWaitPref.setEnabled((Boolean) arg1);
+							return true;
+						}
+			        });
+			        
+		       connectionPrefCat.addPreference(connectChargeWaitPref);
+		        
 		        	CheckBoxPreference wakeLockPref = new CheckBoxPreference(ctx);
 			        wakeLockPref.setPersistent(true);
 			        wakeLockPref.setKey("prefs_wake_lock");
@@ -234,7 +264,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 			        afrLoggingPref.setDefaultValue(false);
 			        afrLoggingPref.setSummaryOn(R.string.enabled);
 			        afrLoggingPref.setSummaryOff(R.string.disabled);
-			        afrLoggingPref.setTitle(R.string.prefs_afr_alarm_loging);
+			        afrLoggingPref.setTitle(R.string.prefs_afr_alarm_logging);
 			        afrLoggingPref.setEnabled(prefs.getBoolean("prefs_afrnottarget_pref", false));
 			        
 			        afrNotTargetPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
@@ -336,7 +366,23 @@ public class AdaptivePreferences extends PreferenceActivity {
 			        tempPrefCat.addPreference(waterTempPref);
 			        tempPrefCat.addPreference(minWaterTempPref);
 			        tempPrefCat.addPreference(maxWaterTempPref);
-		        
+		     
+            	PreferenceCategory loggingPrefCat = new PreferenceCategory(ctx);
+            	loggingPrefCat.setTitle(R.string.prefs_logging_category);
+            	alertsPref.addPreference(loggingPrefCat);
+
+			        final CheckBoxPreference loggingPref = new CheckBoxPreference(ctx);
+			        
+			        loggingPref.setPersistent(true);
+			        loggingPref.setKey("prefs_log_all");
+			        loggingPref.setDefaultValue(false);
+			        loggingPref.setSummaryOn(R.string.enabled);
+			        loggingPref.setSummaryOff(R.string.disabled);
+			        loggingPref.setTitle(R.string.prefs_logging_enabled);
+			        loggingPref.setEnabled(true);
+			        
+			        loggingPrefCat.addPreference(loggingPref);
+
 	        setPreferenceScreen(alertsPref);
         }
     }

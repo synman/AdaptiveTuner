@@ -30,11 +30,33 @@ public class LogItems {
 		this.items = items;
 	}
 
-	public static LogItem newLogItem() {
+	public LogItem newLogItem() {
 		return new LogItem();
 	}
 	
-	public static class LogItem {
+	public void addLogItem(LogItem item) {
+		LogItem newItem = newLogItem();
+		
+		newItem.afr = item.afr;
+		newItem.closedLoop = item.closedLoop;
+		newItem.learningFLoad = item.learningFLoad;
+		newItem.learningFRpm = item.learningFRpm;
+		newItem.learningFWait = item.learningFWait;
+		newItem.learningILoad = item.learningILoad;
+		newItem.learningIRpm = item.learningIRpm;
+		newItem.learningIWait = item.learningIWait;
+		newItem.map = item.map;
+		newItem.mat = item.mat;
+		newItem.referenceAfr = item.referenceAfr;
+		newItem.rpm = item.rpm;
+		newItem.targetAfr = item.targetAfr;
+		newItem.tps = item.tps;
+		newItem.wat = item.wat;
+		
+		items.add(newItem);
+	}
+	
+	public class LogItem {
 
 		private final long timestamp = System.currentTimeMillis();
 		
@@ -58,127 +80,127 @@ public class LogItems {
 		
 		private boolean closedLoop = false;
 				
-		public synchronized int getRpm() {
+		public int getRpm() {
 			return rpm;
 		}
 
-		public synchronized void setRpm(final int rpm) {
+		public void setRpm(final int rpm) {
 			this.rpm = rpm;
 		}
 
-		public synchronized int getMap() {
+		public int getMap() {
 			return map;
 		}
 
-		public synchronized void setMap(final int map) {
+		public void setMap(final int map) {
 			this.map = map;
 		}
 
-		public synchronized int getWat() {
+		public int getWat() {
 			return wat;
 		}
 
-		public synchronized void setWat(final int wat) {
+		public void setWat(final int wat) {
 			this.wat = wat;
 		}
 
-		public synchronized int getMat() {
+		public int getMat() {
 			return mat;
 		}
 
-		public synchronized void setMat(final int mat) {
+		public void setMat(final int mat) {
 			this.mat = mat;
 		}
 
-		public synchronized int getTps() {
+		public int getTps() {
 			return tps;
 		}
 
-		public synchronized void setTps(final int tps) {
+		public void setTps(final int tps) {
 			this.tps = tps;
 		}
 
-		public synchronized float getAfr() {
+		public float getAfr() {
 			return afr;
 		}
 
-		public synchronized void setAfr(final float afr) {
+		public void setAfr(final float afr) {
 			this.afr = afr;
 		}
 
-		public synchronized float getReferenceAfr() {
+		public float getReferenceAfr() {
 			return referenceAfr;
 		}
 
-		public synchronized void setReferenceAfr(final float referenceAfr) {
+		public void setReferenceAfr(final float referenceAfr) {
 			this.referenceAfr = referenceAfr;
 		}
 
-		public synchronized float getTargetAfr() {
+		public float getTargetAfr() {
 			return targetAfr;
 		}
 
-		public synchronized void setTargetAfr(final float targetAfr) {
+		public void setTargetAfr(final float targetAfr) {
 			this.targetAfr = targetAfr;
 		}
 
-		public synchronized boolean isLearningIWait() {
+		public boolean isLearningIWait() {
 			return learningIWait;
 		}
 
-		public synchronized void setLearningIWait(final boolean learningIWait) {
+		public void setLearningIWait(final boolean learningIWait) {
 			this.learningIWait = learningIWait;
 		}
 
-		public synchronized boolean isLearningIRpm() {
+		public boolean isLearningIRpm() {
 			return learningIRpm;
 		}
 
-		public synchronized void setLearningIRpm(final boolean learningIRpm) {
+		public void setLearningIRpm(final boolean learningIRpm) {
 			this.learningIRpm = learningIRpm;
 		}
 
-		public synchronized boolean isLearningILoad() {
+		public boolean isLearningILoad() {
 			return learningILoad;
 		}
 
-		public synchronized void setLearningILoad(final boolean learningILoad) {
+		public void setLearningILoad(final boolean learningILoad) {
 			this.learningILoad = learningILoad;
 		}
 
-		public synchronized boolean isLearningFWait() {
+		public boolean isLearningFWait() {
 			return learningFWait;
 		}
 
-		public synchronized void setLearningFWait(final boolean learningFWait) {
+		public void setLearningFWait(final boolean learningFWait) {
 			this.learningFWait = learningFWait;
 		}
 
-		public synchronized boolean isLearningFRpm() {
+		public boolean isLearningFRpm() {
 			return learningFRpm;
 		}
 
-		public synchronized void setLearningFRpm(final boolean learningFRpm) {
+		public void setLearningFRpm(final boolean learningFRpm) {
 			this.learningFRpm = learningFRpm;
 		}
 
-		public synchronized boolean isLearningFLoad() {
+		public boolean isLearningFLoad() {
 			return learningFLoad;
 		}
 
-		public synchronized void setLearningFLoad(final boolean learningFLoad) {
+		public void setLearningFLoad(final boolean learningFLoad) {
 			this.learningFLoad = learningFLoad;
 		}
 
-		public synchronized boolean isClosedLoop() {
+		public boolean isClosedLoop() {
 			return closedLoop;
 		}
 
-		public synchronized void setClosedLoop(final boolean closedLoop) {
+		public void setClosedLoop(final boolean closedLoop) {
 			this.closedLoop = closedLoop;
 		}
 
-		public synchronized long getTimestamp() {
+		public long getTimestamp() {
 			return timestamp;
 		}
 
