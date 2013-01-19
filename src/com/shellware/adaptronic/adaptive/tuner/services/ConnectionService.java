@@ -189,9 +189,17 @@ public class ConnectionService extends Service {
 			
 			if (usbThread != null) {
 				connectedThread = usbThread;
-				lastUpdateInMillis = System.currentTimeMillis();
+				
+				lastUpdateInMillis = System.currentTimeMillis();	            
+	    		totalTimeMillis = 0;
+	    		updatesReceived = 0;
+				
 	        	state = State.CONNECTED_USB;
 	            notifier.tickerText = getResources().getString(R.string.service_usb_connected);
+
+	            sendRequest(REGISTER_4096_PLUS_SEVEN);
+
+	    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
 
 	            // acquire wakelock
 	            if (wakeLock && !wl.isHeld()) wl.acquire();
@@ -226,7 +234,7 @@ public class ConnectionService extends Service {
         
         // show a notification if our activity doesn't have focus
         if (!UI_THREAD_IS_ACTIVE) {
-            notifier.setLatestEventInfo(getApplicationContext(), getString(R.string.app_name), notifier.tickerText, pi);        
+            notifier.setLatestEventInfo(getApplicationContext(), getString(R.string.app_name), notifier.tickerText, pi);     
             startForeground(NOTIFICATION_ID, notifier);
         }
         
@@ -281,6 +289,7 @@ public class ConnectionService extends Service {
 		
 	        switch (message.getData().getShort("handle")) {
 	        	case CONNECTED:
+	        		// this message is only sent via BT connect
 	        		final String name = message.getData().getString("name");
 	        		final String addr = message.getData().getString("addr");
 	        		

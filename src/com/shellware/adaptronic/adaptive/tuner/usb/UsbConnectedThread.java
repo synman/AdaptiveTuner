@@ -165,7 +165,7 @@ public class UsbConnectedThread extends ConnectedThread {
 			bytes = mConnection.bulkTransfer(mInEndpoint, buffer, buffer.length, 5);
 			
 			if (bytes == -1) {
-				if (DEBUG) Log.d(TAG, "Bulk Transfer In Error");
+//				if (DEBUG) Log.d(TAG, "Bulk Transfer In Error");
 			} else {
 		        if (DEBUG)  {
 	                Log.d(TAG, String.format("Received %d bytes", bytes));
@@ -175,7 +175,7 @@ public class UsbConnectedThread extends ConnectedThread {
 //			        }
 		        }
                 
-                // Send the obtained bytes to the UI activity
+                // Send the obtained bytes to the connection service
 		        Bundle b = new Bundle();
 
 		        b.putShort("handle", ConnectionService.DATA_READY);
@@ -198,6 +198,8 @@ public class UsbConnectedThread extends ConnectedThread {
 	public void write(byte[] bytes) {
 		if (mConnection.bulkTransfer(mOutEndpoint, bytes, bytes.length, 5) == -1) {
 			if (DEBUG) Log.d(TAG, "Bulk Transfer Out Error");
+		} else {
+			if (DEBUG) Log.d(TAG, "Bulk Transfer Out Successful");
 		}
 	}
 	

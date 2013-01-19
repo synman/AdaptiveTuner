@@ -19,6 +19,14 @@
     </style>
   </head>
   <body>
+$ 1.1.8
+  % Version 1.1.8
+  _ 2013-01-19
+  ! Bug Fix
+  	* OTG confirmed as functional
+  	* TODO: Finish fuel table 
+  	* Pushed to Master
+  	* Honeycomb 3.1+ only
 $ 1.1.7
   % Version 1.1.7
   _ 2013-01-12
