@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import android.app.ActionBar;
+import android.app.ActionBar.OnNavigationListener;
 import android.app.ActionBar.Tab;
 import android.app.Activity;
 import android.app.Fragment;
@@ -53,16 +54,11 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
@@ -72,7 +68,6 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ViewFlipper;
 
 import com.shellware.adaptronic.adaptive.tuner.changelog.ChangeLog;
 import com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle;
@@ -83,7 +78,7 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService.State;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 
-public class MainActivity extends Activity implements ActionBar.TabListener, OnClickListener {
+public class MainActivity extends Activity implements ActionBar.TabListener {
 	
 	public static final String TAG = "Adaptive";
 	public static final boolean DEBUG = false;
@@ -93,10 +88,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private static final int AFR_MIN = 970;
 	private static final int AFR_MAX = 1970;
 
-	private View mActionBarView;
 	private Fragment adaptiveFragment;
 	private Fragment gaugesFragment;
 	private Fragment fuelFragment;
+	
+	private final Fragment[] frags = { adaptiveFragment, gaugesFragment, fuelFragment };
 	
 	private TextView txtData;
 	private ListView lvDevices;
@@ -163,22 +159,19 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private static boolean logAll = false;
 	private static boolean afrAlarmLogging = false;
 	
-	private GridView fuelGrid1;
-	private GridView fuelGrid2;
-	private GridView fuelGrid3;
-	private GridView fuelGrid4;
-	
-	private ArrayAdapter<String> fuelData1;
-	private ArrayAdapter<String> fuelData2;
-	private ArrayAdapter<String> fuelData3;
-	private ArrayAdapter<String> fuelData4;
-	
-	private static final int SWIPE_MIN_DISTANCE = 120;
-	private static final int SWIPE_MAX_OFF_PATH = 250;
-	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+	private GridView fuelGridHeaderTop;
+	private GridView fuelGrid;
 
-	private GestureDetector gestureDetector;
-	View.OnTouchListener gestureListener;
+	
+	private ArrayAdapter<String> fuelDataTop;
+	private ArrayAdapter<String> fuelData;
+
+//	private static final int SWIPE_MIN_DISTANCE = 120;
+//	private static final int SWIPE_MAX_OFF_PATH = 250;
+//	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
+//
+//	private GestureDetector gestureDetector;
+//	View.OnTouchListener gestureListener;
 		
 	private ConnectionService connectionService;
 	private ServiceConnection connectionServiceConnection;
@@ -201,23 +194,69 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         ctx = this;
     	prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
     	
+    	// Instantiate all of our fragments
         adaptiveFragment = getFragmentManager().findFragmentById(R.id.frag_adaptive);
         gaugesFragment = getFragmentManager().findFragmentById(R.id.frag_gauges);
         fuelFragment = getFragmentManager().findFragmentById(R.id.frag_fuel);
         
-        ActionBar bar = getActionBar();
+        frags[0] = adaptiveFragment;
+        frags[1] = gaugesFragment;
+        frags[2] = fuelFragment;
+                
+        final ActionBar bar = getActionBar();
         
-        bar.addTab(bar.newTab().setText(R.string.tab_adaptive).setTabListener(this), false);        
-        bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this), false);
-        bar.addTab(bar.newTab().setText(R.string.tab_fuel_map).setTabListener(this), false);
+        // ActionBar settings common across orientations
+        bar.setDisplayShowTitleEnabled(false);
+        bar.setDisplayUseLogoEnabled(true);
+        bar.setDisplayShowHomeEnabled(true);        	
 
-        mActionBarView = getLayoutInflater().inflate(
-                R.layout.action_bar_custom, null);
- 
-        bar.setCustomView(mActionBarView);
-        bar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM | ActionBar.DISPLAY_USE_LOGO);
-        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        bar.setDisplayShowHomeEnabled(true);
+        final int o = getResources().getConfiguration().orientation;
+         
+        // build our navigation model based on orientation
+        if (o != Surface.ROTATION_0 && o != Surface.ROTATION_180) {
+        	// portrait
+            bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+            
+            // our navigation list items
+            final String[] actions = new String[] { getResources().getString(R.string.tab_adaptive), 
+            										getResources().getString(R.string.tab_gauges), 
+            										getResources().getString(R.string.tab_fuel_map) };
+            // define our array adapter
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(ctx, android.R.layout.simple_spinner_dropdown_item, actions);
+            
+            // define our listener 
+            OnNavigationListener navigationListener = new OnNavigationListener() {
+                public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+                	FragmentTransaction ft = getFragmentManager().beginTransaction();
+                	
+                	ft.hide(adaptiveFragment);
+                	ft.hide(gaugesFragment);
+                	ft.hide(fuelFragment);
+                	
+                	//kludge to populate fuel map
+                	if (itemPosition == 2) buildFuelMap();
+               
+                	ft.show(frags[itemPosition]);
+                	ft.commit();
+
+        			Editor edit = prefs.edit();
+        			edit.putInt("prefs_last_tab",itemPosition);
+        			edit.commit();
+
+                	return true;
+                }
+            };
+            
+            // bind our  adapter and listener
+           bar.setListNavigationCallbacks(adapter, navigationListener);
+        } else {
+        	// landscape
+            bar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+            bar.addTab(bar.newTab().setText(R.string.tab_adaptive).setTabListener(this), false);        
+            bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this), false);
+            bar.addTab(bar.newTab().setText(R.string.tab_fuel_map).setTabListener(this), false);
+        }
 
         txtData = (TextView) findViewById(R.id.txtData);
         lvDevices = (ListView) findViewById(R.id.lvDevices);
@@ -298,37 +337,32 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
             cl.getLogDialog().show();
         }
         
-        fuelGrid1 = (GridView) findViewById(R.id.gridFuel1);
-        fuelData1 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        fuelGrid1.setAdapter(fuelData1);
+        fuelGrid = (GridView) findViewById(R.id.gridFuel);
+        fuelData = new ArrayAdapter<String>(this, R.layout.tiny_list_item);
+        fuelGrid.setAdapter(fuelData);
         
-        fuelGrid2 = (GridView) findViewById(R.id.gridFuel2);
-        fuelData2 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        fuelGrid2.setAdapter(fuelData2);
+        fuelGridHeaderTop = (GridView) findViewById(R.id.gridFuelHeaderTop);
+        fuelDataTop = new ArrayAdapter<String>(this, R.layout.tiny_list_item_bold);
+        fuelGridHeaderTop.setAdapter(fuelDataTop);
         
-        fuelGrid3 = (GridView) findViewById(R.id.gridFuel3);
-        fuelData3 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        fuelGrid3.setAdapter(fuelData3);
+        fuelDataTop.add("RPM");
+        fuelDataTop.add("0 kPA");
+        fuelDataTop.add("13 kPA");
+        fuelDataTop.add("26 kPA");
+        fuelDataTop.add("40 kPA");
+        fuelDataTop.add("53 kPA");
+        fuelDataTop.add("66 kPA");
+        fuelDataTop.add("80 kPA");
+        fuelDataTop.add("93 kPA");
+        fuelDataTop.add("106 kPA");
+        fuelDataTop.add("120 kPA");
+        fuelDataTop.add("133 kPA");
+        fuelDataTop.add("146 kPA");
+        fuelDataTop.add("160 kPA");
+        fuelDataTop.add("173 kPA");
+        fuelDataTop.add("186 kPA");
+        fuelDataTop.add("200 kPA");
         
-        fuelGrid4 = (GridView) findViewById(R.id.gridFuel4);
-        fuelData4 = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        fuelGrid4.setAdapter(fuelData4);
-        
-//        GridView[] fuelGrids = {fuelGrid1, fuelGrid2, fuelGrid3, fuelGrid4};
-        
-        // Gesture detection
-        gestureDetector = new GestureDetector(new MyGestureDetector());
-        gestureListener = new View.OnTouchListener() {
-            public boolean onTouch(View v, MotionEvent event) {
-                return gestureDetector.onTouchEvent(event);
-            }
-        };
-        
-        fuelGrid1.setOnTouchListener(gestureListener);
-        fuelGrid2.setOnTouchListener(gestureListener);
-        fuelGrid3.setOnTouchListener(gestureListener);
-        fuelGrid4.setOnTouchListener(gestureListener);
-		
 		usbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(usbReceiver, usbDetachedFilter);
         
@@ -405,17 +439,31 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     		menuShareLog.setVisible((afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()) ||
     								 (logAll && !connectionService.getLogAllItems().getItems().isEmpty()));
     	}
-
+    	
     	// ensure all fragments are hidden
     	FragmentTransaction ft = getFragmentManager().beginTransaction();
     	ft.hide(adaptiveFragment);
     	ft.hide(gaugesFragment);
     	ft.hide(fuelFragment);
-    	ft.commit();  
-    	
-    	ActionBar bar = getActionBar();
-    	bar.selectTab(bar.getTabAt(prefs.getInt("prefs_last_tab", 1)));    
-    	
+
+    	final ActionBar bar = getActionBar();	
+        final int o = getResources().getConfiguration().orientation;   
+        final int savedTabIndex = prefs.getInt("prefs_last_tab", 1);
+        
+        // set default navigation item based on orientation
+        if (o != Surface.ROTATION_0 && o != Surface.ROTATION_180) {
+        	// portrait
+            bar.setSelectedNavigationItem(savedTabIndex);
+        	if (savedTabIndex == 2) buildFuelMap();
+        	ft.show(frags[savedTabIndex]);
+        	ft.commit();  
+        } else {
+        	// landscape
+        	ft.commit(); // must commit before selecting tab  
+        	bar.selectTab(bar.getTabAt(savedTabIndex));            	
+        }
+
+        // check our intent to see if we received a USB attachment
         String action = getIntent().getAction();
 
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
@@ -423,6 +471,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
         }   	
 
+        // refresh the screen (atleast) once
         refreshHandler = new Handler();
 		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
 		
@@ -453,7 +502,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private final Runnable RefreshRunnable = new Runnable() {
 
 		public void run() {
-			
+
 			// bail if no service binding available or not connected
 			if (connectionService == null || 
 					(connectionService != null && 
@@ -489,15 +538,15 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 			imgStatus.setBackgroundColor(connectionService.isDataNotAvailable() ? Color.RED : Color.GREEN);
 			
 			// show the log share menu option if logging is enabled
-	    	if (connectionService != null)
+			if (connectionService != null && menuShareLog != null)
 	    		menuShareLog.setVisible((afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()) ||
-						 (logAll && !connectionService.getLogAllItems().getItems().isEmpty()));
+						 (logAll && !connectionService.getLogAllItems().getItems().isEmpty()));				
 			
 	    	// show our fuel table fragment if an updated
 	    	// map is available (because we asked it for)
 	    	if (mapMode) {
 	    		if (mapReady) {
-	        		populateFuelTables(connectionService.getMapData());
+	        		populateFuelTable(connectionService.getMapData());
 
 			    	mapMode = false;
 	        		mapReady = false;
@@ -609,20 +658,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         }
     };
     
-	private void populateFuelTables(final StringBuffer data) {
-
+	private void populateFuelTable(final StringBuffer data) {
 
 		String[] map = data.toString().trim().split(" ");
 		short cnt = 0;
 
 		for (int x = 0; x < 32; x++) {
+			fuelData.add(String.format("%d", x * 300));
 			for (int y = 0; y < 16; y++) {
-				double val = Double.parseDouble(String.format(Locale.US, "%.4f", Integer.parseInt(map[cnt] + map[cnt+1], 16) / 128f));
-				fuelData1.add(String.format("%.4f", val));
-				fuelData2.add(String.format("%.4f", val));
-				fuelData3.add(String.format("%.4f", val));
-				fuelData4.add(String.format("%.4f", val));
-				if (DEBUG) Log.d(TAG, String.format("%d:%d = %.4f", x, y, val));
+				double val = Double.parseDouble(String.format(Locale.US, "%.2f", Integer.parseInt(map[cnt] + map[cnt+1], 16) / 128f));
+				fuelData.add(String.format("%.2f", val));
+
+				if (DEBUG) Log.d(TAG, String.format("%d:%d = %.2f", x, y, val));
 				cnt = (short) (cnt + 2);
 			}
 		}	  		
@@ -936,7 +983,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	public void onTabSelected(Tab tab, FragmentTransaction ft) {
 		
 		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
-		
+
 		switch (tab.getPosition()) {
 			case 0:
 				ft.show(adaptiveFragment);
@@ -945,19 +992,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 				ft.show(gaugesFragment);
 				break;  
 			case 2:				
-				if (ConnectionService.state != ConnectionService.State.DISCONNECTED) {
-					mapMode = true;
-			    	progress = ProgressDialog.show(ctx, "Fuel Map" , "Reading map values ...");
-		        	startService(new Intent(ConnectionService.ACTION_UPDATE_FUEL_MAP));	
-
-		        	fuelData1.clear();
-					fuelData2.clear();
-					fuelData3.clear();
-					fuelData4.clear();
-	        		
-					ft.show(fuelFragment);
-				}
-				
+				buildFuelMap();
+				ft.show(fuelFragment);
 				break;
 		}
 		
@@ -967,6 +1003,46 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 			edit.putInt("prefs_last_tab", tab.getPosition());
 			edit.commit();
 		}
+	}
+	
+	private void buildFuelMap() {
+		if (ConnectionService.state != ConnectionService.State.DISCONNECTED) {
+			mapMode = true;
+	    	progress = ProgressDialog.show(ctx, "Fuel Map" , "Reading map values ...");
+	    	progress.setCancelable(true);
+	    	progress.setOnCancelListener(new OnCancelListener() {
+				public void onCancel(DialogInterface arg0) {
+					disconnect();
+				}});
+	    	
+        	startService(new Intent(ConnectionService.ACTION_UPDATE_FUEL_MAP));	
+
+        	fuelData.clear();      		
+		} else {
+			fuelData.clear();
+			for (int x = 0; x < 32; x++) {
+				fuelData.add(String.format("%d", x * 300));
+				for (int y = 0; y < 16; y++) {
+					fuelData.add("");
+				}
+			}	
+		}
+		
+//		fuelData.clear();
+//		
+//		int y = 0;
+//		int z = 300;
+//		fuelData.add("0");
+//		for (int x = 0 ; x < 512 ; x++) {
+//			fuelData.add("000.00");
+//
+//			y++;
+//			if (y==16 && z < 9600) {
+//				y=0;
+//				fuelData.add(String.format("%d", z));
+//				z=z+300;
+//			}
+//		}
 	}
 
 	@Override
@@ -979,49 +1055,50 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 		}
 	}
 
-	public void onClick(View arg0) {
-//        Filter f = (Filter) v.getTag();
-//        FilterFullscreenActivity.show(this, input, f);
-	}
+//	public void onClick(View arg0) {
+////        Filter f = (Filter) v.getTag();
+////        FilterFullscreenActivity.show(this, input, f);
+//	}
 	
-    class MyGestureDetector extends SimpleOnGestureListener {
+//    class MyGestureDetector extends SimpleOnGestureListener {
+//
+//        final private ViewFlipper vf = (ViewFlipper) findViewById(R.id.gridFlipper);
+//        
+//        final private Animation animFlipInForeward = AnimationUtils.loadAnimation(ctx, R.anim.flipin);
+//        final private Animation animFlipOutForeward = AnimationUtils.loadAnimation(ctx, R.anim.flipout);
+//        final private Animation animFlipInBackward = AnimationUtils.loadAnimation(ctx, R.anim.flipin_reverse);
+//        final private Animation animFlipOutBackward = AnimationUtils.loadAnimation(ctx, R.anim.flipout_reverse);
+//        
+//        @Override
+//        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+//            try {
+//                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH) return false;
+//                
+//                // right to left swipe
+//                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+////                    Toast.makeText(ctx, "Left Swipe", Toast.LENGTH_SHORT).show();
+//
+////                    vf.setAnimation(AnimationUtils.loadAnimation(ctx, android.R.anim.slide_out_right));
+//                    vf.setInAnimation(animFlipInForeward);
+//                    vf.setOutAnimation(animFlipOutForeward);
+//                    
+//                    vf.showNext();
+//                    
+//                }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+////                    Toast.makeText(ctx, "Right Swipe", Toast.LENGTH_SHORT).show();
+//                    
+////                    vf.setAnimation(AnimationUtils.loadAnimation(ctx, android.R.anim.slide_in_left));
+//                    vf.setInAnimation(animFlipInBackward);
+//                    vf.setOutAnimation(animFlipOutBackward);
+//                    
+//                    vf.showPrevious();                    
+//                }
+//            } catch (Exception e) {
+//                // nothing
+//            }
+//            return false;
+//        }
+//
+//    }
 
-        final private ViewFlipper vf = (ViewFlipper) findViewById(R.id.gridFlipper);
-        
-        final private Animation animFlipInForeward = AnimationUtils.loadAnimation(ctx, R.anim.flipin);
-        final private Animation animFlipOutForeward = AnimationUtils.loadAnimation(ctx, R.anim.flipout);
-        final private Animation animFlipInBackward = AnimationUtils.loadAnimation(ctx, R.anim.flipin_reverse);
-        final private Animation animFlipOutBackward = AnimationUtils.loadAnimation(ctx, R.anim.flipout_reverse);
-        
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            try {
-                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH) return false;
-                
-                // right to left swipe
-                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-//                    Toast.makeText(ctx, "Left Swipe", Toast.LENGTH_SHORT).show();
-
-//                    vf.setAnimation(AnimationUtils.loadAnimation(ctx, android.R.anim.slide_out_right));
-                    vf.setInAnimation(animFlipInForeward);
-                    vf.setOutAnimation(animFlipOutForeward);
-                    
-                    vf.showNext();
-                    
-                }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-//                    Toast.makeText(ctx, "Right Swipe", Toast.LENGTH_SHORT).show();
-                    
-//                    vf.setAnimation(AnimationUtils.loadAnimation(ctx, android.R.anim.slide_in_left));
-                    vf.setInAnimation(animFlipInBackward);
-                    vf.setOutAnimation(animFlipOutBackward);
-                    
-                    vf.showPrevious();                    
-                }
-            } catch (Exception e) {
-                // nothing
-            }
-            return false;
-        }
-
-    }
 }

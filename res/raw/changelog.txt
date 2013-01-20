@@ -19,11 +19,18 @@
     </style>
   </head>
   <body>
+$ 1.1.9
+  % Version 1.1.9
+  _ 2013-01-20
+  ! Orientation &amp; Fuel Map
+  	* All kinds of orientation optimizations
+  	* Fuel Map spruced up and nearing completion 
 $ 1.1.8
   % Version 1.1.8
   _ 2013-01-19
   ! Bug Fix
   	* OTG confirmed as functional
+  	* Low Density display optimizations
   	* TODO: Finish fuel table 
   	* Pushed to Master
   	* Honeycomb 3.1+ only

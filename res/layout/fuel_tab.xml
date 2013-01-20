@@ -42,53 +42,23 @@ android:layout_width="fill_parent" android:layout_height="wrap_content">
      android:background="@drawable/shape_gradient_background"
      tools:context=".fragments.FuelFragment" >
 
-     <ViewFlipper
-         android:id="@+id/gridFlipper"
-         android:layout_width="wrap_content"
-         android:layout_height="wrap_content" >
-
-         <RelativeLayout
-         	android:layout_width="wrap_content"
-         	android:layout_height="wrap_content">
-
-		     <GridView
-		         android:id="@+id/gridFuel1"
-		         android:layout_width="wrap_content"
-		         android:layout_height="wrap_content"
-		         android:fadingEdge="horizontal|vertical"
-		         android:numColumns="16"
-		         android:scrollbars="horizontal|vertical" >
-		     </GridView>
-		     
-		</RelativeLayout>
-		
-	     <GridView
-	         android:id="@+id/gridFuel2"
+     <GridView
+         android:id="@+id/gridFuelHeaderTop"
 	         android:layout_width="wrap_content"
 	         android:layout_height="wrap_content"
 	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="16"
-	         android:scrollbars="horizontal|vertical" >
-	     </GridView>
-
-   	     <GridView
-	         android:id="@+id/gridFuel3"
-	         android:layout_width="wrap_content"
-	         android:layout_height="wrap_content"
-	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="16"
-	         android:scrollbars="horizontal|vertical" >
-	     </GridView>
-
-   	     <GridView
-	         android:id="@+id/gridFuel4"
-	         android:layout_width="wrap_content"
-	         android:layout_height="wrap_content"
-	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="16"
-	         android:scrollbars="horizontal|vertical" >
-	     </GridView>
-
-     </ViewFlipper>
+	         android:numColumns="17"
+	         android:layout_marginTop="10dp"
+	         android:scrollbars="horizontal|vertical" />
      
+	     <GridView
+	         android:id="@+id/gridFuel"
+	         android:layout_below="@+id/gridFuelHeaderTop"
+	         android:layout_width="wrap_content"
+	         android:layout_height="wrap_content"
+	         android:fadingEdge="horizontal|vertical"
+	         android:numColumns="17"
+	         android:scrollbars="horizontal|vertical" >
+	     </GridView>	     
+
 </RelativeLayout>
