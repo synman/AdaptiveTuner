@@ -206,10 +206,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         final ActionBar bar = getActionBar();
         
         // ActionBar settings common across orientations
-        bar.setDisplayShowTitleEnabled(false);
-        bar.setDisplayUseLogoEnabled(true);
-        bar.setDisplayShowHomeEnabled(true);        	
-
+        bar.setDisplayOptions(ActionBar.DISPLAY_SHOW_HOME | ActionBar.DISPLAY_HOME_AS_UP | ActionBar.DISPLAY_USE_LOGO);
+        // get current screen orientation
         final int o = getResources().getConfiguration().orientation;
          
         // build our navigation model based on orientation
