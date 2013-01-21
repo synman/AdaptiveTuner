@@ -24,7 +24,7 @@
 
     <uses-sdk
         android:minSdkVersion="12"
-        android:targetSdkVersion="12" />
+        android:targetSdkVersion="17" />
     
 	<uses-permission android:name="android.permission.WAKE_LOCK"/>  
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -35,7 +35,10 @@
     <application
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
+        android:allowBackup="true"
+        android:backupAgent=".MainActivityBackupAgentHelper"
         android:theme="@android:style/Theme.Holo" >
+        
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"  
@@ -50,8 +53,7 @@
 		    	<action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
 		    </intent-filter>		
               
-			<meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/device_filter" />
-			
+			<meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/device_filter" />			
         </activity>
         
         <activity android:name=".preferences.AdaptivePreferences" 
@@ -69,6 +71,8 @@
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP" />
 			</intent-filter>
 		</service>	
+		
+		<meta-data android:name="com.google.android.backup.api_key" android:value="AEdPqrEAAAAIqGUmRlrTxscSz23fMuDaUAhmoDF5u1BbVVflxg" />
+        
     </application>
-
 </manifest>
