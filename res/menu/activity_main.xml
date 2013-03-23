@@ -23,12 +23,7 @@
 	        android:icon="@drawable/ic_action_share"
 	        android:showAsAction="always"
 	        android:visible="false" />
-<!--    	    <item android:id="@+id/menu_save"
-	        android:orderInCategory="100"
-	        android:icon="@drawable/content_save"
-	        android:showAsAction="always"
-	        android:visible="false" />
- -->    </group>
+	</group>
 	<group>
 	    <item android:id="@+id/menu_connect"
 	        android:title="@string/menu_connect"
@@ -44,6 +39,13 @@
 	<group>
 	    <item android:id="@+id/menu_prefs"
 	        android:title="@string/menu_prefs"
+	        android:orderInCategory="100"
+	        android:showAsAction="never" />
+    </group>
+   	<group>
+	    <item android:id="@+id/menu_save_map"
+	        android:enabled="false"
+	        android:title="@string/menu_save_map"
 	        android:orderInCategory="100"
 	        android:showAsAction="never" />
     </group>

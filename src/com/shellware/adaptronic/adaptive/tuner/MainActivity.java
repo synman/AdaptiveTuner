@@ -117,6 +117,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	
 	private ImageView imgIat;
 	
+	private TextView fuelTableAfr;
+	private ImageView crossX;
+	private ImageView crossY;
+	
 	private GaugeNeedle waterNeedle;
 	private GaugeNeedle iatNeedle;
 	private GaugeNeedle mapNeedle;
@@ -125,6 +129,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private GaugeNeedle rpmNeedle;
 	
 	private GaugeSlider tpsSlider;
+	
+	private ImageView afrGaugeAlarm;
+	private ImageView waterGaugeAlarm;
 
 	private ProgressDialog progress;
 	
@@ -136,12 +143,17 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private ArrayAdapter<String> devices;
 	private ArrayAdapter<String> dataArray;
 
+	private static int lastMAP = 0;
 	private static int lastRPM = 0;
 	
 	private SharedPreferences prefs ;
 	private Context ctx;
 	
+	private static int screenWidth = 0;
+//	private static int screenHeight = 0;
+	
 	private static int tempUomPref = 1;
+	
 	private static boolean wakeLock = true;
 	private static boolean afrNotEqualTargetPref = false;
 	private static float afrNotEqualTargetTolerance = 5f;
@@ -330,6 +342,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         tpsSlider.setMaxValue(100);
         tpsSlider.setSuffix("%");
         
+        afrGaugeAlarm = (ImageView) findViewById(R.id.afrmeteralarm);
+        waterGaugeAlarm = (ImageView) findViewById(R.id.watermeteralarm);
+        
         ChangeLog cl = new ChangeLog(this);
         if (cl.firstRun()) {
             cl.getLogDialog().show();
@@ -361,6 +376,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         fuelDataTop.add("186 kPA");
         fuelDataTop.add("200 kPA");
         
+        crossX = (ImageView) findViewById(R.id.crossX);
+        crossY = (ImageView) findViewById(R.id.crossY);
+        
+        fuelTableAfr = (TextView) findViewById(R.id.fuelTabAfr);
+        
 		usbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(usbReceiver, usbDetachedFilter);
         
@@ -386,6 +406,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	protected void onResume() {
     	super.onResume();
     	
+    	// set screen dimensions
+    	screenWidth = getWindowManager().getDefaultDisplay().getWidth();
+//    	screenHeight = getWindowManager().getDefaultDisplay().getHeight();
+
     	// initialize our preferences
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
     	if (connectionService != null) connectionService.setTempUomPref(tempUomPref);
@@ -503,8 +527,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
 			// bail if no service binding available or not connected
 			if (connectionService == null || 
-					(connectionService != null && 
-					connectionService.getState() != State.CONNECTED_BT &&
+					(connectionService.getState() != State.CONNECTED_BT &&
 					connectionService.getState() != State.CONNECTED_USB)) {
 		    	
     			if (menuConnect != null && menuConnect.getTitle().equals(getResources().getString(R.string.menu_disconnect))) {
@@ -571,23 +594,25 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			final int mat = item.getMat();
 			final int wat = item.getWat();
 			final int map = item.getMap();
+			lastMAP = map;
 			final int rpm = item.getRpm();
 			
 			final float afr = item.getAfr();
 			final float targetAfr = item.getTargetAfr();
 			final float referenceAfr = item.getReferenceAfr();
 			
-			imgFWait.setBackgroundColor(fWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
-			imgFRpm.setBackgroundColor(fRpm ? Color.GREEN : Color.TRANSPARENT);
-			imgFLoad.setBackgroundColor(fLoad ? Color.GREEN : Color.TRANSPARENT);
-			
-			imgIWait.setBackgroundColor(iWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
-			imgIRpm.setBackgroundColor(iRpm ? Color.GREEN : Color.TRANSPARENT);
-			imgILoad.setBackgroundColor(iLoad ? Color.GREEN : Color.TRANSPARENT);
+			if (adaptiveFragment.isVisible()) {
+				imgFWait.setBackgroundColor(fWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
+				imgFRpm.setBackgroundColor(fRpm ? Color.GREEN : Color.TRANSPARENT);
+				imgFLoad.setBackgroundColor(fLoad ? Color.GREEN : Color.TRANSPARENT);
+				
+				imgIWait.setBackgroundColor(iWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
+				imgIRpm.setBackgroundColor(iRpm ? Color.GREEN : Color.TRANSPARENT);
+				imgILoad.setBackgroundColor(iLoad ? Color.GREEN : Color.TRANSPARENT);
+	
+				txtFuelLearn.setBackgroundColor(closedLoop ? Color.GREEN : Color.TRANSPARENT);
+			}
 
-			txtFuelLearn.setBackgroundColor(closedLoop ? Color.GREEN : Color.TRANSPARENT);
-
-//			txtData.setText(String.format("AVG: %.0f ms - TPS: %d%%", connectionService.getAvgResponseMillis(), tps));
 			txtData.setText(String.format("AVG: %.0f ms", connectionService.getAvgResponseMillis()));
 
 			tpsSlider.setValue(tps);
@@ -622,30 +647,45 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
     		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
 
+    		fuelTableAfr.setText(String.format("AFR: %.1f (%.1f)", afr, referenceAfr));
+    		
     		// alarm stuff
     		if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) {
     			
         		// water temperature
     			gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
+    			waterGaugeAlarm.setBackgroundColor(Color.TRANSPARENT)
+    			;
         		if (waterTempPref) {
-        			if (wat < minimumWaterTemp) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
-        			if (wat > maximumWaterTemp) gridData.getChildAt(5).setBackgroundColor(Color.RED);
+        			if (wat < minimumWaterTemp) {
+        				gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
+        				waterGaugeAlarm.setBackgroundColor(Color.BLUE);
+        			}
+        			if (wat > maximumWaterTemp) {
+        				gridData.getChildAt(5).setBackgroundColor(Color.RED);
+        				waterGaugeAlarm.setBackgroundColor(Color.RED);
+        			}
         		}
 
         		// afr vs target alarm
 				gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
+				fuelTableAfr.setBackgroundColor(Color.TRANSPARENT);
+				afrGaugeAlarm.setBackgroundColor(Color.TRANSPARENT);
+				
         		if (afrNotEqualTargetPref) {
         			final float threshold = targetAfr * (afrNotEqualTargetTolerance * .01f);
         			if (Math.abs(targetAfr - afr) >= threshold ) {
-        				if (afr > targetAfr) {
-        					gridData.getChildAt(3).setBackgroundColor(Color.RED);
-        				} else {
-        					gridData.getChildAt(3).setBackgroundColor(Color.BLUE);
-        				}
+        				final int color =  afr > targetAfr ? Color.RED : Color.BLUE;
+    					gridData.getChildAt(3).setBackgroundColor(color);
+        				fuelTableAfr.setBackgroundColor(color);
+        				afrGaugeAlarm.setBackgroundColor(color);
         			}
         		}
     		}
     		
+    		// fuel map crosshairs
+    		if (fuelFragment.isVisible()) setCurrentCell();
+
     		// dismiss the progress bar if it is visible
     		if (progress != null && progress.isShowing()) {
     			progress.dismiss();
@@ -655,6 +695,45 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
         }
     };
+    
+    private void setCurrentCell() {
+
+    	// 213 = max width  13 kpa per cell 	
+    	final float multiplier = screenWidth / 213;
+    	
+    	final float offsetX = (lastMAP + 13) * multiplier;
+    	crossX.setX(offsetX + fuelGrid.getChildAt(0).getWidth() / 2);
+    	
+    	// 9300 @ 300 -- 32 rows -- 17 per row    	
+    	final TextView tvLow = (TextView) fuelGrid.getChildAt(0);
+       	final TextView tvHigh = (TextView) fuelGrid.getChildAt(fuelGrid.getChildCount() - 17);
+    	
+    	final int lowRPM = Integer.parseInt(tvLow.getText().toString());
+    	final int highRPM = Integer.parseInt(tvHigh.getText().toString());
+    	
+    	
+    	if (lastRPM >= lowRPM && lastRPM <= highRPM && lastRPM > 0) {
+
+    		final float distance = lastRPM - lowRPM;
+    		final int row = (int) (distance / 300) + 1;    		
+    		final TextView tvLast = (TextView) fuelGrid.getChildAt(row * 17);
+    				
+    		crossY.setY(tvLast.getY() + tvLast.getHeight());
+    		
+    	} else {
+    		if (lastRPM > highRPM) {
+    			crossY.setY(fuelGrid.getBottom() - 1);
+    		} else {
+    			crossY.setY(fuelGrid.getY() - 1);
+    		}
+    	}
+    	
+//		new Handler().postDelayed(new Runnable() {
+//
+//			public void run() {
+//				setCurrentCell();				
+//			} }, 1000);
+    }
     
 	private void populateFuelTable(final StringBuffer data) {
 
@@ -699,8 +778,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     BroadcastReceiver usbReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction()) &&
-            		connectionService != null && connectionService.getState() == State.CONNECTED_USB) {// &&
-//            		((UsbConnectedThread)connected).isUsbDevice((UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE))) {
+            		connectionService != null && connectionService.getState() == State.CONNECTED_USB) {
     			if (DEBUG) Log.d(TAG, "USB Device Detached");
   
     			disconnect();
@@ -843,6 +921,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	        case R.id.menu_prefs:
                 startActivity(new Intent(this, AdaptivePreferences.class));
                 return true;
+                
+	        case R.id.menu_save_map:	        	
+	        	final File sdcard = Environment.getExternalStorageDirectory();
+				final File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
+				dir.mkdirs();
+				
+				final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.ecu'", Locale.US).format(new Date());
+				
+	        	final Intent sm = new Intent(ConnectionService.ACTION_SAVE_MAP);
+	        	sm.putExtra("map_filename", dir.getAbsolutePath() + filename);
+	        	
+	        	return true;
                 
         	default:
                 return super.onOptionsItemSelected(item);
@@ -1021,7 +1111,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			for (int x = 0; x < 32; x++) {
 				fuelData.add(String.format("%d", x * 300));
 				for (int y = 0; y < 16; y++) {
-					fuelData.add("");
+					fuelData.add("---.--");
 				}
 			}	
 		}
@@ -1041,6 +1131,15 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 //				z=z+300;
 //			}
 //		}
+		
+//		lastMAP = 100;
+//		lastRPM = 5000;
+//		
+//		new Handler().postDelayed(new Runnable() {
+//
+//			public void run() {
+//				setCurrentCell();				
+//			} }, 1000);
 	}
 
 	@Override

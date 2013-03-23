@@ -179,7 +179,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 			        connectChargeWaitPref.setMinValue(1f);
 			        connectChargeWaitPref.setMaxValue(60);
 			        connectChargeWaitPref.setScale(1f);
-					connectChargeWaitPref.setSummary(String.format("%.0f seconds", prefs.getFloat("prefs_connect_on_charge_wait_time", 5f)));
+					connectChargeWaitPref.setSummary(String.format("%.0f seconds", prefs.getFloat("prefs_connect_on_charge_wait_time", 30f)));
 			        connectChargeWaitPref.setDefaultValue(prefs.getFloat("prefs_connect_on_charge_wait_time", 5f));
 			        connectChargeWaitPref.setEnabled(prefs.getBoolean("prefs_connect_on_charge", false));
 			        

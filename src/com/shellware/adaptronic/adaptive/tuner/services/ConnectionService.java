@@ -18,6 +18,7 @@ package com.shellware.adaptronic.adaptive.tuner.services;
 
 import java.lang.ref.WeakReference;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -58,6 +59,7 @@ public class ConnectionService extends Service {
     public final static String 	   ACTION_UI_INACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE";
     public final static String   	 ACTION_UI_ACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE";
     public final static String ACTION_UPDATE_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP";
+    public final static String 		  ACTION_SAVE_MAP = "com.shellware.adaptronic.adaptive.tuner.action.SAVE_MAP";
 
 	public static final short CONNECTION_ERROR = 1;
 	public static final short DATA_READY = 2;
@@ -206,6 +208,18 @@ public class ConnectionService extends Service {
 			}
         }
         
+        // save map
+        if (action.equals(ACTION_SAVE_MAP)) {
+//        	mapName = intent.getExtras().getString("map_filename");
+//        	mapMode = true;
+//        	mapOffset = 0;
+//        	mapLength = 0;
+//        	
+//        	fuelMapData.setLength(0);
+//        	
+//        	sendRequest(mapOffset);        	
+        }
+        
         // map mode
         if (action.equals(ACTION_UPDATE_FUEL_MAP)) {
         	mapMode = true;
@@ -213,6 +227,7 @@ public class ConnectionService extends Service {
         	mapData.setLength(0);
         	
         	sendRequest(mapOffset);
+
         }
         
         // disconnect
@@ -261,9 +276,7 @@ public class ConnectionService extends Service {
         	if (System.currentTimeMillis() - lastUpdateInMillis > LONG_PAUSE) {
         		if (DEBUG) Log.d(TAG, lastRegister + " response timed out: " + dataBuffer.toString());
 
-        		sendRequest();
-				
-        		dataNotAvailable = true;
+        		sendRequest();;
         	}
         	
     		refreshHandler.postDelayed(this, LONG_PAUSE);
@@ -307,7 +320,7 @@ public class ConnectionService extends Service {
 	    			if (msglength > 0) { 
 	    	        	final String data = setDataBuffer(msg, msglength).toString();
 	    	        	
-	    	        	// this could be a lot more efficient -- rethink all the data type conversions
+	    	        	// TODO: this could be a lot more efficient -- rethink all the data type conversions
 	    	        	final int datalength = data.trim().split(" ").length;
 	    	        	
 	    	        	// first check that we've got the right device and mode
@@ -366,6 +379,26 @@ public class ConnectionService extends Service {
 	}
 	
 
+//	private static void saveMap() {
+//		
+//		try {
+//			final File file = new File(mapName);			
+//			final FileOutputStream f = new FileOutputStream(file);
+//			
+//			f.write(mapBytes);
+//			
+//			f.flush();
+//			f.close();
+//			
+//		} catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
+	
     private static void sendRequest() {
     	sendRequest(lastRegister);
     }
@@ -534,7 +567,12 @@ public class ConnectionService extends Service {
 
     private static int getTemperatureValue(String in) {
     	
-    	final int temp = Integer.parseInt(in, 16);
+    	int temp = Integer.parseInt(in, 16);
+    	
+    	// TODO: need to research why apparently all values come back as if they're unsigned ints
+    	if (temp > 60000 && temp < 65536) {
+    		temp = (65536 - temp) * -1;
+    	}
     	
     	switch (tempUomPref) {
     		case 1:
@@ -573,6 +611,7 @@ public class ConnectionService extends Service {
 		tempUomPref = val;
     }
     
+	@SuppressLint("Wakelock")
 	public void setWakeLock(boolean val) {
 		wakeLock = val;
 		

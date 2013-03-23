@@ -42,23 +42,44 @@ android:layout_width="fill_parent" android:layout_height="wrap_content">
      android:background="@drawable/shape_gradient_background"
      tools:context=".fragments.FuelFragment" >
 
+     <TextView
+         android:id="@+id/fuelTabAfr"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_centerHorizontal="true"
+         android:layout_marginTop="5dp"
+         android:textAppearance="?android:attr/textAppearanceLarge" 
+         android:text="AFR: --.- (--.-)" />
+     
      <GridView
          android:id="@+id/gridFuelHeaderTop"
-	         android:layout_width="wrap_content"
-	         android:layout_height="wrap_content"
-	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="17"
-	         android:layout_marginTop="10dp"
-	         android:scrollbars="horizontal|vertical" />
+         android:layout_below="@+id/fuelTabAfr"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:fadingEdge="horizontal|vertical"
+         android:numColumns="17"
+         android:scrollbars="horizontal|vertical" />
+    
+     <GridView
+         android:id="@+id/gridFuel"
+         android:layout_below="@+id/gridFuelHeaderTop"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:fadingEdge="horizontal|vertical"
+         android:numColumns="17"
+         android:scrollbars="horizontal|vertical" >
+     </GridView>	  
      
-	     <GridView
-	         android:id="@+id/gridFuel"
-	         android:layout_below="@+id/gridFuelHeaderTop"
-	         android:layout_width="wrap_content"
-	         android:layout_height="wrap_content"
-	         android:fadingEdge="horizontal|vertical"
-	         android:numColumns="17"
-	         android:scrollbars="horizontal|vertical" >
-	     </GridView>	     
+     <ImageView
+         android:id="@+id/crossX"
+         android:layout_width="3dp"
+         android:layout_height="match_parent"
+         android:src="@drawable/rectangle" />
+
+     <ImageView
+         android:id="@+id/crossY"
+         android:layout_height="3dp"
+         android:layout_width="match_parent"
+         android:src="@drawable/rectangle" />
 
 </RelativeLayout>

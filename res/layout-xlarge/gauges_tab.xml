@@ -131,6 +131,15 @@
 			    android:layout_centerVertical="true"
 			    android:src="@drawable/needle_middle" 
 			    android:scaleType="fitXY"/>
+			
+			<ImageView
+			    android:id="@+id/afrmeteralarm"
+			    android:layout_width="10dp"
+			    android:layout_height="10dp"
+			    android:layout_alignParentBottom="true"
+			    android:layout_alignParentRight="true"
+			    android:layout_marginBottom="140dp"
+			    android:layout_marginRight="140dp" />
 		</RelativeLayout>
 	</RelativeLayout>
 		   	    
@@ -219,6 +228,15 @@
 		    android:layout_centerVertical="true"
 		    android:src="@drawable/needle_offset" 
 		    android:scaleType="fitXY"/>
+		
+		<ImageView
+		    android:id="@+id/watermeteralarm"
+		    android:layout_width="10dp"
+		    android:layout_height="10dp"
+		    android:layout_alignParentBottom="true"
+		    android:layout_alignParentRight="true"
+		    android:layout_marginBottom="80dp"
+		    android:layout_marginRight="70dp" />
 	</RelativeLayout>
 	
    	<RelativeLayout

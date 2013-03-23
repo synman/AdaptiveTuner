@@ -22,7 +22,9 @@
     <string name="menu_connect">Bluetooth Connect</string>
     <string name="menu_usb_connect">USB Connect</string>
     <string name="menu_disconnect">Disconnect</string>
+    <string name ="menu_save_map">Save Map</string>
     <string name="menu_exit">Quit</string>
+    
     <string name="title_activity_main">Adaptive Tuner</string>
     <string name="device_list">Bluetooth Device List</string>
     <string name="ignition">Ignition Learning</string>
