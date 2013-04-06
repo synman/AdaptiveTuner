@@ -17,6 +17,7 @@
 package com.shellware.adaptronic.adaptive.tuner.valueobjects;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class LogItems {
 
@@ -52,6 +53,8 @@ public class LogItems {
 		newItem.targetAfr = item.targetAfr;
 		newItem.tps = item.tps;
 		newItem.wat = item.wat;
+		newItem.knock = item.knock;
+		newItem.volts = item.volts;
 		
 		items.add(newItem);
 	}
@@ -64,11 +67,13 @@ public class LogItems {
 		private int map = 0;
 		private int wat = 0;
 		private int mat = 0;
-		private int tps = 0;
+		private int tps = 0;		
+		private int knock = 0;
 		
 		private float afr = 0f;
 		private float referenceAfr = 0f;
 		private float targetAfr = 0f;
+		private float volts = 0f;
 		
 		private boolean learningIWait = false;
 		private boolean learningIRpm = false;
@@ -143,6 +148,22 @@ public class LogItems {
 		public void setTargetAfr(final float targetAfr) {
 			this.targetAfr = targetAfr;
 		}
+		
+		public float getVolts() {
+			return volts;
+		}
+
+		public void setVolts(float volts) {
+			this.volts = volts;
+		}
+
+		public int getKnock() {
+			return knock;
+		}
+
+		public void setKnock(int knock) {
+			this.knock = knock;
+		}
 
 		public boolean isLearningIWait() {
 			return learningIWait;
@@ -206,7 +227,7 @@ public class LogItems {
 
 		public String getLogString() {
 			
-			final String str = String.format("%d, %d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d\n", 
+			final String str = String.format(Locale.US, "%d, %d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d, %d, %.1f\n", 
 												timestamp,
 												rpm,
 												map,
@@ -216,7 +237,9 @@ public class LogItems {
 												referenceAfr,
 												tps,
 												wat,
-												mat);
+												mat,
+												knock,
+												volts);
 			
 			return str;										
 		}

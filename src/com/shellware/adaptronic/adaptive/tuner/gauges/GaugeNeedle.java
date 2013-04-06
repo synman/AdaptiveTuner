@@ -57,11 +57,11 @@ public class GaugeNeedle extends ImageView {
 		}
 		
 		final float scale = (float) (maxDegrees - minDegrees) / (maxValue - minValue) ;
-		final float newValue = (value - minValue) * scale - ((maxDegrees - minDegrees) / 2) + offsetCenterInDegrees;
+		float newValue = (value - minValue) * scale - ((maxDegrees - minDegrees) / 2) + offsetCenterInDegrees;
 		
-		// bail if our values are significantly beyond our borders (20+ degrees)
-		if (newValue > maxDegrees + 20) return;
-		if (newValue < minDegrees - 20) return;
+		// peg the needle if our values are significantly beyond our borders (20+ degrees)
+		if (newValue > maxDegrees + 20) newValue = maxDegrees + 20;
+		if (newValue < minDegrees - 20) newValue = minDegrees - 20;
 
 //		final RotateAnimation rotateAnimation = new RotateAnimation(lastValue, newValue, 
 //																	  Animation.RELATIVE_TO_SELF, 0.5f, 

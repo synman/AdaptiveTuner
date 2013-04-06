@@ -58,6 +58,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -65,6 +66,7 @@ import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -78,16 +80,24 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService.State;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
 
-public class MainActivity extends Activity implements ActionBar.TabListener {
+public class MainActivity extends Activity implements ActionBar.TabListener, OnClickListener {
 	
 	public static final String TAG = "Adaptive";
 	public static final boolean DEBUG = false;
 
-	private static final int LONG_PAUSE = 200;
+	private static final int LONG_PAUSE = 250;
 
-	private static final int AFR_MIN = 970;
-	private static final int AFR_MAX = 1970;
+//	private static final int AFR_MIN = 970;
+//	private static final int AFR_MAX = 1970;
+	private static final int AFR_MIN = 800;
+	private static final int AFR_MAX = 1800;
 
+	
+	private static final float VE_DIVISOR = 128f;
+	private static final float MS_DIVISOR = 1500f;
+	
+	private static final String LOG_HEADER = "timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat, knock, volts\n";
+	
 	private Fragment adaptiveFragment;
 	private Fragment gaugesFragment;
 	private Fragment fuelFragment;
@@ -145,6 +155,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 
 	private static int lastMAP = 0;
 	private static int lastRPM = 0;
+	private static int lastTPS = 0;
+	
+	private static boolean lastClosedLoop = false;
 	
 	private SharedPreferences prefs ;
 	private Context ctx;
@@ -174,6 +187,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	private GridView fuelGridHeaderTop;
 	private GridView fuelGrid;
 
+	private RadioButton radioMapOne;
+	private RadioButton radioMapTwo;
 	
 	private ArrayAdapter<String> fuelDataTop;
 	private ArrayAdapter<String> fuelData;
@@ -244,7 +259,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
                 	ft.hide(fuelFragment);
                 	
                 	//kludge to populate fuel map
-                	if (itemPosition == 2) buildFuelMap();
+                	if (itemPosition == 2) getFuelMaps();
                
                 	ft.show(frags[itemPosition]);
                 	ft.commit();
@@ -358,30 +373,21 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         fuelDataTop = new ArrayAdapter<String>(this, R.layout.tiny_list_item_bold);
         fuelGridHeaderTop.setAdapter(fuelDataTop);
         
-        fuelDataTop.add("RPM");
-        fuelDataTop.add("0 kPA");
-        fuelDataTop.add("13 kPA");
-        fuelDataTop.add("26 kPA");
-        fuelDataTop.add("40 kPA");
-        fuelDataTop.add("53 kPA");
-        fuelDataTop.add("66 kPA");
-        fuelDataTop.add("80 kPA");
-        fuelDataTop.add("93 kPA");
-        fuelDataTop.add("106 kPA");
-        fuelDataTop.add("120 kPA");
-        fuelDataTop.add("133 kPA");
-        fuelDataTop.add("146 kPA");
-        fuelDataTop.add("160 kPA");
-        fuelDataTop.add("173 kPA");
-        fuelDataTop.add("186 kPA");
-        fuelDataTop.add("200 kPA");
-        
         crossX = (ImageView) findViewById(R.id.crossX);
         crossY = (ImageView) findViewById(R.id.crossY);
         
         fuelTableAfr = (TextView) findViewById(R.id.fuelTabAfr);
         
-		usbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        radioMapOne = (RadioButton) findViewById(R.id.radioMapOne);
+        radioMapTwo = (RadioButton) findViewById(R.id.radioMapTwo);
+        
+        radioMapOne.setOnClickListener(this);
+        radioMapTwo.setOnClickListener(this);
+        
+        // default fuel table header
+//        onxClick(radioMapOne);
+        
+        usbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(usbReceiver, usbDetachedFilter);
         
 	    batteryStatusReceiver = new BatteryStatusReceiver();
@@ -476,7 +482,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
         if (o != Surface.ROTATION_0 && o != Surface.ROTATION_180) {
         	// portrait
             bar.setSelectedNavigationItem(savedTabIndex);
-        	if (savedTabIndex == 2) buildFuelMap();
+        	if (savedTabIndex == 2) getFuelMaps();
         	ft.show(frags[savedTabIndex]);
         	ft.commit();  
         } else {
@@ -537,9 +543,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     			if (menuUsbConnect != null && menuUsbConnect.getTitle().equals(getResources().getString(R.string.menu_disconnect))) {
     				menuUsbConnect.setTitle(R.string.menu_usb_connect);
     			}
-				
+
     			if (connectionService != null && connectionService.getState() == State.DISCONNECTED) {
-    				if (progress != null && progress.isShowing()) {
+    				
+        			imgStatus.setBackgroundColor(Color.TRANSPARENT);
+
+        			if (progress != null && progress.isShowing()) {
     					progress.dismiss();
     				}
     				if (autoConnect && remoteMacAddr.length() > 0) {
@@ -551,10 +560,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			    	}
     			}
     			
+    			//TODO: why am I respawning refreshHandler if the connection is dead?
         		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
 	    		return;
 			}
-			
+
 			// toggle our status image based on data reception
 			imgStatus.setBackgroundColor(connectionService.isDataNotAvailable() ? Color.RED : Color.GREEN);
 			
@@ -567,8 +577,15 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	    	// map is available (because we asked it for)
 	    	if (mapMode) {
 	    		if (mapReady) {
-	        		populateFuelTable(connectionService.getMapData());
-
+	    			// ensure the first map isn't selected if it is not selectable
+	    			if (connectionService != null) {
+	    				if (connectionService.getTuningMode() == 7) {
+	    					onClick(radioMapTwo);
+	    				} else {
+	    					onClick(radioMapOne);
+	    				}
+	    			}
+	    			
 			    	mapMode = false;
 	        		mapReady = false;
 	    		}
@@ -590,11 +607,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 			
 			final boolean closedLoop = item.isClosedLoop();
 			
-			final int tps = item.getTps();
+			final int tps = item.getTps(); lastTPS = tps;
 			final int mat = item.getMat();
 			final int wat = item.getWat();
-			final int map = item.getMap();
-			lastMAP = map;
+			final int map = item.getMap(); lastMAP = map;
+			
 			final int rpm = item.getRpm();
 			
 			final float afr = item.getAfr();
@@ -612,8 +629,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	
 				txtFuelLearn.setBackgroundColor(closedLoop ? Color.GREEN : Color.TRANSPARENT);
 			}
-
-			txtData.setText(String.format("AVG: %.0f ms", connectionService.getAvgResponseMillis()));
+			
+			txtData.setText(String.format("AVG: %.0f ms -- BAT: %.1f V", connectionService.getAvgResponseMillis(), item.getVolts()));
 
 			tpsSlider.setValue(tps);
 			
@@ -629,12 +646,17 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		
     		if (targetAfrVal > AFR_MAX) targetAfrVal = AFR_MAX;
     		if (targetAfrVal < AFR_MIN) targetAfrVal = AFR_MIN;
-    		
-    		final float afrValF = afrVal;
-    		final float targetAfrValF = targetAfrVal;
 
-			afrNeedle.setValue(AFR_MAX - afrValF + AFR_MIN);
-			targetAfrNeedle.setValue(AFR_MAX - targetAfrValF + AFR_MIN);
+//			afrNeedle.setValue(AFR_MAX - afrVal + AFR_MIN);
+			afrNeedle.setValue(afrVal);
+
+			if (closedLoop != lastClosedLoop) {
+				targetAfrNeedle.setImageResource(closedLoop ? R.drawable.needle_middle_green : R.drawable.needle_middle_yellow);
+				lastClosedLoop = closedLoop;
+			}
+			
+//			targetAfrNeedle.setValue(AFR_MAX - targetAfrVal + AFR_MIN);
+			targetAfrNeedle.setValue(targetAfrVal);
     		
     		if (rpm >= 200) lastRPM = rpm;
     		dataArray.add(String.format("RPM\n%d", lastRPM));
@@ -650,37 +672,35 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		fuelTableAfr.setText(String.format("AFR: %.1f (%.1f)", afr, referenceAfr));
     		
     		// alarm stuff
-    		if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) {
-    			
-        		// water temperature
-    			gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
-    			waterGaugeAlarm.setBackgroundColor(Color.TRANSPARENT)
-    			;
-        		if (waterTempPref) {
-        			if (wat < minimumWaterTemp) {
-        				gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
-        				waterGaugeAlarm.setBackgroundColor(Color.BLUE);
-        			}
-        			if (wat > maximumWaterTemp) {
-        				gridData.getChildAt(5).setBackgroundColor(Color.RED);
-        				waterGaugeAlarm.setBackgroundColor(Color.RED);
-        			}
-        		}
 
-        		// afr vs target alarm
-				gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
-				fuelTableAfr.setBackgroundColor(Color.TRANSPARENT);
-				afrGaugeAlarm.setBackgroundColor(Color.TRANSPARENT);
-				
-        		if (afrNotEqualTargetPref) {
-        			final float threshold = targetAfr * (afrNotEqualTargetTolerance * .01f);
-        			if (Math.abs(targetAfr - afr) >= threshold ) {
-        				final int color =  afr > targetAfr ? Color.RED : Color.BLUE;
-    					gridData.getChildAt(3).setBackgroundColor(color);
-        				fuelTableAfr.setBackgroundColor(color);
-        				afrGaugeAlarm.setBackgroundColor(color);
-        			}
-        		}
+    		// water temperature
+			if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
+			waterGaugeAlarm.setBackgroundColor(Color.TRANSPARENT);
+			
+    		if (waterTempPref) {
+    			if (wat < minimumWaterTemp) {
+    				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
+    				waterGaugeAlarm.setBackgroundColor(Color.BLUE);
+    			}
+    			if (wat > maximumWaterTemp) {
+    				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.RED);
+    				waterGaugeAlarm.setBackgroundColor(Color.RED);
+    			}
+    		}
+
+    		// afr vs target alarm
+    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
+			fuelTableAfr.setBackgroundColor(Color.TRANSPARENT);
+			afrGaugeAlarm.setBackgroundColor(Color.TRANSPARENT);
+			
+    		if (afrNotEqualTargetPref) {
+    			final float threshold = targetAfr * (afrNotEqualTargetTolerance * .01f);
+    			if (Math.abs(targetAfr - afr) >= threshold ) {
+    				final int color =  afr > targetAfr ? Color.RED : Color.BLUE;
+    				if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(color);
+    				fuelTableAfr.setBackgroundColor(color);
+    				afrGaugeAlarm.setBackgroundColor(color);
+    			}
     		}
     		
     		// fuel map crosshairs
@@ -697,59 +717,79 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     };
     
     private void setCurrentCell() {
+    	try {	
+    		// x axis
+			final int TUNING_MODE = connectionService.getTuningMode();
+			final int cellWidth = fuelGrid.getChildAt(0).getWidth();
 
-    	// 213 = max width  13 kpa per cell 	
-    	final float multiplier = screenWidth / 213;
-    	
-    	final float offsetX = (lastMAP + 13) * multiplier;
-    	crossX.setX(offsetX + fuelGrid.getChildAt(0).getWidth() / 2);
-    	
-    	// 9300 @ 300 -- 32 rows -- 17 per row    	
-    	final TextView tvLow = (TextView) fuelGrid.getChildAt(0);
-       	final TextView tvHigh = (TextView) fuelGrid.getChildAt(fuelGrid.getChildCount() - 17);
-    	
-    	final int lowRPM = Integer.parseInt(tvLow.getText().toString());
-    	final int highRPM = Integer.parseInt(tvHigh.getText().toString());
-    	
-    	
-    	if (lastRPM >= lowRPM && lastRPM <= highRPM && lastRPM > 0) {
+			float multiplier = 0;
+			float refValue = 0;
+			float offsetX = 0;
+			
+    		// are we in MAP or TPS mode?
+			if ((radioMapOne.isChecked() && TUNING_MODE != 7 && TUNING_MODE != 10) ||
+					(radioMapTwo.isChecked() && TUNING_MODE != 0 && TUNING_MODE != 9 && TUNING_MODE != 13)) {
+		    	// map mode 	
+		    	multiplier = (screenWidth - cellWidth)  / connectionService.getMaxMapValue();
+		    	refValue = lastMAP;
+			} else {
+				multiplier = (screenWidth - cellWidth) / 100;
+		    	refValue = lastTPS;
+			}
 
-    		final float distance = lastRPM - lowRPM;
-    		final int row = (int) (distance / 300) + 1;    		
-    		final TextView tvLast = (TextView) fuelGrid.getChildAt(row * 17);
-    				
-    		crossY.setY(tvLast.getY() + tvLast.getHeight());
-    		
-    	} else {
-    		if (lastRPM > highRPM) {
-    			crossY.setY(fuelGrid.getBottom() - 1);
+	    	offsetX = refValue * multiplier + cellWidth;
+	    	crossX.setX(offsetX);
+
+	    	// y axis   	
+	    	final TextView tvLow = (TextView) fuelGrid.getChildAt(0);
+	       	final TextView tvHigh = (TextView) fuelGrid.getChildAt(fuelGrid.getChildCount() - 17);
+	    	
+	    	final int lowRPM = Integer.parseInt(tvLow.getText().toString());
+	    	final int highRPM = Integer.parseInt(tvHigh.getText().toString());
+	    	
+	    	if (lastRPM >= lowRPM && lastRPM <= highRPM && lastRPM > 0) {
+	    		final float distance = lastRPM - lowRPM;
+	    		final int row = (int) distance / connectionService.getRpmStepSize();
+	    		
+	    		TextView tvLast = (TextView) fuelGrid.getChildAt(row * 17);
+
+	    		crossY.setY(fuelGrid.getY() + tvLast.getY() + tvLast.getHeight() / 2);
     		} else {
-    			crossY.setY(fuelGrid.getY() - 1);
-    		}
+				crossY.setY(lastRPM > highRPM ? fuelGrid.getBottom() - 1 : fuelGrid.getTop() - 1);
+	    	}
+    	} catch (Exception ex) {
+    		Log.d(TAG, "Unknown exception thrown in setCurrentCell");
     	}
-    	
-//		new Handler().postDelayed(new Runnable() {
-//
-//			public void run() {
-//				setCurrentCell();				
-//			} }, 1000);
     }
     
-	private void populateFuelTable(final StringBuffer data) {
-
-		String[] map = data.toString().trim().split(" ");
-		short cnt = 0;
-
-		for (int x = 0; x < 32; x++) {
-			fuelData.add(String.format("%d", x * 300));
-			for (int y = 0; y < 16; y++) {
-				double val = Double.parseDouble(String.format(Locale.US, "%.2f", Integer.parseInt(map[cnt] + map[cnt+1], 16) / 128f));
-				fuelData.add(String.format("%.2f", val));
-
-				if (DEBUG) Log.d(TAG, String.format("%d:%d = %.2f", x, y, val));
-				cnt = (short) (cnt + 2);
-			}
-		}	  		
+	private void populateFuelTable(final StringBuffer data, final boolean isVE) {
+		
+		// bail if data is null or empty
+		if (data == null || data.length() == 0) return;
+		
+		try {
+			final int rpmStepSize = connectionService.getRpmStepSize();
+			final String[] map = data.toString().trim().split(" ");
+			short cnt = 0;
+	
+			fuelData.clear();
+	
+			for (int x = 0; x < 32; x++) {
+				fuelData.add(String.format("%d", x * rpmStepSize));
+				for (int y = 0; y < 16; y++) {
+					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
+										Integer.parseInt(map[cnt] + map[cnt+1], 16) / 
+										(isVE ? VE_DIVISOR : MS_DIVISOR)));
+	
+					fuelData.add(String.format("%.2f", val));
+	
+					if (DEBUG) Log.d(TAG, String.format("%d:%d = %.2f", x, y, val));
+					cnt = (short) (cnt + 2);
+				}
+			}			
+		} catch (Exception ex) {
+			// do nothing
+		}
 	}
 	
     private String getTemperatureSymbol() {
@@ -875,6 +915,18 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
     		menuShareLog.setVisible((afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()) ||
 					 (logAll && !connectionService.getLogAllItems().getItems().isEmpty()));
 		
+    	if (connectionService != null && connectionService.getState() == State.DISCONNECTED) {
+    		menuConnect.setTitle(R.string.menu_connect);
+    		menuUsbConnect.setTitle(R.string.menu_usb_connect);
+    	} else {
+    		if (connectionService != null && connectionService.getState() == State.CONNECTED_BT) {
+    			menuConnect.setTitle(R.string.menu_disconnect);
+    		} else {
+        		if (connectionService != null && connectionService.getState() == State.CONNECTED_USB) {
+        			menuConnect.setTitle(R.string.menu_disconnect);
+        		}
+    		}
+    	}
         return true;
     }
 
@@ -934,6 +986,17 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 	        	
 	        	return true;
                 
+	        case R.id.menu_info:
+	        	final String info = String.format(Locale.US, "Map 1 VE: %d Map 2 VE: %d Mode: %d RPM Step: %d Max MAP: %d",
+						        								connectionService.isFuelMapOneVE() ? 1 : 0,
+						        								connectionService.isFuelMapTwoVE() ? 1 : 0,
+						        								connectionService.getTuningMode(),
+						        								connectionService.getRpmStepSize(),
+						        								connectionService.getMaxMapValue());
+
+	        	Toast.makeText(getApplicationContext(), info, Toast.LENGTH_LONG).show();
+	        	return true;
+
         	default:
                 return super.onOptionsItemSelected(item);
         }
@@ -954,7 +1017,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 				FileOutputStream f = new FileOutputStream(file);
 				
 				// write our header
-				f.write("timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat\n".getBytes());
+				f.write(LOG_HEADER.getBytes());
 				
 				ArrayList<LogItem> items = connectionService.getAfrAlarmLogItems().getItems();
 				Iterator<LogItem> iterator = items.iterator();
@@ -1000,7 +1063,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 				FileOutputStream f = new FileOutputStream(file);
 				
 				// write our header
-				f.write("timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat\n".getBytes());
+				f.write(LOG_HEADER.getBytes());
 				
 				ArrayList<LogItem> items = connectionService.getLogAllItems().getItems();
 				Iterator<LogItem> iterator = items.iterator();
@@ -1080,7 +1143,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 				ft.show(gaugesFragment);
 				break;  
 			case 2:				
-				buildFuelMap();
+				getFuelMaps();
 				ft.show(fuelFragment);
 				break;
 		}
@@ -1093,8 +1156,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		}
 	}
 	
-	private void buildFuelMap() {
-		if (ConnectionService.state != ConnectionService.State.DISCONNECTED) {
+	private void getFuelMaps() {
+    	fuelData.clear();      		
+
+    	if (ConnectionService.state != ConnectionService.State.DISCONNECTED) {
 			mapMode = true;
 	    	progress = ProgressDialog.show(ctx, "Fuel Map" , "Reading map values ...");
 	    	progress.setCancelable(true);
@@ -1104,42 +1169,16 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 				}});
 	    	
         	startService(new Intent(ConnectionService.ACTION_UPDATE_FUEL_MAP));	
-
-        	fuelData.clear();      		
 		} else {
-			fuelData.clear();
+			final int rpmStepSize = connectionService != null ? connectionService.getRpmStepSize() : 500;
+			
 			for (int x = 0; x < 32; x++) {
-				fuelData.add(String.format("%d", x * 300));
+				fuelData.add(String.format("%d", x * rpmStepSize));
 				for (int y = 0; y < 16; y++) {
 					fuelData.add("---.--");
 				}
 			}	
 		}
-		
-//		fuelData.clear();
-//		
-//		int y = 0;
-//		int z = 300;
-//		fuelData.add("0");
-//		for (int x = 0 ; x < 512 ; x++) {
-//			fuelData.add("000.00");
-//
-//			y++;
-//			if (y==16 && z < 9600) {
-//				y=0;
-//				fuelData.add(String.format("%d", z));
-//				z=z+300;
-//			}
-//		}
-		
-//		lastMAP = 100;
-//		lastRPM = 5000;
-//		
-//		new Handler().postDelayed(new Runnable() {
-//
-//			public void run() {
-//				setCurrentCell();				
-//			} }, 1000);
 	}
 
 	@Override
@@ -1152,50 +1191,90 @@ public class MainActivity extends Activity implements ActionBar.TabListener {
 		}
 	}
 
-//	public void onClick(View arg0) {
-////        Filter f = (Filter) v.getTag();
-////        FilterFullscreenActivity.show(this, input, f);
-//	}
-	
-//    class MyGestureDetector extends SimpleOnGestureListener {
-//
-//        final private ViewFlipper vf = (ViewFlipper) findViewById(R.id.gridFlipper);
-//        
-//        final private Animation animFlipInForeward = AnimationUtils.loadAnimation(ctx, R.anim.flipin);
-//        final private Animation animFlipOutForeward = AnimationUtils.loadAnimation(ctx, R.anim.flipout);
-//        final private Animation animFlipInBackward = AnimationUtils.loadAnimation(ctx, R.anim.flipin_reverse);
-//        final private Animation animFlipOutBackward = AnimationUtils.loadAnimation(ctx, R.anim.flipout_reverse);
-//        
-//        @Override
-//        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-//            try {
-//                if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH) return false;
-//                
-//                // right to left swipe
-//                if(e1.getX() - e2.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-////                    Toast.makeText(ctx, "Left Swipe", Toast.LENGTH_SHORT).show();
-//
-////                    vf.setAnimation(AnimationUtils.loadAnimation(ctx, android.R.anim.slide_out_right));
-//                    vf.setInAnimation(animFlipInForeward);
-//                    vf.setOutAnimation(animFlipOutForeward);
-//                    
-//                    vf.showNext();
-//                    
-//                }  else if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-////                    Toast.makeText(ctx, "Right Swipe", Toast.LENGTH_SHORT).show();
-//                    
-////                    vf.setAnimation(AnimationUtils.loadAnimation(ctx, android.R.anim.slide_in_left));
-//                    vf.setInAnimation(animFlipInBackward);
-//                    vf.setOutAnimation(animFlipOutBackward);
-//                    
-//                    vf.showPrevious();                    
-//                }
-//            } catch (Exception e) {
-//                // nothing
-//            }
-//            return false;
-//        }
-//
-//    }
+	public void onClick(View view) {
+		
+		if (view.getId() == R.id.radioMapOne || view.getId() == R.id.radioMapTwo) {
 
+			final RadioButton radio = (RadioButton) view;
+			
+			final int TUNING_MODE = connectionService != null ? connectionService.getTuningMode() : 0;
+			final int MAX_MAP_VALUE = connectionService != null ? connectionService.getMaxMapValue() : 200;
+			final String NO_MAP_FOR_MODE = getResources().getString(R.string.no_map_for_mode_selected);
+			
+			// filter out the impossibles
+			if (radio.getId() == R.id.radioMapOne) {
+				if (TUNING_MODE == 7) {
+					radio.setChecked(false);
+					Toast.makeText(getApplicationContext(), String.format(NO_MAP_FOR_MODE, 1), Toast.LENGTH_LONG).show();
+					return;
+				}
+			} else {
+				if (TUNING_MODE == 0) {
+					radio.setChecked(false);
+					Toast.makeText(getApplicationContext(), String.format(NO_MAP_FOR_MODE, 2), Toast.LENGTH_LONG).show();
+					return;
+				}				
+			}
+
+			radioMapOne.setChecked(false);
+			radioMapTwo.setChecked(false);
+			
+			radio.setChecked(true);
+			
+			float MULTIPLIER = 0f;
+			String STRING_FORMAT = "";
+
+			fuelDataTop.clear();
+			
+		      //  0 - 1=MAP, 2=unused
+		      //  1 - 1=MAP (default), 2=TPS (fallback)
+		      //  2 - 1=MAP (fallback), 2=TPS (default)
+		      //  3 - 1=MAP, 2=TPS, fuel=max(MAP,TPS)
+		      //  4 - 1=MAP, 2=TPS, fuel=avg(MAP,TPS)
+		      //  5 - 1=MAP, 2=TPS, fuel=min(MAP,TPS)
+		      //  6 - 1=MAP, 2=TPS, fuel=MAP+TPS (both signed)
+		      //  7 - 1=unused, 2=TPS
+		      //  8 - 1=MAP, 2=TPS - use MAP on closed throttle
+		      //  9 - 1=MAP, 2=MAP, digital input to select #2
+		      // 10 - 1=TPS, 2=TPS, digital input to select #2
+		      // 11 - 1=MAP, 2=TPS, digital input to select #2
+		      // 12 - 1=MAP, 2=TPS, fuel=MAP*TPS
+		      // 13 - 1=MAP, 2=MAP, Pri = 1, Sec = 1x2, Ign = 1
+			
+			switch (radio.getId()) {
+				case R.id.radioMapOne:
+					if (TUNING_MODE != 7 && TUNING_MODE != 10) {
+						MULTIPLIER = MAX_MAP_VALUE / 15f;
+						STRING_FORMAT = "%d kPA";
+				        fuelDataTop.add("MAP/\nRPM");						
+					} else {
+						MULTIPLIER = 6.6667f;
+						STRING_FORMAT = "%d%%";
+				        fuelDataTop.add("TPS/\nRPM");						
+					}
+		    		populateFuelTable(connectionService.getMapOneData(), connectionService.isFuelMapOneVE());
+					break;
+				case R.id.radioMapTwo:
+					if (TUNING_MODE != 0 && TUNING_MODE != 9 && TUNING_MODE != 13) {
+						MULTIPLIER = 6.6667f;
+						STRING_FORMAT = "%d%%";
+				        fuelDataTop.add("TPS/\nRPM");						
+					} else {
+						MULTIPLIER = MAX_MAP_VALUE / 15f;
+						STRING_FORMAT = "%d kPA";
+				        fuelDataTop.add("MAP/\nRPM");						
+					}
+		    		populateFuelTable(connectionService.getMapTwoData(), connectionService.isFuelMapTwoVE());
+					break;
+			}
+
+			for (int x = 0; x < 16; x++) {
+	        	fuelDataTop.add(String.format(STRING_FORMAT, (int) (x * MULTIPLIER)));
+	        }
+						
+			lastRPM = 6000;
+			lastMAP = 60;
+			setCurrentCell();
+		}	
+	}
 }

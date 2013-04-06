@@ -71,23 +71,38 @@ public class ConnectionService extends Service {
 	private static final byte SLAVE_ADDRESS = 0x01;
 	private static final byte HOLDING_REGISTER = 0x03;
 	
-	private static final short REGISTER_4096_PLUS_SEVEN = 4096;
-	private static final int REGISTER_4096_LENGTH = 21;
+	private static final short REGISTER_4096_PLUS_NINE = 4096;
+	private static final int REGISTER_4096_LENGTH = 25;
 	
 	private static final short REGISTER_4140_PLUS_SIX = 4140;
 	private static final int REGISTER_4140_LENGTH = 19;
+	
+	private static final short REGISTER_2048_MAX_MAP = 2048;
+	private static final int REGISTER_2048_LENGTH = 7;
 
+	private static final short REGISTER_2050_TUNING_MODE = 2050;
+	private static final int REGISTER_2050_LENGTH = 7;
+	
+	private static final short REGISTER_2269_MAP_TYPES = 2269;
+	private static final int REGISTER_2269_LENGTH = 7;
+	
+	private static final short REGISTER_2611_RPM_STEP = 2611;
+	private static final int REGISTER_2611_LENGTH = 7;
+	
 	private static final String DEVICE_ADDR_AND_MODE_HEADER = "01 03 ";
 	private static final String SEVEN_REGISTERS = "01 03 0E ";
-	private static final String EIGHT_REGISTERS = "01 03 10 ";
+	private static final String TEN_REGISTERS = "01 03 14 ";
 	private static final String SIXTEEN_REGISTERS = "01 03 20";
+	private static final String ONE_REGISTER = "01 03 02";
 	
-	private static final int LONG_PAUSE = 100;
+	private static final int LONG_PAUSE = 150;
 	private static final int NOTIFICATION_ID = 1;
 	
 	private static boolean mapMode = false;
 	private static short mapOffset = 0;
-	private final static StringBuffer mapData = new StringBuffer(1280);
+	
+	private final static StringBuffer mapOneData = new StringBuffer(1280);
+	private final static StringBuffer mapTwoData = new StringBuffer(1280);
 	
 	private final static LogItems afrAlarmLogItems = new LogItems();
 	private final static LogItems logAllItems = new LogItems();
@@ -115,6 +130,13 @@ public class ConnectionService extends Service {
 	private static boolean wakeLock = true;
 	private static boolean afrAlarmLogging = false;
 	private static float afrNotEqualTargetTolerance = 5f;
+	
+	private static boolean fuelMapOneVE = false;
+	private static boolean fuelMapTwoVE = false;
+	
+	private static int rpmStepSize = 500;
+	private static int tuningMode = 0;
+	private static int maxMapValue = 200;
 	
 	private static boolean logAll = false;
 
@@ -199,7 +221,8 @@ public class ConnectionService extends Service {
 	        	state = State.CONNECTED_USB;
 	            notifier.tickerText = getResources().getString(R.string.service_usb_connected);
 
-	            sendRequest(REGISTER_4096_PLUS_SEVEN);
+	            sendRequest(REGISTER_2269_MAP_TYPES);
+//	            sendRequest(REGISTER_4096_PLUS_SEVEN);
 
 	    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
 
@@ -224,7 +247,9 @@ public class ConnectionService extends Service {
         if (action.equals(ACTION_UPDATE_FUEL_MAP)) {
         	mapMode = true;
         	mapOffset = 0;
-        	mapData.setLength(0);
+        	
+        	mapOneData.setLength(0);
+        	mapTwoData.setLength(0);
         	
         	sendRequest(mapOffset);
 
@@ -233,7 +258,7 @@ public class ConnectionService extends Service {
         // disconnect
         if (action.equals(ACTION_DISCONNECT)) {
             notifier.tickerText = getResources().getString(R.string.service_disconnected); 
-            disconnect();
+            teardownConnection();
         }
         
         // indicate UI thread is alive
@@ -260,7 +285,7 @@ public class ConnectionService extends Service {
 	public void onDestroy() {
 		super.onDestroy();
 
-		disconnect();
+		teardownConnection();
 		
 		stopForeground(true);
 		state = State.DISCONNECTED;
@@ -275,7 +300,7 @@ public class ConnectionService extends Service {
         	// last time slice of data is trash -- discard it and try again
         	if (System.currentTimeMillis() - lastUpdateInMillis > LONG_PAUSE) {
         		if (DEBUG) Log.d(TAG, lastRegister + " response timed out: " + dataBuffer.toString());
-
+        		dataNotAvailable = true;
         		sendRequest();;
         	}
         	
@@ -306,11 +331,12 @@ public class ConnectionService extends Service {
 	        		final String name = message.getData().getString("name");
 	        		final String addr = message.getData().getString("addr");
 	        		
-	        		service.connect(name, addr);
+	        		service.setupConnection(name, addr);
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
-					service.disconnect();
+	        		dataNotAvailable = true;
+					service.teardownConnection();
 					break;
 					
 	        	case DATA_READY:
@@ -335,20 +361,45 @@ public class ConnectionService extends Service {
 	    	        		}
 	    	        		
 	    	        		// do we have a bad message?
-	    	        		if (!(data.contains(EIGHT_REGISTERS) || data.contains(SEVEN_REGISTERS))) {
+	    	        		if (!(data.contains(TEN_REGISTERS) || data.contains(SEVEN_REGISTERS) || data.contains(ONE_REGISTER))) {
 	    	            		if (DEBUG) Log.d(TAG, lastRegister + " response discarded: " + data);
 	    	            		dataNotAvailable = true;
 	    	        			sendRequest();
 	    	        			break;
 	    	        		}
 	    	        		
-	    	        		// RPM, MAP, MAT, WAT, AUXT, AFR, TPS - 8 16 bit integers (sixteen bytes)
-	    	        		if (data.contains(EIGHT_REGISTERS) && datalength >= REGISTER_4096_LENGTH) {
-	    	        			process4096Response(data);
-	    		        	} else {
-    		        			if (data.contains(SEVEN_REGISTERS) && datalength >= REGISTER_4140_LENGTH) {
-    		        				process4140Response(data);
-    		        			}
+	    	        		// process applicible packet type
+	    	        		switch (lastRegister) {
+	    	        			case REGISTER_4096_PLUS_NINE:
+			    	        		if (data.contains(TEN_REGISTERS) && datalength == REGISTER_4096_LENGTH) {
+			    	        			process4096Response(data);
+			    	        		}
+			    	        		break;
+	    	        			case REGISTER_4140_PLUS_SIX:
+	    		        			if (data.contains(SEVEN_REGISTERS) && datalength == REGISTER_4140_LENGTH) {
+	    		        				process4140Response(data);
+	    		        			}
+	    		        			break;
+	    	        			case REGISTER_2269_MAP_TYPES:
+    		        				if (data.contains(ONE_REGISTER) && datalength == REGISTER_2269_LENGTH) {
+    		        					process2269Response(data);
+    		        				}
+    		        				break;
+	    	        			case REGISTER_2611_RPM_STEP:
+    		        				if (data.contains(ONE_REGISTER) && datalength == REGISTER_2611_LENGTH) {
+    		        					process2611Response(data);  
+    		        				}
+    		        				break;
+	    	        			case REGISTER_2050_TUNING_MODE:
+    		        				if (data.contains(ONE_REGISTER) && datalength == REGISTER_2050_LENGTH) {
+    		        					process2050Response(data);  
+    		        				} 
+    		        				break;
+	    	        			case REGISTER_2048_MAX_MAP:
+    		        				if (data.contains(ONE_REGISTER) && datalength == REGISTER_2048_LENGTH) {
+    		        					process2048Response(data);  
+    		        				}
+    		        				break;			
 	    		        	}
 	    	        	}
     	        	}
@@ -363,18 +414,24 @@ public class ConnectionService extends Service {
 		String[] mapmap = data.trim().split(" ");
 		
 		for (int x = 3; x < 35; x++) {
-			mapData.append(mapmap[x]);
-			mapData.append(" ");
+			if (mapOffset <= 512) {
+				mapOneData.append(mapmap[x]);
+				mapOneData.append(" ");
+			} else {
+				mapTwoData.append(mapmap[x]);
+				mapTwoData.append(" ");				
+			}
 		}
 
-		if (mapOffset < 512) {
+		if (mapOffset < 1024) {
 			sendRequest(mapOffset);
 			return;
 		}
 
+		//TODO: figure out a better way to post results to the activity
 		MainActivity.mapReady = true;
 
-		lastRegister = REGISTER_4096_PLUS_SEVEN;
+		lastRegister = REGISTER_4096_PLUS_NINE;
 		mapMode = false;		
 	}
 	
@@ -413,9 +470,22 @@ public class ConnectionService extends Service {
     	
     	short length;
     	
+    	// set our byte (16 bit) packet size
     	switch (register) {
-    		case REGISTER_4096_PLUS_SEVEN:
-    			length = 8;
+    		case REGISTER_2048_MAX_MAP:
+    			length = 1;
+    			break;
+    		case REGISTER_2050_TUNING_MODE:
+    			length = 1;
+    			break;
+			case REGISTER_2269_MAP_TYPES:
+				length = 1;
+				break;
+			case REGISTER_2611_RPM_STEP:
+				length = 1;
+				break;
+    		case REGISTER_4096_PLUS_NINE:
+    			length = 10;
     			break;
     		case REGISTER_4140_PLUS_SIX:
     			length = 7;
@@ -433,10 +503,11 @@ public class ConnectionService extends Service {
 		}
 	}
 	
-	private void connect(final String name, final String addr) {
+	private void setupConnection(final String name, final String addr) {
 		state = state == State.CONNECTING ? State.CONNECTED_BT : State.CONNECTED_USB;
 
-		sendRequest(REGISTER_4096_PLUS_SEVEN);
+		sendRequest(REGISTER_2269_MAP_TYPES);
+//		sendRequest(REGISTER_4096_PLUS_SEVEN);
 		totalTimeMillis = 0;
 		updatesReceived = 0;
 
@@ -461,7 +532,7 @@ public class ConnectionService extends Service {
         }
 	}
 	
-    private void disconnect() {
+    private void teardownConnection() {
     	refreshHandler.removeCallbacks(RefreshRunnable);			
     	
 		try {
@@ -488,6 +559,100 @@ public class ConnectionService extends Service {
     	state = State.DISCONNECTED;
     }
 
+    private static void process2048Response(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, REGISTER_2048_LENGTH)) {   
+			dataNotAvailable = false;
+			
+			maxMapValue = Integer.parseInt(buf[3] + buf[4], 16);
+			
+            if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
+            	
+        	Log.d(TAG, "Fuel Map One VE: " + fuelMapOneVE);
+        	Log.d(TAG, "Fuel Map Two VE: " + fuelMapTwoVE);
+        	Log.d(TAG, "  RPM Step Size: " + rpmStepSize);
+        	Log.d(TAG, "        Max MAP: " + maxMapValue);
+        	Log.d(TAG, "    Tuning Mode: " + tuningMode);
+
+        	sendRequest(REGISTER_4096_PLUS_NINE);            
+            return;
+            
+		} else {
+			if (DEBUG) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
+			dataNotAvailable = true;
+			sendRequest();
+		}
+    }
+    
+    private static void process2050Response(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, REGISTER_2050_LENGTH)) {   
+			dataNotAvailable = false;
+			
+			tuningMode = Integer.parseInt(buf[3] + buf[4], 16);
+			
+            if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
+			sendRequest(REGISTER_2048_MAX_MAP);            
+            return;
+            
+		} else {
+			if (DEBUG) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
+			dataNotAvailable = true;
+			sendRequest();
+		}
+    }
+    
+    private static void process2611Response(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, REGISTER_2611_LENGTH)) {   
+			dataNotAvailable = false;
+			
+			 final int chk = Integer.parseInt(buf[3], 8);
+			 
+			 if (chk == 0) {
+				 rpmStepSize = 500;
+			 } else {
+				 rpmStepSize = Integer.parseInt(buf[3] + buf[4], 16);
+			 }
+			
+            if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
+			sendRequest(REGISTER_2050_TUNING_MODE);            
+            return;
+            
+		} else {
+			if (DEBUG) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
+			dataNotAvailable = true;
+			sendRequest();
+		}
+    }
+    
+    private static void process2269Response(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, REGISTER_2269_LENGTH)) {   
+			dataNotAvailable = false;
+			
+			 fuelMapOneVE = (getBit(Integer.parseInt(buf[3] + buf[4], 16), 8) > 0); 
+			 fuelMapTwoVE = (getBit(Integer.parseInt(buf[3] + buf[4], 16), 9) > 0);
+			
+            if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
+			sendRequest(REGISTER_2611_RPM_STEP);            
+            return;
+            
+		} else {
+			if (DEBUG) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
+			dataNotAvailable = true;
+			sendRequest();
+		}
+    }
+    
 	private static void process4140Response(final String data) {
 		    	
 		final String[] buf = data.substring(data.indexOf(SEVEN_REGISTERS), data.length()).split(" ");
@@ -500,7 +665,7 @@ public class ConnectionService extends Service {
 			logItem.setClosedLoop(getBit(Integer.parseInt(buf[9] + buf[10], 16), 8) > 0); 
 			
             if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
-			sendRequest(REGISTER_4096_PLUS_SEVEN);            
+			sendRequest(REGISTER_4096_PLUS_NINE);            
             return;
             
 		} else {
@@ -512,7 +677,7 @@ public class ConnectionService extends Service {
 	
     private static void process4096Response(final String data) {
     	
-		final String[] buf = data.substring(data.indexOf(EIGHT_REGISTERS), data.length()).split(" ");
+		final String[] buf = data.substring(data.indexOf(TEN_REGISTERS), data.length()).split(" ");
 
 		if (ModbusRTU.validCRC(buf, REGISTER_4096_LENGTH)) {   
 			dataNotAvailable = false;
@@ -522,10 +687,13 @@ public class ConnectionService extends Service {
     		logItem.setMat(getTemperatureValue(buf[7] + buf[8]));
     		logItem.setWat(getTemperatureValue(buf[9] + buf[10]));
     		
-    		logItem.setAfr(Integer.parseInt(buf[14], 16) / 10f);
     		logItem.setReferenceAfr(Integer.parseInt(buf[13], 16) / 10f);
+    		logItem.setAfr(Integer.parseInt(buf[14], 16) / 10f);
     		
+    		logItem.setKnock(Integer.parseInt(buf[15] + buf[16], 16));
     		logItem.setTps(Integer.parseInt(buf[17] + buf[18], 16));
+    		
+    		logItem.setVolts(Integer.parseInt(buf[21] + buf[22], 16) / 10f);
     		
     		// afr logging stuff
     		if (afrAlarmLogging) {
@@ -655,8 +823,12 @@ public class ConnectionService extends Service {
 		return logAllItems;
 	}
 	
-	public StringBuffer getMapData() {
-		return mapData;
+	public StringBuffer getMapOneData() {
+		return mapOneData;
+	}
+
+	public StringBuffer getMapTwoData() {
+		return mapTwoData;
 	}
 
 	public float getAvgResponseMillis() {
@@ -665,5 +837,25 @@ public class ConnectionService extends Service {
 		} catch (Exception ex) {
 			return 0;
 		}
+	}
+
+	public boolean isFuelMapOneVE() {
+		return fuelMapOneVE;
+	}
+
+	public boolean isFuelMapTwoVE() {
+		return fuelMapTwoVE;
+	}
+
+	public int getRpmStepSize() {
+		return rpmStepSize;
+	}
+
+	public int getTuningMode() {
+		return tuningMode;
+	}
+
+	public int getMaxMapValue() {
+		return maxMapValue;
 	}
 }

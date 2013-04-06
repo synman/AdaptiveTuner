@@ -19,6 +19,22 @@
     </style>
   </head>
   <body>
+$ 1.1.11
+  % Version 1.1.11
+  _ 2013-04-06
+  ! Interim Release
+  	* Fixed range of RPM crosshairs on fuel map
+  	* Added check for fuel map type on connect
+  	* Added check for max map value on connect
+  	* Added check for rpm step size on connect
+  	* Added check for tuning mode on connect
+  	* Added radio buttons for fuel map #1 and #2
+  	* Added Knock to log items
+  	* Added Voltage to log items & debug text
+  	* New AFR gauge
+  	* TODO: improve precision for RPM crosshairs
+  	* TODO: add support for variable MAP crosshairs
+  	* TODO: more clean up for connect / disconnect logic
 $ 1.1.10
   % Version 1.1.10
   _ 2013-03-12
@@ -27,7 +43,7 @@ $ 1.1.10
   	* Added AFR display to the fuel map
   	* Added AFR and water meter alarms
   	* Added alarm to AFR display on the fuel map
-$1.1.9
+$ 1.1.9
   % Version 1.1.9
   _ 2013-01-20
   ! Orientation &amp; Fuel Map

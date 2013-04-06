@@ -114,24 +114,21 @@
 		        android:layout_height="fill_parent"
 		        android:layout_centerInParent="true"
 		        android:scaleType="fitXY"
-		        android:src="@drawable/afr" />
+		        android:src="@drawable/afrtwo" />
+
+		    <com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
+		        android:id="@+id/afrneedle"
+		        android:layout_width="fill_parent"
+		        android:layout_height="fill_parent"
+		        android:scaleType="fitXY"
+		        android:src="@drawable/needle_middle" />
 		    	
 			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
 			    android:id="@+id/targetafrneedle"
 			    android:layout_width="fill_parent"
 			    android:layout_height="fill_parent"
-			    android:layout_centerInParent="true"
 			    android:scaleType="fitXY"
 			    android:src="@drawable/needle_middle_yellow" />
-	
-			<com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle
-			    android:id="@+id/afrneedle"
-			    android:layout_width="fill_parent"
-			    android:layout_height="fill_parent"
-			    android:layout_centerHorizontal="true"
-			    android:layout_centerVertical="true"
-			    android:src="@drawable/needle_middle" 
-			    android:scaleType="fitXY"/>
 			
 			<ImageView
 			    android:id="@+id/afrmeteralarm"

@@ -46,7 +46,7 @@
         android:id="@+id/imgStatus"
         android:layout_width="10dp"
         android:layout_height="10dp"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentLeft="true"
         android:layout_margin="@dimen/padding_small" />
     
     <RelativeLayout android:id="@+id/layoutDevices"
@@ -80,7 +80,7 @@
         android:id="@+id/txtData"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
+        android:layout_toRightOf="@+id/imgStatus"
         android:layout_alignParentTop="true"
         android:textAppearance="?android:attr/textAppearanceSmall" />
 

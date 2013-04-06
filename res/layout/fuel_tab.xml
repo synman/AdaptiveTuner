@@ -47,8 +47,8 @@ android:layout_width="fill_parent" android:layout_height="wrap_content">
          android:layout_width="wrap_content"
          android:layout_height="wrap_content"
          android:layout_centerHorizontal="true"
-         android:layout_marginTop="5dp"
-         android:textAppearance="?android:attr/textAppearanceLarge" 
+         android:layout_marginTop="4dp"
+         android:layout_marginBottom="4dp"
          android:text="AFR: --.- (--.-)" />
      
      <GridView
@@ -81,5 +81,24 @@ android:layout_width="fill_parent" android:layout_height="wrap_content">
          android:layout_height="3dp"
          android:layout_width="match_parent"
          android:src="@drawable/rectangle" />
+
+     <RadioButton
+         android:id="@+id/radioMapTwo"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentRight="true"
+         android:layout_alignParentTop="true"
+         android:layout_marginTop="-5dp"
+         android:text="2" />
+
+     <RadioButton
+         android:id="@+id/radioMapOne"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_toLeftOf="@+id/radioMapTwo"
+         android:layout_alignParentTop="true"
+         android:layout_marginTop="-5dp"
+         android:checked="true"
+         android:text="1" />
 
 </RelativeLayout>
