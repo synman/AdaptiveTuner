@@ -71,6 +71,9 @@ public class ConnectionService extends Service {
 	private static final byte SLAVE_ADDRESS = 0x01;
 	private static final byte HOLDING_REGISTER = 0x03;
 	
+	private static final byte PRESET_SINGLE_REGISTER = 0x06;
+	private static final int PRESET_RESPONSE_LENGTH = 8;
+	
 	private static final short REGISTER_4096_PLUS_NINE = 4096;
 	private static final int REGISTER_4096_LENGTH = 25;
 	
@@ -89,7 +92,9 @@ public class ConnectionService extends Service {
 	private static final short REGISTER_2611_RPM_STEP = 2611;
 	private static final int REGISTER_2611_LENGTH = 7;
 	
-	private static final String DEVICE_ADDR_AND_MODE_HEADER = "01 03 ";
+	private static final String DEVICE_ADDR_AND_HOLDING_HEADER = "01 03 ";
+	private static final String DEVICE_ADDR_AND_PRESET_HEADER = "01 06 ";
+
 	private static final String SEVEN_REGISTERS = "01 03 0E ";
 	private static final String TEN_REGISTERS = "01 03 14 ";
 	private static final String SIXTEEN_REGISTERS = "01 03 20";
@@ -137,6 +142,10 @@ public class ConnectionService extends Service {
 	private static int rpmStepSize = 500;
 	private static int tuningMode = 0;
 	private static int maxMapValue = 200;
+	
+	private final static short NO_UPDATE_PENDING = -1;
+	private static short registerToSend = NO_UPDATE_PENDING;
+	private static short registerToSendValue = 0;
 	
 	private static boolean logAll = false;
 
@@ -299,10 +308,16 @@ public class ConnectionService extends Service {
 
         	// last time slice of data is trash -- discard it and try again
         	if (System.currentTimeMillis() - lastUpdateInMillis > LONG_PAUSE) {
-        		if (DEBUG) Log.d(TAG, lastRegister + " response timed out: " + dataBuffer.toString());
         		dataNotAvailable = true;
-        		sendRequest();;
-        	}
+
+        		if (registerToSend == NO_UPDATE_PENDING) {
+	        		if (DEBUG) Log.d(TAG, lastRegister + " response timed out: " + dataBuffer.toString());
+	        		sendRequest();;
+	        	} else {
+	        		if (DEBUG) Log.d(TAG, registerToSend + " update timed out: " + dataBuffer.toString());
+	    			setSingleRegister(registerToSend, registerToSendValue);
+	        	}
+	    	}
         	
     		refreshHandler.postDelayed(this, LONG_PAUSE);
         }
@@ -347,14 +362,14 @@ public class ConnectionService extends Service {
 	    	        	final String data = setDataBuffer(msg, msglength).toString();
 	    	        	
 	    	        	// TODO: this could be a lot more efficient -- rethink all the data type conversions
-	    	        	final int datalength = data.trim().split(" ").length;
+	    	        	final int dataLength = data.trim().split(" ").length;
 	    	        	
 	    	        	// first check that we've got the right device and mode
-	    	        	if (datalength > 2 && data.contains(DEVICE_ADDR_AND_MODE_HEADER)) {
+	    	        	if (dataLength > 2 && data.startsWith(DEVICE_ADDR_AND_HOLDING_HEADER)) {
 	    	        		
 	    	        		// if we're in map mode process any map data if it exists
 	    	        		if (mapMode) {
-	    	        			if (data.contains(SIXTEEN_REGISTERS) && datalength >= 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
+	    	        			if (data.contains(SIXTEEN_REGISTERS) && dataLength >= 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
 	    	        				populateFuelMap(data);
 	    	        			}
 	    	        			break;
@@ -368,39 +383,50 @@ public class ConnectionService extends Service {
 	    	        			break;
 	    	        		}
 	    	        		
+	    	        		// if update pending process it rather than the response
+	    	        		if (registerToSend != NO_UPDATE_PENDING) {
+	    	        			setSingleRegister(registerToSend, registerToSendValue);
+	    	        			break;
+	    	        		}
+	    	        		
 	    	        		// process applicible packet type
 	    	        		switch (lastRegister) {
 	    	        			case REGISTER_4096_PLUS_NINE:
-			    	        		if (data.contains(TEN_REGISTERS) && datalength == REGISTER_4096_LENGTH) {
+			    	        		if (data.contains(TEN_REGISTERS) && dataLength == REGISTER_4096_LENGTH) {
 			    	        			process4096Response(data);
 			    	        		}
 			    	        		break;
 	    	        			case REGISTER_4140_PLUS_SIX:
-	    		        			if (data.contains(SEVEN_REGISTERS) && datalength == REGISTER_4140_LENGTH) {
+	    		        			if (data.contains(SEVEN_REGISTERS) && dataLength == REGISTER_4140_LENGTH) {
 	    		        				process4140Response(data);
 	    		        			}
 	    		        			break;
 	    	        			case REGISTER_2269_MAP_TYPES:
-    		        				if (data.contains(ONE_REGISTER) && datalength == REGISTER_2269_LENGTH) {
+    		        				if (data.contains(ONE_REGISTER) && dataLength == REGISTER_2269_LENGTH) {
     		        					process2269Response(data);
     		        				}
     		        				break;
 	    	        			case REGISTER_2611_RPM_STEP:
-    		        				if (data.contains(ONE_REGISTER) && datalength == REGISTER_2611_LENGTH) {
+    		        				if (data.contains(ONE_REGISTER) && dataLength == REGISTER_2611_LENGTH) {
     		        					process2611Response(data);  
     		        				}
     		        				break;
 	    	        			case REGISTER_2050_TUNING_MODE:
-    		        				if (data.contains(ONE_REGISTER) && datalength == REGISTER_2050_LENGTH) {
+    		        				if (data.contains(ONE_REGISTER) && dataLength == REGISTER_2050_LENGTH) {
     		        					process2050Response(data);  
     		        				} 
     		        				break;
 	    	        			case REGISTER_2048_MAX_MAP:
-    		        				if (data.contains(ONE_REGISTER) && datalength == REGISTER_2048_LENGTH) {
+    		        				if (data.contains(ONE_REGISTER) && dataLength == REGISTER_2048_LENGTH) {
     		        					process2048Response(data);  
     		        				}
     		        				break;			
 	    		        	}
+	    	        	} else {
+	    	        		if (dataLength > 7 && data.startsWith(DEVICE_ADDR_AND_PRESET_HEADER)) {
+	    	        			// we got an update response let's validate it
+	    	        			processUpdateResponse(data);
+	    	        		}
 	    	        	}
     	        	}
 			}
@@ -435,7 +461,6 @@ public class ConnectionService extends Service {
 		mapMode = false;		
 	}
 	
-
 //	private static void saveMap() {
 //		
 //		try {
@@ -455,6 +480,26 @@ public class ConnectionService extends Service {
 //			e.printStackTrace();
 //		}
 //	}
+	
+	public void updateRegister(final short register, final short value) {
+		if (registerToSend == NO_UPDATE_PENDING) {
+			registerToSend = register;
+			registerToSendValue = value;
+		}
+	}
+	private static void setSingleRegister(final short register, final short value) {
+			
+		if (connectedThread != null && connectedThread.isAlive()) {			
+	    	final long currentTimeInMillis = System.currentTimeMillis();
+	    	final long elapsed = currentTimeInMillis - lastUpdateInMillis;
+	    	
+	    	totalTimeMillis+=elapsed;
+	    	updatesReceived++;
+	    	
+	     	clearDataBuffer();
+			connectedThread.write(ModbusRTU.getRegister(SLAVE_ADDRESS, PRESET_SINGLE_REGISTER, register, value));
+		}
+	}
 	
     private static void sendRequest() {
     	sendRequest(lastRegister);
@@ -559,6 +604,23 @@ public class ConnectionService extends Service {
     	state = State.DISCONNECTED;
     }
 
+    private static void processUpdateResponse(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(DEVICE_ADDR_AND_PRESET_HEADER), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, PRESET_RESPONSE_LENGTH)) {   
+            if (DEBUG) Log.d(TAG, "Processed " + registerToSend + " update: " + data);
+			dataNotAvailable = false;
+			registerToSend = NO_UPDATE_PENDING;
+		} else {
+			if (DEBUG) Log.d(TAG, "bad CRC for " + registerToSend + " update: " + data);
+			dataNotAvailable = true;
+			setSingleRegister(registerToSend, registerToSendValue);
+		}
+
+    }
+
+    
     private static void process2048Response(final String data) {
     	
 		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
@@ -615,14 +677,23 @@ public class ConnectionService extends Service {
 			
 			 final int chk = Integer.parseInt(buf[3], 8);
 			 
+			 // andy says if initial value is zero treat it like it's 500
 			 if (chk == 0) {
 				 rpmStepSize = 500;
 			 } else {
 				 rpmStepSize = Integer.parseInt(buf[3] + buf[4], 16);
 			 }
 			
-            if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
-			sendRequest(REGISTER_2050_TUNING_MODE);            
+			 // validate our rpm step size -- for some reason it's buggy
+			 if (rpmStepSize == 200 || rpmStepSize == 250 || rpmStepSize == 300 || rpmStepSize == 500) {
+		            if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
+					sendRequest(REGISTER_2050_TUNING_MODE);            				 
+			 } else {
+					if (DEBUG) Log.d(TAG, "invalid RPM STEP SIZE for " + lastRegister + ": " + data);
+					dataNotAvailable = true;
+					sendRequest();				 
+			 }
+			 
             return;
             
 		} else {

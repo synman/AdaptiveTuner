@@ -71,16 +71,32 @@ android:layout_width="fill_parent" android:layout_height="wrap_content">
      </GridView>	  
      
      <ImageView
-         android:id="@+id/crossX"
-         android:layout_width="3dp"
+         android:id="@+id/crossXYellow"
+         android:layout_width="3px"
          android:layout_height="match_parent"
-         android:src="@drawable/rectangle" />
+         android:src="@drawable/rectangle_yellow"
+         android:visibility="invisible" />
 
      <ImageView
-         android:id="@+id/crossY"
-         android:layout_height="3dp"
+         android:id="@+id/crossYYellow"
+         android:layout_height="3px"
+         android:visibility="invisible" 
          android:layout_width="match_parent"
-         android:src="@drawable/rectangle" />
+         android:src="@drawable/rectangle_yellow" />
+
+     <ImageView
+         android:id="@+id/crossXGreen"
+         android:layout_width="3px"
+         android:visibility="invisible" 
+         android:layout_height="match_parent"
+         android:src="@drawable/rectangle_green" />
+
+     <ImageView
+         android:id="@+id/crossYGreen"
+         android:layout_height="3px"
+         android:visibility="invisible" 
+         android:layout_width="match_parent"
+         android:src="@drawable/rectangle_green" />
 
      <RadioButton
          android:id="@+id/radioMapTwo"

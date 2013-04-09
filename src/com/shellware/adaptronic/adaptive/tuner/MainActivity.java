@@ -29,6 +29,7 @@ import android.app.ActionBar;
 import android.app.ActionBar.OnNavigationListener;
 import android.app.ActionBar.Tab;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
@@ -54,6 +55,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
@@ -62,7 +64,9 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -130,6 +134,11 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private TextView fuelTableAfr;
 	private ImageView crossX;
 	private ImageView crossY;
+	
+	private ImageView crossXYellow;
+	private ImageView crossYYellow;
+	private ImageView crossXGreen;
+	private ImageView crossYGreen;
 	
 	private GaugeNeedle waterNeedle;
 	private GaugeNeedle iatNeedle;
@@ -369,12 +378,103 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         fuelData = new ArrayAdapter<String>(this, R.layout.tiny_list_item);
         fuelGrid.setAdapter(fuelData);
         
+        fuelGrid.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+			public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+
+				// bail if not connected
+				if (connectionService == null || connectionService.getState() == State.DISCONNECTED) {
+					return true;
+				}
+				
+				final TextView tv = (TextView) view;
+//				tv.setBackgroundColor(Color.GRAY);
+				
+				// get edit_cell_dialog.xml view
+				LayoutInflater li = LayoutInflater.from(ctx);
+				View promptsView = li.inflate(R.layout.edit_cell_dialog, null);
+ 
+				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ctx);
+ 
+				alertDialogBuilder.setView(promptsView);
+ 
+				final EditText userInput = (EditText) promptsView.findViewById(R.id.editTextNewValue);
+				userInput.setText(tv.getText());
+				userInput.selectAll();
+				
+				// set dialog message
+				alertDialogBuilder
+					.setCancelable(false)
+					.setPositiveButton("OK",
+					  new DialogInterface.OnClickListener() {
+					    public void onClick(DialogInterface dialog,int id) {
+					    	
+							final float tvv = Float.parseFloat(userInput.getText().toString());
+							short value = 0;
+							
+							// rewrite our adapter
+							String[] temp = new String[fuelData.getCount()];
+							
+							for (int x = 0; x < fuelData.getCount() ; x++) {
+								if (x == position) {
+									temp[x] = String.format("%.2f", tvv);
+								} else {
+									temp[x] = fuelData.getItem(x);
+								}
+							}
+							
+							fuelData.clear();
+							fuelData.addAll(temp);
+							fuelData.notifyDataSetChanged();
+
+							tv.setTextColor(Color.GREEN);
+//							tv.setBackgroundColor(Color.BLACK);
+							
+							if ((radioMapOne.isChecked() && connectionService.isFuelMapOneVE()) || 
+									(radioMapTwo.isChecked() && connectionService.isFuelMapTwoVE())) {
+								// VE DIVISED
+								value = (short) (tvv * VE_DIVISOR);
+							} else {
+								// MS DIVISED
+								value = (short) (tvv * MS_DIVISOR);
+							}
+							
+							// determine offset
+							final int offset = position / 17 + 1;
+							if (DEBUG) Log.d(TAG, "Position: " + (position - offset));
+							
+							connectionService.updateRegister((short) (position - offset), value);
+					    }
+					  })
+					.setNegativeButton("Cancel",
+					  new DialogInterface.OnClickListener() {
+					    public void onClick(DialogInterface dialog,int id) {
+						dialog.cancel();
+//						tv.setBackgroundColor(Color.TRANSPARENT);
+					    }
+					  });
+ 
+				// create and show alert dialog
+				AlertDialog alertDialog = alertDialogBuilder.create();
+				alertDialog.show();
+				
+				return false;
+			}
+		});
+        
         fuelGridHeaderTop = (GridView) findViewById(R.id.gridFuelHeaderTop);
         fuelDataTop = new ArrayAdapter<String>(this, R.layout.tiny_list_item_bold);
         fuelGridHeaderTop.setAdapter(fuelDataTop);
         
-        crossX = (ImageView) findViewById(R.id.crossX);
-        crossY = (ImageView) findViewById(R.id.crossY);
+        crossXYellow = (ImageView) findViewById(R.id.crossXYellow);
+        crossYYellow = (ImageView) findViewById(R.id.crossYYellow);
+        
+        crossXGreen = (ImageView) findViewById(R.id.crossXGreen);
+        crossYGreen = (ImageView) findViewById(R.id.crossYGreen);
+        
+        // initialize it just to be safe
+        crossX = crossXYellow;
+        crossY = crossYYellow;
         
         fuelTableAfr = (TextView) findViewById(R.id.fuelTabAfr);
         
@@ -383,9 +483,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         
         radioMapOne.setOnClickListener(this);
         radioMapTwo.setOnClickListener(this);
-        
-        // default fuel table header
-//        onxClick(radioMapOne);
         
         usbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(usbReceiver, usbDetachedFilter);
@@ -411,7 +508,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     @Override
 	protected void onResume() {
     	super.onResume();
-    	
+
     	// set screen dimensions
     	screenWidth = getWindowManager().getDefaultDisplay().getWidth();
 //    	screenHeight = getWindowManager().getDefaultDisplay().getHeight();
@@ -652,6 +749,20 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 
 			if (closedLoop != lastClosedLoop) {
 				targetAfrNeedle.setImageResource(closedLoop ? R.drawable.needle_middle_green : R.drawable.needle_middle_yellow);
+		    	
+		    	// set the fuel map crosshairs color based on closed loop status
+				crossX.setVisibility(View.INVISIBLE);
+				crossY.setVisibility(View.INVISIBLE);
+
+				crossX = closedLoop ? crossXGreen : crossXYellow;
+		        crossY = closedLoop ? crossYGreen : crossYYellow;
+
+		        crossX.setVisibility(View.VISIBLE);
+				crossY.setVisibility(View.VISIBLE);
+				
+				crossY.setX((fuelGrid.getChildAt(0) != null ? ((TextView) fuelGrid.getChildAt(0)).getWidth() : 6) - 5);
+				crossX.setY(fuelGrid.getY() - 5);
+				
 				lastClosedLoop = closedLoop;
 			}
 			
@@ -757,6 +868,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     		} else {
 				crossY.setY(lastRPM > highRPM ? fuelGrid.getBottom() - 1 : fuelGrid.getTop() - 1);
 	    	}
+
     	} catch (Exception ex) {
     		Log.d(TAG, "Unknown exception thrown in setCurrentCell");
     	}
@@ -791,6 +903,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 			// do nothing
 		}
 	}
+	
+//	String bla = Intseger.toHexString(150);
+
+
 	
     private String getTemperatureSymbol() {
     	switch (tempUomPref) {
@@ -1144,7 +1260,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 				break;  
 			case 2:				
 				getFuelMaps();
-				ft.show(fuelFragment);
+				ft.show(fuelFragment);				
 				break;
 		}
 		
@@ -1271,10 +1387,26 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 			for (int x = 0; x < 16; x++) {
 	        	fuelDataTop.add(String.format(STRING_FORMAT, (int) (x * MULTIPLIER)));
 	        }
-						
-			lastRPM = 6000;
-			lastMAP = 60;
-			setCurrentCell();
+			
+	    	// set the fuel map crosshairs color based on closed loop status
+			crossX.setVisibility(View.INVISIBLE);
+			crossY.setVisibility(View.INVISIBLE);
+
+			crossX = lastClosedLoop ? crossXGreen : crossXYellow;
+	        crossY = lastClosedLoop ? crossYGreen : crossYYellow;
+
+	        crossX.setVisibility(View.VISIBLE);
+			crossY.setVisibility(View.VISIBLE);
+			
+			crossY.setX((fuelGridHeaderTop.getChildAt(0) != null ? ((TextView) fuelGridHeaderTop.getChildAt(0)).getWidth() : 6) - 5);
+			crossY.setY(fuelGrid.getY());
+			
+			crossX.setX(fuelGridHeaderTop.getChildAt(0) != null ? ((TextView) fuelGridHeaderTop.getChildAt(0)).getWidth() : 6);
+			crossX.setY(fuelGrid.getY() - 5);
+			
+//			lastRPM = 1500;
+//			lastMAP = 60;
+//			setCurrentCell();
 		}	
 	}
 }

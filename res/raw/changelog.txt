@@ -19,6 +19,17 @@
     </style>
   </head>
   <body>
+$ 1.2.0
+  % Version 1.2.0
+  _ 2013-04-09
+  ! TERMS OF USE & FUEL MAP EDITING
+  	* Adaptive Tuner is governed by the terms of the <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
+  	<p/>   	
+  	* Added fuel table cell edit capability
+  	* Added redundancy check for updating map values
+  	* Fuel Map crosshairs green for closed loop and yellow for open loop
+  	* TODO: improve precision for RPM crosshairs
+  	* TODO: more clean up for connect / disconnect logic
 $ 1.1.11
   % Version 1.1.11
   _ 2013-04-06
