@@ -44,7 +44,7 @@
     </group>
    	<group>
 	    <item android:id="@+id/menu_save_map"
-	        android:enabled="false"
+	        android:enabled="true"
 	        android:title="@string/menu_save_map"
 	        android:orderInCategory="100"
 	        android:showAsAction="never" />

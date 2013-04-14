@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package com.shellware.adaptronic.adaptive.tuner.gauges;
+package com.shellware.adaptronic.adaptive.tuner.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;

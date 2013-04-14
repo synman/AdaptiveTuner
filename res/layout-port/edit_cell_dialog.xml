@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+/*
+ *   Copyright 2013 Shell M. Shrader
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+ -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_root"
+    android:layout_width="240dp"
+    android:layout_height="380dp"
+    android:orientation="vertical"
+    android:padding="10dp" >
+
+    	<RelativeLayout
+		    android:layout_width="wrap_content"
+		    android:layout_height="match_parent"
+		    android:layout_alignParentTop="true"
+		    android:layout_centerHorizontal="true"
+		    android:layout_alignTop="@+id/cellValueWidget1" >
+		    
+		    <TextView
+		        android:id="@+id/textView1"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+	  	        android:layout_alignParentTop="true"
+		        android:layout_centerHorizontal="true"
+		        android:text="@string/edit_cell_message"
+		        android:textAppearance="?android:attr/textAppearanceLarge" />
+		    
+		    <EditText
+		        android:id="@+id/editTextNewValue"
+		        android:layout_width="80dp"
+		        android:layout_height="wrap_content"
+		        android:layout_below="@+id/textView1"
+		        android:layout_marginTop="20dp"
+		        android:layout_centerHorizontal="true"
+		        android:inputType="numberDecimal" />
+	</RelativeLayout>
+
+    
+	<com.shellware.adaptronic.adaptive.tuner.widgets.CellValueWidget
+	    android:id="@+id/cellValueWidget1"
+	    android:layout_width="170dp"
+	    android:layout_height="170dp"
+	    android:layout_centerHorizontal="true"
+		android:layout_alignParentBottom="true"
+		android:layout_marginBottom="20dp"
+	    android:scaleType="fitXY"
+	    android:src="@drawable/cell_value_widget" />
+
+</RelativeLayout>

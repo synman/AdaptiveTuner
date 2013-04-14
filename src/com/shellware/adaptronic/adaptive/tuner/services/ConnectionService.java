@@ -16,6 +16,9 @@
  */
 package com.shellware.adaptronic.adaptive.tuner.services;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 
 import android.annotation.SuppressLint;
@@ -59,7 +62,7 @@ public class ConnectionService extends Service {
     public final static String 	   ACTION_UI_INACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE";
     public final static String   	 ACTION_UI_ACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE";
     public final static String ACTION_UPDATE_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP";
-    public final static String 		  ACTION_SAVE_MAP = "com.shellware.adaptronic.adaptive.tuner.action.SAVE_MAP";
+    public final static String 	 ACTION_SAVE_ECU_FILE = "com.shellware.adaptronic.adaptive.tuner.action.SAVE_ECU_FILE";
 
 	public static final short CONNECTION_ERROR = 1;
 	public static final short DATA_READY = 2;
@@ -102,6 +105,10 @@ public class ConnectionService extends Service {
 	
 	private static final int LONG_PAUSE = 150;
 	private static final int NOTIFICATION_ID = 1;
+	
+	private static boolean saveMode = false;
+	private static short saveModeOffset = 0;
+	private static OutputStream saveStream;
 	
 	private static boolean mapMode = false;
 	private static short mapOffset = 0;
@@ -241,15 +248,19 @@ public class ConnectionService extends Service {
         }
         
         // save map
-        if (action.equals(ACTION_SAVE_MAP)) {
-//        	mapName = intent.getExtras().getString("map_filename");
-//        	mapMode = true;
-//        	mapOffset = 0;
-//        	mapLength = 0;
-//        	
-//        	fuelMapData.setLength(0);
-//        	
-//        	sendRequest(mapOffset);        	
+        if (action.equals(ACTION_SAVE_ECU_FILE)) {
+        	final String filename = intent.getExtras().getString("map_filename");
+
+        	try {
+				saveStream = new FileOutputStream(filename);
+
+				saveMode = true;
+	        	saveModeOffset = 0;	        	
+
+	        	sendRequest(saveModeOffset);        	
+			} catch (FileNotFoundException e) {
+				if (DEBUG) Log.d(TAG, "unable to open ecu file " + e.getMessage());
+			}  
         }
         
         // map mode
@@ -261,7 +272,6 @@ public class ConnectionService extends Service {
         	mapTwoData.setLength(0);
         	
         	sendRequest(mapOffset);
-
         }
         
         // disconnect
@@ -312,7 +322,7 @@ public class ConnectionService extends Service {
 
         		if (registerToSend == NO_UPDATE_PENDING) {
 	        		if (DEBUG) Log.d(TAG, lastRegister + " response timed out: " + dataBuffer.toString());
-	        		sendRequest();;
+	        		sendRequest();
 	        	} else {
 	        		if (DEBUG) Log.d(TAG, registerToSend + " update timed out: " + dataBuffer.toString());
 	    			setSingleRegister(registerToSend, registerToSendValue);
@@ -369,14 +379,22 @@ public class ConnectionService extends Service {
 	    	        		
 	    	        		// if we're in map mode process any map data if it exists
 	    	        		if (mapMode) {
-	    	        			if (data.contains(SIXTEEN_REGISTERS) && dataLength >= 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
+	    	        			if (data.startsWith(SIXTEEN_REGISTERS) && dataLength >= 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
 	    	        				populateFuelMap(data);
 	    	        			}
 	    	        			break;
 	    	        		}
 	    	        		
+	    	        		// if we're in save mode process any ecu data if it exists
+	    	        		if (saveMode) {
+	    	        			if (data.startsWith(SIXTEEN_REGISTERS) && dataLength == 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
+	    	        				saveEcuData(msg);
+	    	        			}
+	    	        			break;
+	    	        		}
+	    	        		
 	    	        		// do we have a bad message?
-	    	        		if (!(data.contains(TEN_REGISTERS) || data.contains(SEVEN_REGISTERS) || data.contains(ONE_REGISTER))) {
+	    	        		if (!(data.startsWith(TEN_REGISTERS) || data.startsWith(SEVEN_REGISTERS) || data.startsWith(ONE_REGISTER))) {
 	    	            		if (DEBUG) Log.d(TAG, lastRegister + " response discarded: " + data);
 	    	            		dataNotAvailable = true;
 	    	        			sendRequest();
@@ -392,32 +410,32 @@ public class ConnectionService extends Service {
 	    	        		// process applicible packet type
 	    	        		switch (lastRegister) {
 	    	        			case REGISTER_4096_PLUS_NINE:
-			    	        		if (data.contains(TEN_REGISTERS) && dataLength == REGISTER_4096_LENGTH) {
+			    	        		if (data.startsWith(TEN_REGISTERS) && dataLength == REGISTER_4096_LENGTH) {
 			    	        			process4096Response(data);
 			    	        		}
 			    	        		break;
 	    	        			case REGISTER_4140_PLUS_SIX:
-	    		        			if (data.contains(SEVEN_REGISTERS) && dataLength == REGISTER_4140_LENGTH) {
+	    		        			if (data.startsWith(SEVEN_REGISTERS) && dataLength == REGISTER_4140_LENGTH) {
 	    		        				process4140Response(data);
 	    		        			}
 	    		        			break;
 	    	        			case REGISTER_2269_MAP_TYPES:
-    		        				if (data.contains(ONE_REGISTER) && dataLength == REGISTER_2269_LENGTH) {
+    		        				if (data.startsWith(ONE_REGISTER) && dataLength == REGISTER_2269_LENGTH) {
     		        					process2269Response(data);
     		        				}
     		        				break;
 	    	        			case REGISTER_2611_RPM_STEP:
-    		        				if (data.contains(ONE_REGISTER) && dataLength == REGISTER_2611_LENGTH) {
+    		        				if (data.startsWith(ONE_REGISTER) && dataLength == REGISTER_2611_LENGTH) {
     		        					process2611Response(data);  
     		        				}
     		        				break;
 	    	        			case REGISTER_2050_TUNING_MODE:
-    		        				if (data.contains(ONE_REGISTER) && dataLength == REGISTER_2050_LENGTH) {
+    		        				if (data.startsWith(ONE_REGISTER) && dataLength == REGISTER_2050_LENGTH) {
     		        					process2050Response(data);  
     		        				} 
     		        				break;
 	    	        			case REGISTER_2048_MAX_MAP:
-    		        				if (data.contains(ONE_REGISTER) && dataLength == REGISTER_2048_LENGTH) {
+    		        				if (data.startsWith(ONE_REGISTER) && dataLength == REGISTER_2048_LENGTH) {
     		        					process2048Response(data);  
     		        				}
     		        				break;			
@@ -432,6 +450,34 @@ public class ConnectionService extends Service {
 			}
 		}	
     }
+	
+	private static void saveEcuData(final byte[] data) {
+		
+		saveModeOffset+=16;
+
+		try {
+			for (int x = 3; x < 35; x++) {
+				saveStream.write(data[x]);
+			}
+			
+			if (saveModeOffset < 4096) {
+				sendRequest(saveModeOffset);
+				return;
+			}
+			
+			saveStream.flush();
+			saveStream.close();
+			
+			//TODO: figure out a better way to post results to the activity
+			MainActivity.saveReady = true;
+			
+			saveMode = false;
+			lastRegister = REGISTER_4096_PLUS_NINE;
+
+		} catch (Exception ex) {
+			if (DEBUG) Log.d(TAG, "Error saving ECU data " + ex.getMessage()); 
+		}
+	}
 	
 	private static void populateFuelMap(final String data) {
 
@@ -460,26 +506,6 @@ public class ConnectionService extends Service {
 		lastRegister = REGISTER_4096_PLUS_NINE;
 		mapMode = false;		
 	}
-	
-//	private static void saveMap() {
-//		
-//		try {
-//			final File file = new File(mapName);			
-//			final FileOutputStream f = new FileOutputStream(file);
-//			
-//			f.write(mapBytes);
-//			
-//			f.flush();
-//			f.close();
-//			
-//		} catch (FileNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
 	
 	public void updateRegister(final short register, final short value) {
 		if (registerToSend == NO_UPDATE_PENDING) {
@@ -515,29 +541,34 @@ public class ConnectionService extends Service {
     	
     	short length;
     	
-    	// set our byte (16 bit) packet size
-    	switch (register) {
-    		case REGISTER_2048_MAX_MAP:
-    			length = 1;
-    			break;
-    		case REGISTER_2050_TUNING_MODE:
-    			length = 1;
-    			break;
-			case REGISTER_2269_MAP_TYPES:
-				length = 1;
-				break;
-			case REGISTER_2611_RPM_STEP:
-				length = 1;
-				break;
-    		case REGISTER_4096_PLUS_NINE:
-    			length = 10;
-    			break;
-    		case REGISTER_4140_PLUS_SIX:
-    			length = 7;
-    			break;
-			default:
-				length = 16;
-				break;
+    	if (mapMode || saveMode) {
+    		if (DEBUG) Log.d(TAG, (mapMode ? "Map" : "Save") + " Mode offset " + register + " requested");
+			length = 16;
+    	} else {
+	    	// set our byte (16 bit) packet size
+	    	switch (register) {
+	    		case REGISTER_2048_MAX_MAP:
+	    			length = 1;
+	    			break;
+	    		case REGISTER_2050_TUNING_MODE:
+	    			length = 1;
+	    			break;
+				case REGISTER_2269_MAP_TYPES:
+					length = 1;
+					break;
+				case REGISTER_2611_RPM_STEP:
+					length = 1;
+					break;
+	    		case REGISTER_4096_PLUS_NINE:
+	    			length = 10;
+	    			break;
+	    		case REGISTER_4140_PLUS_SIX:
+	    			length = 7;
+	    			break;
+				default:
+					length = 16;
+					break;
+	    	}
     	}
     
 		if (connectedThread != null && connectedThread.isAlive()) {

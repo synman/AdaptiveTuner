@@ -18,8 +18,8 @@
  -->
  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shellware.adaptronic.adaptive.tuner"
-    android:versionCode="2008"
-    android:versionName="1.2.0"
+    android:versionCode="2009"
+    android:versionName="1.2.1"
     android:installLocation="preferExternal">
 
     <uses-sdk
@@ -69,7 +69,8 @@
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE" />
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE" />
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP" />
-			</intent-filter>
+   			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.SAVE_ECU_FILE" />
+ 			</intent-filter>
 		</service>	
 		
 		<meta-data android:name="com.google.android.backup.api_key" android:value="AEdPqrEAAAAIqGUmRlrTxscSz23fMuDaUAhmoDF5u1BbVVflxg" />

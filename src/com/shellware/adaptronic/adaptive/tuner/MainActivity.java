@@ -45,6 +45,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.hardware.usb.UsbManager;
@@ -55,6 +56,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -62,6 +65,7 @@ import android.view.Surface;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
@@ -76,15 +80,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.shellware.adaptronic.adaptive.tuner.changelog.ChangeLog;
-import com.shellware.adaptronic.adaptive.tuner.gauges.GaugeNeedle;
-import com.shellware.adaptronic.adaptive.tuner.gauges.GaugeSlider;
 import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
 import com.shellware.adaptronic.adaptive.tuner.receivers.BatteryStatusReceiver;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService.State;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
+import com.shellware.adaptronic.adaptive.tuner.widgets.CellValueWidget;
+import com.shellware.adaptronic.adaptive.tuner.widgets.GaugeNeedle;
+import com.shellware.adaptronic.adaptive.tuner.widgets.GaugeSlider;
 
-public class MainActivity extends Activity implements ActionBar.TabListener, OnClickListener {
+public class MainActivity 	extends Activity 
+							implements ActionBar.TabListener, 
+									   OnClickListener {
 	
 	public static final String TAG = "Adaptive";
 	public static final boolean DEBUG = false;
@@ -102,11 +109,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	
 	private static final String LOG_HEADER = "timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat, knock, volts\n";
 	
-	private Fragment adaptiveFragment;
-	private Fragment gaugesFragment;
-	private Fragment fuelFragment;
-	
-	private final Fragment[] frags = { adaptiveFragment, gaugesFragment, fuelFragment };
+	private final Fragment[] frags = { null, null, null };
+	private static final short FRAGS_COUNT = 3;
 	
 	private TextView txtData;
 	private ListView lvDevices;
@@ -190,6 +194,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	private static boolean mapMode = false;
 	public static boolean mapReady = false;
 	
+	private static boolean saveMode = false;
+	public static boolean saveReady = false;
+	private static String saveName = "";
+	
 	private static boolean logAll = false;
 	private static boolean afrAlarmLogging = false;
 	
@@ -231,13 +239,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
     	
     	// Instantiate all of our fragments
-        adaptiveFragment = getFragmentManager().findFragmentById(R.id.frag_adaptive);
-        gaugesFragment = getFragmentManager().findFragmentById(R.id.frag_gauges);
-        fuelFragment = getFragmentManager().findFragmentById(R.id.frag_fuel);
-        
-        frags[0] = adaptiveFragment;
-        frags[1] = gaugesFragment;
-        frags[2] = fuelFragment;
+        frags[0] = getFragmentManager().findFragmentById(R.id.frag_adaptive);
+        frags[1] = getFragmentManager().findFragmentById(R.id.frag_gauges);
+        frags[2] = getFragmentManager().findFragmentById(R.id.frag_fuel);
                 
         final ActionBar bar = getActionBar();
         
@@ -263,9 +267,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
                 public boolean onNavigationItemSelected(int itemPosition, long itemId) {
                 	FragmentTransaction ft = getFragmentManager().beginTransaction();
                 	
-                	ft.hide(adaptiveFragment);
-                	ft.hide(gaugesFragment);
-                	ft.hide(fuelFragment);
+                	for (int x = 0; x < FRAGS_COUNT; x++) {
+                		ft.hide(frags[x]);
+                	}
                 	
                 	//kludge to populate fuel map
                 	if (itemPosition == 2) getFuelMaps();
@@ -273,9 +277,12 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
                 	ft.show(frags[itemPosition]);
                 	ft.commit();
 
-        			Editor edit = prefs.edit();
-        			edit.putInt("prefs_last_tab",itemPosition);
-        			edit.commit();
+                	// don't allow the fuel map to be saved
+                	if (itemPosition != 2) {
+	        			Editor edit = prefs.edit();
+	        			edit.putInt("prefs_last_tab",itemPosition);
+	        			edit.commit();
+                	}
 
                 	return true;
                 }
@@ -378,89 +385,8 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         fuelData = new ArrayAdapter<String>(this, R.layout.tiny_list_item);
         fuelGrid.setAdapter(fuelData);
         
-        fuelGrid.setOnItemLongClickListener(new OnItemLongClickListener() {
-
-			public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-
-				// bail if not connected
-				if (connectionService == null || connectionService.getState() == State.DISCONNECTED) {
-					return true;
-				}
-				
-				final TextView tv = (TextView) view;
-//				tv.setBackgroundColor(Color.GRAY);
-				
-				// get edit_cell_dialog.xml view
-				LayoutInflater li = LayoutInflater.from(ctx);
-				View promptsView = li.inflate(R.layout.edit_cell_dialog, null);
- 
-				AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ctx);
- 
-				alertDialogBuilder.setView(promptsView);
- 
-				final EditText userInput = (EditText) promptsView.findViewById(R.id.editTextNewValue);
-				userInput.setText(tv.getText());
-				userInput.selectAll();
-				
-				// set dialog message
-				alertDialogBuilder
-					.setCancelable(false)
-					.setPositiveButton("OK",
-					  new DialogInterface.OnClickListener() {
-					    public void onClick(DialogInterface dialog,int id) {
-					    	
-							final float tvv = Float.parseFloat(userInput.getText().toString());
-							short value = 0;
-							
-							// rewrite our adapter
-							String[] temp = new String[fuelData.getCount()];
-							
-							for (int x = 0; x < fuelData.getCount() ; x++) {
-								if (x == position) {
-									temp[x] = String.format("%.2f", tvv);
-								} else {
-									temp[x] = fuelData.getItem(x);
-								}
-							}
-							
-							fuelData.clear();
-							fuelData.addAll(temp);
-							fuelData.notifyDataSetChanged();
-
-							tv.setTextColor(Color.GREEN);
-//							tv.setBackgroundColor(Color.BLACK);
-							
-							if ((radioMapOne.isChecked() && connectionService.isFuelMapOneVE()) || 
-									(radioMapTwo.isChecked() && connectionService.isFuelMapTwoVE())) {
-								// VE DIVISED
-								value = (short) (tvv * VE_DIVISOR);
-							} else {
-								// MS DIVISED
-								value = (short) (tvv * MS_DIVISOR);
-							}
-							
-							// determine offset
-							final int offset = position / 17 + 1;
-							if (DEBUG) Log.d(TAG, "Position: " + (position - offset));
-							
-							connectionService.updateRegister((short) (position - offset), value);
-					    }
-					  })
-					.setNegativeButton("Cancel",
-					  new DialogInterface.OnClickListener() {
-					    public void onClick(DialogInterface dialog,int id) {
-						dialog.cancel();
-//						tv.setBackgroundColor(Color.TRANSPARENT);
-					    }
-					  });
- 
-				// create and show alert dialog
-				AlertDialog alertDialog = alertDialogBuilder.create();
-				alertDialog.show();
-				
-				return false;
-			}
-		});
+        // lotsa stuff happens here
+        fuelGrid.setOnItemLongClickListener(cellEditListener);
         
         fuelGridHeaderTop = (GridView) findViewById(R.id.gridFuelHeaderTop);
         fuelDataTop = new ArrayAdapter<String>(this, R.layout.tiny_list_item_bold);
@@ -567,9 +493,10 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	
     	// ensure all fragments are hidden
     	FragmentTransaction ft = getFragmentManager().beginTransaction();
-    	ft.hide(adaptiveFragment);
-    	ft.hide(gaugesFragment);
-    	ft.hide(fuelFragment);
+
+    	for (int x = 0; x < FRAGS_COUNT; x++) {
+    		ft.hide(frags[x]);
+    	}
 
     	final ActionBar bar = getActionBar();	
         final int o = getResources().getConfiguration().orientation;   
@@ -690,6 +617,22 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
         		return;
 	    	}
 	    	
+	    	// ecu file save in progress?
+	    	if (saveMode) {
+	    		if (saveReady) {
+	    			saveMode = false;
+	    			saveReady = false;
+	    			
+					Intent share = new Intent(Intent.ACTION_SEND);
+					share.setType("text/plain");
+					share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + saveName));
+					startActivity(Intent.createChooser(share, getText(R.string.share_ecu_file_heading)));
+	    		}
+	    		
+	    		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
+        		return;	    		
+	    	}
+	    	
 			// populate all data elements
     		dataArray.clear();
 			final LogItem item = connectionService.getLogItem();
@@ -714,27 +657,7 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 			final float afr = item.getAfr();
 			final float targetAfr = item.getTargetAfr();
 			final float referenceAfr = item.getReferenceAfr();
-			
-			if (adaptiveFragment.isVisible()) {
-				imgFWait.setBackgroundColor(fWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
-				imgFRpm.setBackgroundColor(fRpm ? Color.GREEN : Color.TRANSPARENT);
-				imgFLoad.setBackgroundColor(fLoad ? Color.GREEN : Color.TRANSPARENT);
-				
-				imgIWait.setBackgroundColor(iWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
-				imgIRpm.setBackgroundColor(iRpm ? Color.GREEN : Color.TRANSPARENT);
-				imgILoad.setBackgroundColor(iLoad ? Color.GREEN : Color.TRANSPARENT);
-	
-				txtFuelLearn.setBackgroundColor(closedLoop ? Color.GREEN : Color.TRANSPARENT);
-			}
-			
-			txtData.setText(String.format("AVG: %.0f ms -- BAT: %.1f V", connectionService.getAvgResponseMillis(), item.getVolts()));
 
-			tpsSlider.setValue(tps);
-			
-			iatNeedle.setValue(mat); 
-			waterNeedle.setValue(convertWat(wat));
-			mapNeedle.setValue(map); 
-    		
 			float afrVal = afr * 100;
     		float targetAfrVal = targetAfr * 100;
     		
@@ -743,9 +666,6 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     		
     		if (targetAfrVal > AFR_MAX) targetAfrVal = AFR_MAX;
     		if (targetAfrVal < AFR_MIN) targetAfrVal = AFR_MIN;
-
-//			afrNeedle.setValue(AFR_MAX - afrVal + AFR_MIN);
-			afrNeedle.setValue(afrVal);
 
 			if (closedLoop != lastClosedLoop) {
 				targetAfrNeedle.setImageResource(closedLoop ? R.drawable.needle_middle_green : R.drawable.needle_middle_yellow);
@@ -765,58 +685,78 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 				
 				lastClosedLoop = closedLoop;
 			}
-			
-//			targetAfrNeedle.setValue(AFR_MAX - targetAfrVal + AFR_MIN);
-			targetAfrNeedle.setValue(targetAfrVal);
-    		
+			    		
     		if (rpm >= 200) lastRPM = rpm;
-    		dataArray.add(String.format("RPM\n%d", lastRPM));
-    		
-			rpmNeedle.setValue(lastRPM); 
 
-    		dataArray.add(String.format("MAP\n%d kPa", map));
-    		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
-    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
-    		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
-    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
+    		txtData.setText(String.format("AVG: %.0f ms -- BAT: %.1f V", connectionService.getAvgResponseMillis(), item.getVolts()));
 
-    		fuelTableAfr.setText(String.format("AFR: %.1f (%.1f)", afr, referenceAfr));
-    		
-    		// alarm stuff
+			if (frags[0].isVisible()) {
+				imgFWait.setBackgroundColor(fWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
+				imgFRpm.setBackgroundColor(fRpm ? Color.GREEN : Color.TRANSPARENT);
+				imgFLoad.setBackgroundColor(fLoad ? Color.GREEN : Color.TRANSPARENT);
+				
+				imgIWait.setBackgroundColor(iWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
+				imgIRpm.setBackgroundColor(iRpm ? Color.GREEN : Color.TRANSPARENT);
+				imgILoad.setBackgroundColor(iLoad ? Color.GREEN : Color.TRANSPARENT);
+	
+				txtFuelLearn.setBackgroundColor(closedLoop ? Color.GREEN : Color.TRANSPARENT);
 
-    		// water temperature
-			if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
-			waterGaugeAlarm.setBackgroundColor(Color.TRANSPARENT);
-			
+				dataArray.add(String.format("RPM\n%d", lastRPM));
+	    		dataArray.add(String.format("MAP\n%d kPa", map));
+	    		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
+	    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
+	    		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
+	    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
+	    		
+				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
+	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
+			}
+
+			if (frags[1].isVisible()) {
+				rpmNeedle.setValue(lastRPM); 
+				tpsSlider.setValue(tps);			
+				iatNeedle.setValue(mat); 
+				waterNeedle.setValue(convertWat(wat));
+				mapNeedle.setValue(map); 
+				afrNeedle.setValue(afrVal);
+				targetAfrNeedle.setValue(targetAfrVal);
+				
+				waterGaugeAlarm.setBackgroundColor(Color.TRANSPARENT);
+				afrGaugeAlarm.setBackgroundColor(Color.TRANSPARENT);
+			}
+
+			if (frags[2].isVisible()) {
+				fuelTableAfr.setText(String.format("AFR: %.1f (%.1f)", afr, referenceAfr));
+
+				// fuel map crosshairs
+	    		setCurrentCell();
+
+	    		fuelTableAfr.setBackgroundColor(Color.TRANSPARENT);
+			}
+
+			// water temperature alarm			
     		if (waterTempPref) {
     			if (wat < minimumWaterTemp) {
-    				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
-    				waterGaugeAlarm.setBackgroundColor(Color.BLUE);
+    				if (frags[0].isVisible() && gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
+    				if (frags[1].isVisible()) waterGaugeAlarm.setBackgroundColor(Color.BLUE);
     			}
     			if (wat > maximumWaterTemp) {
-    				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.RED);
-    				waterGaugeAlarm.setBackgroundColor(Color.RED);
+    				if (frags[0].isVisible() && gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.RED);
+    				if (frags[1].isVisible()) waterGaugeAlarm.setBackgroundColor(Color.RED);
     			}
     		}
 
-    		// afr vs target alarm
-    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
-			fuelTableAfr.setBackgroundColor(Color.TRANSPARENT);
-			afrGaugeAlarm.setBackgroundColor(Color.TRANSPARENT);
-			
+    		// afr vs target alarm			
     		if (afrNotEqualTargetPref) {
     			final float threshold = targetAfr * (afrNotEqualTargetTolerance * .01f);
     			if (Math.abs(targetAfr - afr) >= threshold ) {
     				final int color =  afr > targetAfr ? Color.RED : Color.BLUE;
-    				if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(color);
-    				fuelTableAfr.setBackgroundColor(color);
-    				afrGaugeAlarm.setBackgroundColor(color);
+    				if (frags[0].isVisible() && gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(color);
+    				if (frags[1].isVisible()) afrGaugeAlarm.setBackgroundColor(color);
+    				if (frags[2].isVisible()) fuelTableAfr.setBackgroundColor(color);
     			}
     		}
     		
-    		// fuel map crosshairs
-    		if (fuelFragment.isVisible()) setCurrentCell();
-
     		// dismiss the progress bar if it is visible
     		if (progress != null && progress.isShowing()) {
     			progress.dismiss();
@@ -1026,6 +966,13 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	menuConnect = myMenu.findItem(R.id.menu_connect);
     	menuUsbConnect = myMenu.findItem(R.id.menu_usb_connect);
     	
+    	return onPrepareOptionsMenu(menu);
+    }
+    
+
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		
     	// show share button if logging
     	if (connectionService != null)
     		menuShareLog.setVisible((afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()) ||
@@ -1034,17 +981,27 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
     	if (connectionService != null && connectionService.getState() == State.DISCONNECTED) {
     		menuConnect.setTitle(R.string.menu_connect);
     		menuUsbConnect.setTitle(R.string.menu_usb_connect);
+    		menuConnect.setEnabled(true);
+    		menuUsbConnect.setEnabled(true);
+    		
+    		myMenu.findItem(R.id.menu_save_map).setEnabled(false);
     	} else {
+    		myMenu.findItem(R.id.menu_save_map).setEnabled(true);
     		if (connectionService != null && connectionService.getState() == State.CONNECTED_BT) {
     			menuConnect.setTitle(R.string.menu_disconnect);
+        		menuConnect.setEnabled(true);
+        		menuUsbConnect.setEnabled(false);
     		} else {
         		if (connectionService != null && connectionService.getState() == State.CONNECTED_USB) {
-        			menuConnect.setTitle(R.string.menu_disconnect);
+        			menuUsbConnect.setTitle(R.string.menu_disconnect);
+            		menuConnect.setEnabled(false);
+            		menuUsbConnect.setEnabled(true);
         		}
     		}
     	}
-        return true;
-    }
+     
+		return true;
+	}
 
 	@Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -1091,15 +1048,22 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
                 return true;
                 
 	        case R.id.menu_save_map:	        	
+	        	saveMode = true;
+
 	        	final File sdcard = Environment.getExternalStorageDirectory();
 				final File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
 				dir.mkdirs();
 				
-				final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.ecu'", Locale.US).format(new Date());
-				
-	        	final Intent sm = new Intent(ConnectionService.ACTION_SAVE_MAP);
-	        	sm.putExtra("map_filename", dir.getAbsolutePath() + filename);
-	        	
+				saveName = dir.getAbsolutePath() + "/" + new SimpleDateFormat("yyyyMMdd_HHmmss'.ecu'", Locale.US).format(new Date());
+
+				progress = ProgressDialog.show(ctx, getResources().getString(R.string.save_ecu_title), 
+	        										getResources().getString(R.string.save_ecu_message) + " " + saveName + " ...");
+		    	progress.setCancelable(false);
+
+		    	final Intent sm = new Intent(ConnectionService.ACTION_SAVE_ECU_FILE);
+	        	sm.putExtra("map_filename", saveName);
+		    	
+	        	startService(sm);	
 	        	return true;
                 
 	        case R.id.menu_info:
@@ -1216,56 +1180,25 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 	public void onTabReselected(Tab tab, FragmentTransaction ft) {
 		
 		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
-		
-		switch (tab.getPosition()) {
-			case 0:
-				ft.show(adaptiveFragment);
-				break;
-			case 1:
-				ft.show(gaugesFragment);
-				break;  
-			case 2:
-				ft.show(fuelFragment);
-		}
-		
+		ft.show(frags[tab.getPosition()]);
 	}
 	
 	public void onTabUnselected(Tab tab, FragmentTransaction ft) {
 
 		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
-
-		switch (tab.getPosition()) {
-			case 0:
-				ft.hide(adaptiveFragment);
-				break;
-			case 1:
-				ft.hide(gaugesFragment);
-				break;  
-			case 2:
-				ft.hide(fuelFragment);
-		}
+		ft.hide(frags[tab.getPosition()]);
 	}
 	
 	
 	public void onTabSelected(Tab tab, FragmentTransaction ft) {
 		
 		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
-
-		switch (tab.getPosition()) {
-			case 0:
-				ft.show(adaptiveFragment);
-				break;
-			case 1:
-				ft.show(gaugesFragment);
-				break;  
-			case 2:				
-				getFuelMaps();
-				ft.show(fuelFragment);				
-				break;
-		}
+		if (tab.getPosition() == 2) getFuelMaps();
+		ft.show(frags[tab.getPosition()]);
 		
 		// we don't want to overwrite our pref if we're in onCreate
-		if (lvDevices != null) {
+		// also don't allow fuel map to be set as default
+		if (lvDevices != null && tab.getPosition() != 2) {
 			Editor edit = prefs.edit();
 			edit.putInt("prefs_last_tab", tab.getPosition());
 			edit.commit();
@@ -1277,12 +1210,9 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 
     	if (ConnectionService.state != ConnectionService.State.DISCONNECTED) {
 			mapMode = true;
-	    	progress = ProgressDialog.show(ctx, "Fuel Map" , "Reading map values ...");
-	    	progress.setCancelable(true);
-	    	progress.setOnCancelListener(new OnCancelListener() {
-				public void onCancel(DialogInterface arg0) {
-					disconnect();
-				}});
+	    	progress = ProgressDialog.show(ctx, getResources().getString(R.string.read_fuel_map_title), 
+	    										getResources().getString(R.string.read_fuel_map_message) + " ...");
+	    	progress.setCancelable(false);
 	    	
         	startService(new Intent(ConnectionService.ACTION_UPDATE_FUEL_MAP));	
 		} else {
@@ -1409,4 +1339,130 @@ public class MainActivity extends Activity implements ActionBar.TabListener, OnC
 //			setCurrentCell();
 		}	
 	}
+	
+	private OnItemLongClickListener cellEditListener = new OnItemLongClickListener() {
+		public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+
+			// bail if not connected
+			if (connectionService == null || connectionService.getState() == State.DISCONNECTED) {
+				return true;
+			}
+			
+			final TextView tv = (TextView) view;
+//			tv.setBackgroundColor(Color.GRAY);
+			
+			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ctx);
+
+	    	// get edit_cell_dialog.xml view
+	    	final LayoutInflater li = LayoutInflater.from(ctx);
+	    	
+	    	final View promptsView = li.inflate(R.layout.edit_cell_dialog, null);
+    		alertDialogBuilder.setView(promptsView);
+	    	
+	    	final CellValueWidget cellValueWidget = (CellValueWidget) promptsView.findViewById(R.id.cellValueWidget1);
+			final EditText userInput = (EditText) promptsView.findViewById(R.id.editTextNewValue);
+
+			cellValueWidget.setEditText(userInput);
+	    	
+			userInput.setText(tv.getText());
+//			userInput.selectAll();
+			
+			// set dialog message
+			alertDialogBuilder
+				.setCancelable(false)
+				.setPositiveButton("OK",
+				  new DialogInterface.OnClickListener() {
+				    public void onClick(DialogInterface dialog,int id) {
+				    	
+						short value = 0;
+						
+						final float tvv;
+						try {
+							tvv = Float.parseFloat(userInput.getText().toString());
+						} catch (Exception ex) {
+							return;
+						}
+						
+						// rewrite our adapter
+						String[] temp = new String[fuelData.getCount()];
+						
+						for (int x = 0; x < fuelData.getCount() ; x++) {
+							if (x == position) {
+								temp[x] = String.format("%.2f", tvv);
+							} else {
+								temp[x] = fuelData.getItem(x);
+							}
+						}
+						
+						fuelData.clear();
+						fuelData.addAll(temp);
+						fuelData.notifyDataSetChanged();
+
+						tv.setTextColor(Color.GREEN);
+//						tv.setBackgroundColor(Color.BLACK);
+						
+						if ((radioMapOne.isChecked() && connectionService.isFuelMapOneVE()) || 
+								(radioMapTwo.isChecked() && connectionService.isFuelMapTwoVE())) {
+							// VE DIVISED
+							value = (short) (tvv * VE_DIVISOR);
+						} else {
+							// MS DIVISED
+							value = (short) (tvv * MS_DIVISOR);
+						}
+						
+						// determine offset
+						final int offset = position / 17 + 1;
+						if (DEBUG) Log.d(TAG, "Position: " + (position - offset));
+						
+						connectionService.updateRegister((short) (position - offset), value);
+				    }
+				  })
+				.setNegativeButton("Cancel",
+				  new DialogInterface.OnClickListener() {
+				    public void onClick(DialogInterface dialog,int id) {
+					dialog.cancel();
+//					tv.setBackgroundColor(Color.TRANSPARENT);
+				    }
+				  });
+
+			// create and show alert dialog
+			AlertDialog alertDialog = alertDialogBuilder.create();
+			alertDialog.show();
+			
+		    final int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 
+					   getScreenOrientation() == Configuration.ORIENTATION_PORTRAIT ? 380 : 240, 
+					   getResources().getDisplayMetrics());
+
+		    final int width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 
+					  getScreenOrientation() == Configuration.ORIENTATION_PORTRAIT ? 240 : 380, 
+					  getResources().getDisplayMetrics());
+
+			WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+		    lp.copyFrom(alertDialog.getWindow().getAttributes());
+		    lp.width = width;
+		    lp.height = height;
+		    
+		    alertDialog.getWindow().setAttributes(lp);
+		    
+			userInput.clearFocus();
+			
+			return true;
+		}
+		
+		private int getScreenOrientation() {
+		    Display getOrient = getWindowManager().getDefaultDisplay();
+		    int orientation = Configuration.ORIENTATION_UNDEFINED;
+		    if(getOrient.getWidth()==getOrient.getHeight()){
+		        orientation = Configuration.ORIENTATION_SQUARE;
+		    } else{ 
+		        if(getOrient.getWidth() < getOrient.getHeight()){
+		            orientation = Configuration.ORIENTATION_PORTRAIT;
+		        }else { 
+		             orientation = Configuration.ORIENTATION_LANDSCAPE;
+		        }
+		    }
+		    return orientation;
+		}
+	};
 }
+
