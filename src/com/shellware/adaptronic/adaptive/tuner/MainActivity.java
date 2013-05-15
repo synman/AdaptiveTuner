@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Set;
@@ -48,13 +49,21 @@ import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Typeface;
 import android.hardware.usb.UsbManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.TextToSpeech.Engine;
+import android.speech.tts.TextToSpeech.OnInitListener;
+import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
+
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
@@ -85,6 +94,7 @@ import com.shellware.adaptronic.adaptive.tuner.receivers.BatteryStatusReceiver;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService.State;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems.LogItem;
+import com.shellware.adaptronic.adaptive.tuner.widgets.AdaptiveAdapter;
 import com.shellware.adaptronic.adaptive.tuner.widgets.CellValueWidget;
 import com.shellware.adaptronic.adaptive.tuner.widgets.GaugeNeedle;
 import com.shellware.adaptronic.adaptive.tuner.widgets.GaugeSlider;
@@ -164,7 +174,7 @@ public class MainActivity 	extends Activity
 	private final BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();;
 	
 	private ArrayAdapter<String> devices;
-	private ArrayAdapter<String> dataArray;
+	private AdaptiveAdapter dataArray;
 
 	private static int lastMAP = 0;
 	private static int lastRPM = 0;
@@ -217,6 +227,34 @@ public class MainActivity 	extends Activity
 //	private GestureDetector gestureDetector;
 //	View.OnTouchListener gestureListener;
 		
+    // TextToSpeech
+    private static TextToSpeech speaker;
+	private static AudioManager am;
+	
+	private static String AUDIBLE_MAX_RPM;
+	private static String AUDIBLE_MAX_MAP;
+	private static String AUDIBLE_MAX_WAT;
+	private static String AUDIBLE_MAX_MAT;
+	private static String AUDIBLE_MAX_TPS;
+	
+	private static boolean doAudibles = false;
+
+	private static int audibleMaxRpm;
+	private static int audibleMaxMap;
+	private static int audibleMaxWat;
+	private static int audibleMaxMat;
+	private static int audibleMaxTps;
+	
+	private static final int TTS_MIN_SILENCE_MILLIS = 15000;
+	
+    private static boolean isTtsReady = false;
+    private static long lastPhraseMillis = 0;
+    private static final AudioManager.OnAudioFocusChangeListener afChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        public void onAudioFocusChange(int focusChange) {
+        	// do nothing
+        }
+    };
+
 	private ConnectionService connectionService;
 	private ServiceConnection connectionServiceConnection;
 	
@@ -283,6 +321,19 @@ public class MainActivity 	extends Activity
 	        			edit.putInt("prefs_last_tab",itemPosition);
 	        			edit.commit();
                 	}
+                	
+//            		dataArray.setDash(!dataArray.isDash());
+//            		dataArray.clear();
+//            		
+//                    dataArray.add("RPM\n9000");
+//                    dataArray.add("MAP\n175");
+//                    dataArray.add("MAT\n65\u00B0");
+//                    dataArray.add("AFR\n14.7 (14.7)");
+//                    dataArray.add("TAFR\n14.7");
+//                    dataArray.add("WAT\n185\u00B0");
+//                    dataArray.add("TPS\n90%");
+//                    dataArray.add("KNOCK\n0");
+//                    dataArray.add("BAT\n14.1v");
 
                 	return true;
                 }
@@ -318,16 +369,22 @@ public class MainActivity 	extends Activity
 
         gridData = (GridView) findViewById(R.id.gridData);
         
-        dataArray = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+//        dataArray = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        dataArray = new AdaptiveAdapter(this, R.layout.adaptive_grid_item,
+        								Typeface.createFromAsset(ctx.getAssets(), "fonts/digital_7.ttf"));
+        
         dataArray.add("RPM\n ----");
         dataArray.add("MAP\n ---");
         dataArray.add("MAT\n ---\u00B0");
-        dataArray.add("AFR\n --.-");
+        dataArray.add("AFR\n --.- (--.-)");
         dataArray.add("TAFR\n --.-");
         dataArray.add("WAT\n ---\u00B0");
+        dataArray.add("TPS\n---%");
+        dataArray.add("KNOCK\n---");
+        dataArray.add("BAT\n--.-v");
  
         gridData.setAdapter(dataArray);   
-        
+
         lvDevices.setOnItemClickListener(DevicesClickListener);
         
         waterNeedle = (GaugeNeedle) findViewById(R.id.waterneedle);
@@ -428,8 +485,29 @@ public class MainActivity 	extends Activity
 		    }
 		};
 		
-	    bindService(new Intent(this, ConnectionService.class), connectionServiceConnection, Context.BIND_AUTO_CREATE);	    
-    }
+	    bindService(new Intent(this, ConnectionService.class), connectionServiceConnection, Context.BIND_AUTO_CREATE);	
+	    
+        // TextToSpeech - SMS
+	    am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+		speaker = new TextToSpeech(this, new OnInitListener() {
+			public void onInit(int status) {
+
+				speaker.setOnUtteranceCompletedListener(new OnUtteranceCompletedListener() {
+					public void onUtteranceCompleted(String utteranceId) {
+						am.abandonAudioFocus(afChangeListener);
+					}
+				});
+
+				AUDIBLE_MAX_MAP = getResources().getString(R.string.audible_max_map);
+				AUDIBLE_MAX_MAT = getResources().getString(R.string.audible_max_mat);
+				AUDIBLE_MAX_RPM = getResources().getString(R.string.audible_max_rpm);
+				AUDIBLE_MAX_TPS = getResources().getString(R.string.audible_max_tps);
+				AUDIBLE_MAX_WAT = getResources().getString(R.string.audible_max_wat);
+
+                isTtsReady = true;
+			}
+        });		
+	}
     
     @Override
 	protected void onResume() {
@@ -440,6 +518,14 @@ public class MainActivity 	extends Activity
 //    	screenHeight = getWindowManager().getDefaultDisplay().getHeight();
 
     	// initialize our preferences
+    	doAudibles = prefs.getBoolean("prefs_audibles_pref", false);
+    	
+    	audibleMaxMap = prefs.getInt("prefs_audibles_max_map", 150);
+    	audibleMaxMat = prefs.getInt("prefs_audibles_max_mat", 120);
+    	audibleMaxRpm = prefs.getInt("prefs_audibles_max_rpm", 7000);
+    	audibleMaxTps = prefs.getInt("prefs_audibles_max_map", 80);
+    	audibleMaxWat = prefs.getInt("prefs_audibles_max_wat", 200);
+    	
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
     	if (connectionService != null) connectionService.setTempUomPref(tempUomPref);
     	
@@ -547,7 +633,11 @@ public class MainActivity 	extends Activity
 		unregisterReceiver(usbReceiver);
 		unregisterReceiver(batteryStatusReceiver);
 		
-		if (shuttingDown) stopService(new Intent(this, ConnectionService.class));
+		if (shuttingDown) {
+			stopService(new Intent(this, ConnectionService.class));
+			speaker.shutdown();
+		}
+		
     	unbindService(connectionServiceConnection);
 	}
 
@@ -653,10 +743,12 @@ public class MainActivity 	extends Activity
 			final int map = item.getMap(); lastMAP = map;
 			
 			final int rpm = item.getRpm();
+			final int knock = item.getKnock();
 			
 			final float afr = item.getAfr();
 			final float targetAfr = item.getTargetAfr();
 			final float referenceAfr = item.getReferenceAfr();
+			final float volts = item.getVolts();
 
 			float afrVal = afr * 100;
     		float targetAfrVal = targetAfr * 100;
@@ -707,6 +799,9 @@ public class MainActivity 	extends Activity
 	    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
 	    		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
 	    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
+	    		dataArray.add(String.format("TPS\n%d%%", lastTPS));
+	    		dataArray.add(String.format("KNOCK\n%d", knock));
+	    		dataArray.add(String.format("BAT\n%.1fv", volts));
 	    		
 				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
 	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
@@ -755,6 +850,15 @@ public class MainActivity 	extends Activity
     				if (frags[1].isVisible()) afrGaugeAlarm.setBackgroundColor(color);
     				if (frags[2].isVisible()) fuelTableAfr.setBackgroundColor(color);
     			}
+    		}
+    		
+    		// audibles
+    		if (doAudibles) {
+    			if (lastRPM > audibleMaxRpm) speakPhrase(String.format(AUDIBLE_MAX_RPM, lastRPM));
+    			if (lastTPS > audibleMaxTps) speakPhrase(String.format(AUDIBLE_MAX_TPS, lastTPS));
+    			if (mat > audibleMaxMat) speakPhrase(String.format(AUDIBLE_MAX_MAT, mat));
+    			if (map > audibleMaxMap) speakPhrase(String.format(AUDIBLE_MAX_MAP, map));
+				if (wat > audibleMaxWat) speakPhrase(String.format(AUDIBLE_MAX_WAT, wat));
     		}
     		
     		// dismiss the progress bar if it is visible
@@ -1179,6 +1283,19 @@ public class MainActivity 	extends Activity
 
 	public void onTabReselected(Tab tab, FragmentTransaction ft) {
 		
+//		dataArray.setDash(!dataArray.isDash());
+//		dataArray.clear();
+//		
+//        dataArray.add("RPM\n9000");
+//        dataArray.add("MAP\n175");
+//        dataArray.add("MAT\n65\u00B0");
+//        dataArray.add("AFR\n14.7 (14.7)");
+//        dataArray.add("TAFR\n14.7");
+//        dataArray.add("WAT\n185\u00B0");
+//        dataArray.add("TPS\n90%");
+//        dataArray.add("KNOCK\n0");
+//        dataArray.add("BAT\n14.1v");
+		
 		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
 		ft.show(frags[tab.getPosition()]);
 	}
@@ -1464,5 +1581,35 @@ public class MainActivity 	extends Activity
 		    return orientation;
 		}
 	};
+	
+	private void speakPhrase(final String phrase) {
+		
+		// bail if no tts
+		if (!isTtsReady) return;
+		
+		final long millis = System.currentTimeMillis();
+		
+		// bail if in tts blackout
+		if (millis - lastPhraseMillis < TTS_MIN_SILENCE_MILLIS) {
+			return;
+		}
+		
+		lastPhraseMillis = millis;
+		
+		// Request audio focus for playback
+		int result = am.requestAudioFocus(afChangeListener,
+		                                 // Use the music stream.
+		                                 AudioManager.STREAM_MUSIC,
+		                                 // Request permanent focus.
+		                                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK);
+		   
+		if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            final HashMap<String, String> params = new HashMap<String, String>();
+            params.put(Engine.KEY_PARAM_VOLUME, ".75");
+            params.put(Engine.KEY_PARAM_UTTERANCE_ID, phrase);
+
+    		speaker.speak(params.get(Engine.KEY_PARAM_UTTERANCE_ID), TextToSpeech.QUEUE_ADD, params); 
+		}
+	}
 }
 

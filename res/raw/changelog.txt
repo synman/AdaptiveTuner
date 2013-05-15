@@ -21,11 +21,14 @@
   <body>
 $ 1.2.1
   % Version 1.2.1
-  _ 2013-04-13
-  ! Fuel Cell Edit Widget
+  _ 2013-05-14
+  ! Fuel Cell Edit Widget TTS Alerts & Digital 7
   	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
   	<p/>   	
+  	* Added Android TTS alerts and preferences
   	* Added cell value modifier widget
+  	* Added Digital 7 font to Adaptive Tab
+  	* Cleaned up positioning on Adaptive Tab 
   	* Enabled Save ECU File (it is buggy - do not use)
   	* TODO: improve precision for RPM crosshairs
   	* TODO: more clean up for connect / disconnect logic

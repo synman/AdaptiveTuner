@@ -117,15 +117,13 @@
 	    android:layout_width="match_parent"
 	    android:layout_height="wrap_content"
 	    android:layout_alignParentBottom="true"
-	    android:layout_below="@id/learningFrame"
 	    android:layout_centerHorizontal="true"
 	    android:layout_marginBottom="@dimen/padding_large" >
 
 	    <GridView
 	        android:id="@+id/gridData"
 	        android:layout_width="match_parent"
-	        android:layout_height="match_parent"
-	        android:layout_marginLeft="35dp"
+	        android:layout_height="wrap_content"
 	        android:stackFromBottom="true"
 	        android:numColumns="3" />
 

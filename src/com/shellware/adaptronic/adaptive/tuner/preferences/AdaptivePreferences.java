@@ -18,6 +18,7 @@ package com.shellware.adaptronic.adaptive.tuner.preferences;
 
 import java.util.List;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
@@ -57,7 +58,8 @@ public class AdaptivePreferences extends PreferenceActivity {
     public static final float MIN_WATER_TEMP_FAHRENHEIT = 160f;
     public static final float MAX_WATER_TEMP_FAHRENHEIT = 210f;
 
-    @Override
+    @SuppressLint("CommitPrefEdits")
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
 //    	requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
     	super.onCreate(savedInstanceState);
@@ -224,6 +226,154 @@ public class AdaptivePreferences extends PreferenceActivity {
             alertsPref.setKey("prefs_alerts");
             alertsPref.setTitle(R.string.prefs_alerts_pref);
             
+	        	PreferenceCategory audiblesPrefCat = new PreferenceCategory(ctx);
+	        	audiblesPrefCat.setTitle(R.string.prefs_alerts_audibles);
+	        	audiblesPrefCat.setKey(audiblesPrefCat.getTitle().toString());
+	        	alertsPref.addPreference(audiblesPrefCat);
+	        	
+	        	
+			        CheckBoxPreference audiblesPref = new CheckBoxPreference(ctx);
+			        audiblesPref.setPersistent(true);
+			        audiblesPref.setKey("prefs_audibles_pref");
+			        audiblesPref.setDefaultValue(false);
+			        audiblesPref.setSummaryOn(R.string.enabled);
+			        audiblesPref.setSummaryOff(R.string.disabled);
+			        audiblesPref.setTitle(R.string.prefs_alerts_audible_alerts);
+			        
+			        audiblesPrefCat.addPreference(audiblesPref);
+			        
+			        final SeekBarPreference audiblesMaxMap = new SeekBarPreference(ctx);
+			        
+			        audiblesMaxMap.setPersistent(false);
+			        audiblesMaxMap.setTitle(R.string.prefs_audibles_max_map);
+			        audiblesMaxMap.setSummary(String.format("%d KPA", prefs.getInt("prefs_audibles_max_map", 150)));
+			        audiblesMaxMap.setSuffix(" KPA");
+			        audiblesMaxMap.setMinValue(0f);
+			        audiblesMaxMap.setMaxValue(200);
+			        audiblesMaxMap.setScale(5f);
+			        audiblesMaxMap.setDefaultValue((float) prefs.getInt("prefs_audibles_max_map", 150));
+			        audiblesMaxMap.setEnabled(prefs.getBoolean("prefs_audibles_pref", false));
+			        
+			        audiblesMaxMap.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, Object arg1) {
+							final int val = Math.round((Float) arg1);
+							audiblesMaxMap.setSummary(String.format("%d KPA", val));
+							edit.putInt("prefs_audibles_max_map", val);
+							edit.commit();
+							return true;
+						}
+			        });
+			        
+			        audiblesPrefCat.addPreference(audiblesMaxMap);	
+			        
+			        final SeekBarPreference audiblesMaxMat = new SeekBarPreference(ctx);
+			        
+			        audiblesMaxMat.setPersistent(false);
+			        audiblesMaxMat.setTitle(R.string.prefs_audibles_max_mat);
+			        audiblesMaxMat.setSummary(String.format("%d\u00B0", prefs.getInt("prefs_audibles_max_mat", 120)));
+			        audiblesMaxMat.setSuffix("\u00B0");
+			        audiblesMaxMat.setMinValue(50);
+			        audiblesMaxMat.setMaxValue(200);
+			        audiblesMaxMat.setScale(5f);
+			        audiblesMaxMat.setDefaultValue((float) prefs.getInt("prefs_audibles_max_mat", 120));
+			        audiblesMaxMat.setEnabled(prefs.getBoolean("prefs_audibles_pref", false));
+			        
+			        audiblesMaxMat.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, Object arg1) {
+							final int val = Math.round((Float) arg1);
+							audiblesMaxMat.setSummary(String.format("%d\u00B0", val));
+							edit.putInt("prefs_audibles_max_mat", val);
+							edit.commit();
+							return true;
+						}
+			        });
+			        
+			        audiblesPrefCat.addPreference(audiblesMaxMat);			        
+			        audiblesPrefCat.addPreference(audiblesMaxMap);	
+			        
+			        final SeekBarPreference audiblesMaxRpm = new SeekBarPreference(ctx);
+			        
+			        audiblesMaxRpm.setPersistent(false);
+			        audiblesMaxRpm.setTitle(R.string.prefs_audibles_max_rpm);
+			        audiblesMaxRpm.setSummary(String.format("%d RPM", prefs.getInt("prefs_audibles_max_rpm", 7000)));
+			        audiblesMaxRpm.setSuffix(" RPM");
+			        audiblesMaxRpm.setMinValue(5000);
+			        audiblesMaxRpm.setMaxValue(10000);
+			        audiblesMaxRpm.setScale(250f);
+			        audiblesMaxRpm.setDefaultValue((float) prefs.getInt("prefs_audibles_max_rpm", 7000));
+			        audiblesMaxRpm.setEnabled(prefs.getBoolean("prefs_audibles_pref", false));
+			        
+			        audiblesMaxRpm.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, Object arg1) {
+							final int val = Math.round((Float) arg1);
+							audiblesMaxRpm.setSummary(String.format("%d RPM", val));
+							edit.putInt("prefs_audibles_max_rpm", val);
+							edit.commit();
+							return true;
+						}
+			        });
+			        
+			        audiblesPrefCat.addPreference(audiblesMaxRpm);
+			        
+			        final SeekBarPreference audiblesMaxTps = new SeekBarPreference(ctx);
+			        
+			        audiblesMaxTps.setPersistent(false);
+			        audiblesMaxTps.setTitle(R.string.prefs_audibles_max_tps);
+			        audiblesMaxTps.setSummary(String.format("%d%%", prefs.getInt("prefs_audibles_max_tps", 80)));
+			        audiblesMaxTps.setSuffix("%");
+			        audiblesMaxTps.setMinValue(0);
+			        audiblesMaxTps.setMaxValue(100);
+			        audiblesMaxTps.setScale(5f);
+			        audiblesMaxTps.setDefaultValue((float) prefs.getInt("prefs_audibles_max_tps", 80));
+			        audiblesMaxTps.setEnabled(prefs.getBoolean("prefs_audibles_pref", false));
+			        
+			        audiblesMaxTps.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, Object arg1) {
+							final int val = Math.round((Float) arg1);
+							audiblesMaxTps.setSummary(String.format("%d%%", val));
+							edit.putInt("prefs_audibles_max_tps", val);
+							edit.commit();
+							return true;
+						}
+			        });
+			        
+			        audiblesPrefCat.addPreference(audiblesMaxTps);			        
+			        final SeekBarPreference audiblesMaxWat = new SeekBarPreference(ctx);
+			        
+			        audiblesMaxWat.setPersistent(false);
+			        audiblesMaxWat.setTitle(R.string.prefs_audibles_max_wat);
+			        audiblesMaxWat.setSummary(String.format("%d\u00B0", prefs.getInt("prefs_audibles_max_wat", 200)));
+			        audiblesMaxWat.setSuffix("\u00B0");
+			        audiblesMaxWat.setMinValue(50);
+			        audiblesMaxWat.setMaxValue(240);
+			        audiblesMaxWat.setScale(1f);
+			        audiblesMaxWat.setDefaultValue((float) prefs.getInt("prefs_audibles_max_wat", 200));
+			        audiblesMaxWat.setEnabled(prefs.getBoolean("prefs_audibles_pref", false));
+			        
+			        audiblesMaxWat.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, Object arg1) {
+							final int val = Math.round((Float) arg1);
+							audiblesMaxWat.setSummary(String.format("%d\u00B0", val));
+							edit.putInt("prefs_audibles_max_wat", val);
+							edit.commit();
+							return true;
+						}
+			        });
+			        
+			        audiblesPrefCat.addPreference(audiblesMaxWat);
+			        
+			        audiblesPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, Object arg1) {
+							final boolean enabled = (Boolean) arg1;
+							audiblesMaxMap.setEnabled(enabled);
+							audiblesMaxMat.setEnabled(enabled);
+							audiblesMaxRpm.setEnabled(enabled);
+							audiblesMaxTps.setEnabled(enabled);
+							audiblesMaxWat.setEnabled(enabled);
+							return true;
+						}
+			        });
+			        
             	PreferenceCategory afrPrefCat = new PreferenceCategory(ctx);
             	afrPrefCat.setTitle(R.string.prefs_alert_afr_category);
             	alertsPref.addPreference(afrPrefCat);

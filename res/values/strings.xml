@@ -55,11 +55,22 @@
     <string name="prefs_connection_keep_device_awake">Keep Device Awake while Connected</string>
     
     <string name="prefs_alerts_pref">Alerts &amp; Logging</string>
-    <string name="prefs_alert_afr_category">AFR Alerts</string>
+    
+    <string name="prefs_alerts_audibles">Audible Alerts</string>
+    <string name="prefs_alerts_audible_alerts">Android TTS Engine</string>
+    
+    <string name="prefs_audibles_max_map">MAP Threshold</string>
+	<string name="prefs_audibles_max_mat">Intake Temperature Threshold</string>
+	<string name="prefs_audibles_max_rpm">RPM Threshold</string>
+	<string name="prefs_audibles_max_tps">Throttle Position Threshold</string>
+	<string name="prefs_audibles_max_wat">Water Temperature Threshold</string>
+		
+    <string name="prefs_alert_afr_category">Visual AFR Alerts</string>
     <string name="prefs_alert_afrnottarget">Actual AFR vs Target AFR</string>
     <string name="prefs_alert_afrnottarget_tolerance_pref">AFR Tolerance</string>
     <string name="prefs_afr_alarm_logging">AFR Alert Logging</string>
-    <string name="prefs_alert_temperature_category">Temperature Alerts</string>
+
+    <string name="prefs_alert_temperature_category">Visual Temperature Alerts</string>
     <string name="prefs_alert_water_temperature">Water Temperature</string>    
 	<string name="prefs_alert_water_temperature_minimum">Minimum Water Temperature</string>
 	<string name="prefs_alert_water_temperature_maximum">Maximum Water Temperature</string>
@@ -96,5 +107,11 @@
     <string name="service_disconnected">Disconnected</string>
     
     <string name="no_map_for_mode_selected">There is no MAP %d for the tuning mode selected</string>
+    
+    <string name="audible_max_rpm">warning: RPM is %d</string>
+    <string name="audible_max_map">warning: map is %d kay pee ay</string>
+    <string name="audible_max_wat">warning: water temperature is %d degrees</string>
+    <string name="audible_max_mat">warning: intake temperature is %d degrees</string>
+    <string name="audible_max_tps">warning: throttle is %d percent open</string>
     
 </resources>
