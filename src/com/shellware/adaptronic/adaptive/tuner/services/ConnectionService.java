@@ -44,6 +44,7 @@ import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectThread;
 import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
 import com.shellware.adaptronic.adaptive.tuner.usb.UsbConnectedThread;
+import com.shellware.adaptronic.adaptive.tuner.usb.SerialUsbConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems;
 
 public class ConnectionService extends Service {
@@ -245,6 +246,28 @@ public class ConnectionService extends Service {
 	            // acquire wakelock
 	            if (wakeLock && !wl.isHeld()) wl.acquire();
 			}
+            else {
+                final SerialUsbConnectedThread serialUsbThread = SerialUsbConnectedThread.checkConnectedUsbDevice(getApplicationContext(), connectionHandler);
+
+                if (serialUsbThread != null) {
+                    connectedThread = serialUsbThread;
+
+                    lastUpdateInMillis = System.currentTimeMillis();
+                    totalTimeMillis = 0;
+                    updatesReceived = 0;
+
+                    state = State.CONNECTED_USB;
+                    notifier.tickerText = getResources().getString(R.string.service_usb_connected);
+
+                    sendRequest(REGISTER_2269_MAP_TYPES);
+    //	            sendRequest(REGISTER_4096_PLUS_SEVEN);
+
+                    refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
+
+                    // acquire wakelock
+                    if (wakeLock && !wl.isHeld()) wl.acquire();
+                }
+            }
         }
         
         // save map
