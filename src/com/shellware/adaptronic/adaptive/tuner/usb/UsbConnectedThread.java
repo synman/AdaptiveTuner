@@ -105,9 +105,12 @@ public class UsbConnectedThread extends ConnectedThread {
                 UsbDeviceConnector recognisedDeviceConnector = null;
 
                 for (UsbDeviceConnector deviceConnector: SUPPORTED_DEVICES) {
-                    for (int[] deviceVendorProductID : deviceConnector.GetSupportedDevices()) {
-                        if (device.getVendorId() == deviceVendorProductID[USB_VENDOR_ID] && device.getProductId() == deviceVendorProductID[USB_PRODUCT_ID]) {
-                            recognisedDeviceConnector = deviceConnector;
+                    if (recognisedDeviceConnector == null) {
+                        for (int[] deviceVendorProductID : deviceConnector.GetSupportedDevices()) {
+                            if (device.getVendorId() == deviceVendorProductID[USB_VENDOR_ID] && device.getProductId() == deviceVendorProductID[USB_PRODUCT_ID]) {
+                                recognisedDeviceConnector = deviceConnector;
+                                break;
+                            }
                         }
                     }
                 }
