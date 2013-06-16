@@ -52,8 +52,8 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 public class UsbConnectedThread extends ConnectedThread {
 	
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	protected static final String TAG = MainActivity.TAG;
+	protected static final boolean DEBUG = MainActivity.DEBUG;
 
 	public static final int USB_VENDOR_ID 	= 0;
 	public static final int USB_PRODUCT_ID 	= 1;
@@ -100,15 +100,15 @@ public class UsbConnectedThread extends ConnectedThread {
 			if (DEBUG) Log.d(TAG, "Found USB device");
 			
 			try {
-				boolean deviceReconised = false;
+				boolean deviceRecognised = false;
 				
 				for (int[] deviceVendorProductID : ADAPTRONIC_USB_ECUS) {
 					if (device.getVendorId() == deviceVendorProductID[USB_VENDOR_ID] && device.getProductId() == deviceVendorProductID[USB_PRODUCT_ID]) {
-						deviceReconised = true;
+						deviceRecognised = true;
 					}
 				}
 			
-				if (deviceReconised) {
+				if (deviceRecognised) {
 					if (DEBUG) Log.d(TAG, "Adaptronic ECU recognised");									
 					
 					UsbDeviceConnection connection = mUsbManager.openDevice(device);
@@ -211,7 +211,7 @@ public class UsbConnectedThread extends ConnectedThread {
 		return mUsbDevice.getDeviceId() == usbDevice.getDeviceId();
 	}
 	
-	private static void connectionError(String name, String message, Handler handler) {
+	protected static void connectionError(String name, String message, Handler handler) {
         Bundle b = new Bundle();
         
         b.putShort("handle", ConnectionService.CONNECTION_ERROR);

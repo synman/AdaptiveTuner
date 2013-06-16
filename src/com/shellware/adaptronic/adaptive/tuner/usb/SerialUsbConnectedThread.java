@@ -52,10 +52,10 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class SerialUsbConnectedThread extends ConnectedThread {
+public class SerialUsbConnectedThread extends UsbConnectedThread {
 
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	private static final String TAG = UsbConnectedThread.TAG;
+	private static final boolean DEBUG = UsbConnectedThread.DEBUG;
 
 	public static final int USB_VENDOR_ID 	= 0;
 	public static final int USB_PRODUCT_ID 	= 1;
@@ -69,19 +69,9 @@ public class SerialUsbConnectedThread extends ConnectedThread {
 
 	private static UsbManager mUsbManager = null;
 
-	private UsbDevice mUsbDevice = null;
-	private UsbDeviceConnection mConnection = null;
-	private UsbEndpoint mInEndpoint = null;
-	private UsbEndpoint mOutEndpoint = null;
-
 	public SerialUsbConnectedThread(Handler handler, UsbDevice device, UsbDeviceConnection connection, UsbEndpoint inEndpoint, UsbEndpoint outEndpoint) {
-		super(handler);
-		
-		mUsbDevice = device;
-		mConnection = connection;
-		mInEndpoint = inEndpoint;
-		mOutEndpoint = outEndpoint;
-		
+		super(handler, device, connection, inEndpoint, outEndpoint);
+
 		if (DEBUG) Log.d(TAG, "SerialUsbConnectedThread created");
 		
 		start();
@@ -150,15 +140,15 @@ public class SerialUsbConnectedThread extends ConnectedThread {
 			if (DEBUG) Log.d(TAG, "Found USB device");
 			
 			try {
-				boolean deviceReconised = false;
+				boolean deviceRecognised = false;
 				
 				for (int[] deviceVendorProductID : SERIAL_TO_USB_DEVICES) {
 					if (device.getVendorId() == deviceVendorProductID[USB_VENDOR_ID] && device.getProductId() == deviceVendorProductID[USB_PRODUCT_ID]) {
-						deviceReconised = true;
+						deviceRecognised = true;
 					}
 				}
 			
-				if (deviceReconised) {
+				if (deviceRecognised) {
 					if (DEBUG) Log.d(TAG, "Serial->USB device recognised");
 
                     PendingIntent pi = PendingIntent.getActivity(context, 0,
@@ -172,11 +162,6 @@ public class SerialUsbConnectedThread extends ConnectedThread {
 						connectionError(device.getDeviceName(), "Could not claim device interface", handler);
 						return null;
 					}
-					
-					//Control codes for Silicon Labs CP201x USB to UART @ 250000 baud
-/*					connection.controlTransfer(0x40, 0x00, 0xff, 0xff, null, 0, 0);
-					connection.controlTransfer(0x40, 0x01, 0x00, 0x02, null, 0, 0);
-					connection.controlTransfer(0x40, 0x01, 0x0f, 0x00, null, 0, 0);*/
 
                     SetSerialControlParameters(connection);
 					
@@ -213,72 +198,5 @@ public class SerialUsbConnectedThread extends ConnectedThread {
 		
 		return null;
 	}
-	
-	public void run() {
-		byte[] buffer = new byte[512];
-		int bytes;
-		
-		while (!disconnecting) {
-			bytes = mConnection.bulkTransfer(mInEndpoint, buffer, buffer.length, 5);
-			
-			if (bytes == -1) {
-//				if (DEBUG) Log.d(TAG, "Bulk Transfer In Error");
-			} else {
-		        if (DEBUG)  {
-	                Log.d(TAG, String.format("Received %d bytes", bytes));
-	                
-//			        for (int x = 0; x < bytes; x++) {
-//			        	Log.d(TAG, String.format("%X", buffer[x]));
-//			        }
-		        }
-                
-                // Send the obtained bytes to the connection service
-		        Bundle b = new Bundle();
 
-		        b.putShort("handle", ConnectionService.DATA_READY);
-		        b.putByteArray("data", buffer);
-		        b.putInt("length", bytes);
-		        
-		        Message msg = new Message();
-		        msg.setData(b);
-		        
-		        handler.sendMessage(msg);
-			}
-			
-			try {
-				Thread.sleep(5);
-			} catch (Exception e) {}
-	
-		}		
-	}
-	
-	public void write(byte[] bytes) {
-		if (mConnection.bulkTransfer(mOutEndpoint, bytes, bytes.length, 5) == -1) {
-			if (DEBUG) Log.d(TAG, "Bulk Transfer Out Error");
-		} else {
-			if (DEBUG) Log.d(TAG, "Bulk Transfer Out Successful");
-		}
-	}
-	
-	public void cancel() {
-		disconnecting = true;
-	}
-	
-	public boolean isUsbDevice(UsbDevice usbDevice) {
-		return mUsbDevice.getDeviceId() == usbDevice.getDeviceId();
-	}
-	
-	private static void connectionError(String name, String message, Handler handler) {
-        Bundle b = new Bundle();
-        
-        b.putShort("handle", ConnectionService.CONNECTION_ERROR);
-        b.putString("title", name);
-        b.putString("message", message);
-        
-        Message msg = new Message();
-        msg.setData(b);
-        
-        if (DEBUG) Log.d(TAG, "Connection error - " + message); 
-        handler.sendMessage(msg);
-	}
 }
