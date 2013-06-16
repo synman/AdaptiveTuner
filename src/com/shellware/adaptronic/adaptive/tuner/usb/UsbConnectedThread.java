@@ -34,7 +34,9 @@ package com.shellware.adaptronic.adaptive.tuner.usb;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -114,8 +116,15 @@ public class UsbConnectedThread extends ConnectedThread {
 					if (DEBUG) Log.d(TAG, String.format("%s recognised", recognisedDeviceConnector.getConnectorName()));
 					
 					UsbDeviceConnection connection = mUsbManager.openDevice(device);
-					
-					if (!connection.claimInterface(device.getInterface(0), true)) {
+
+
+                    if(recognisedDeviceConnector.RequiresIntent()) {
+                        PendingIntent pi = PendingIntent.getActivity(context, 0,
+                                new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+                        mUsbManager.requestPermission(device, pi );
+                    }
+
+                    if (!connection.claimInterface(device.getInterface(0), true)) {
 						connectionError(device.getDeviceName(), "Could not claim device interface", handler);
 						return null;
 					}

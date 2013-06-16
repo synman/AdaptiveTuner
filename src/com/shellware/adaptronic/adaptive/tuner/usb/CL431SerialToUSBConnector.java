@@ -27,6 +27,9 @@ public class CL431SerialToUsbConnector extends UsbDeviceConnector {
         return "Winchiphead CH341 Serial -> USB Adapter";
     }
 
+    public boolean RequiresIntent() {
+        return true;
+    }
 
     public static final int[][] SERIAL_TO_USB_DEVICES = new int[][] {
             //Format: {USB_VENDOR_ID, USB_PRODUCT_ID}

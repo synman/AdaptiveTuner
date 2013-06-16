@@ -9,6 +9,10 @@ abstract public class UsbDeviceConnector {
 
     abstract public String getConnectorName();
 
+    public boolean RequiresIntent() {
+        return false;
+    }
+
     abstract public int[][] GetSupportedDevices();
 
     abstract public boolean InitialiseConnection(UsbDeviceConnection connection);
