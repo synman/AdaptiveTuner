@@ -117,13 +117,6 @@ public class UsbConnectedThread extends ConnectedThread {
 					
 					UsbDeviceConnection connection = mUsbManager.openDevice(device);
 
-
-                    if(recognisedDeviceConnector.RequiresIntent()) {
-                        PendingIntent pi = PendingIntent.getActivity(context, 0,
-                                new Intent(context, MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
-                        mUsbManager.requestPermission(device, pi );
-                    }
-
                     if (!connection.claimInterface(device.getInterface(0), true)) {
 						connectionError(device.getDeviceName(), "Could not claim device interface", handler);
 						return null;
