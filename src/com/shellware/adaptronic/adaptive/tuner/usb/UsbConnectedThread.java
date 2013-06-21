@@ -34,7 +34,9 @@ package com.shellware.adaptronic.adaptive.tuner.usb;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -57,13 +59,12 @@ public class UsbConnectedThread extends ConnectedThread {
 
 	public static final int USB_VENDOR_ID 	= 0;
 	public static final int USB_PRODUCT_ID 	= 1;
-	
-	//Known ECUs
-	public static final int[][] ADAPTRONIC_USB_ECUS = new int[][] {
-		//Format: {USB_VENDOR_ID, USB_PRODUCT_ID}
-		new int[] {0x10C4, 0x858D} //Select ECU
-	};
-	
+
+    public static final UsbDeviceConnector[] SUPPORTED_DEVICES = new UsbDeviceConnector[] {
+      new SelectECUConnector(), // Select ECU
+      new CL431SerialToUsbConnector()
+    };
+
 	private static UsbManager mUsbManager = null;
 	
 	private UsbDevice mUsbDevice = null;
@@ -100,28 +101,31 @@ public class UsbConnectedThread extends ConnectedThread {
 			if (DEBUG) Log.d(TAG, "Found USB device");
 			
 			try {
-				boolean deviceReconised = false;
-				
-				for (int[] deviceVendorProductID : ADAPTRONIC_USB_ECUS) {
-					if (device.getVendorId() == deviceVendorProductID[USB_VENDOR_ID] && device.getProductId() == deviceVendorProductID[USB_PRODUCT_ID]) {
-						deviceReconised = true;
-					}
-				}
+
+                UsbDeviceConnector recognisedDeviceConnector = null;
+
+                for (UsbDeviceConnector deviceConnector: SUPPORTED_DEVICES) {
+                    if (recognisedDeviceConnector == null) {
+                        for (int[] deviceVendorProductID : deviceConnector.GetSupportedDevices()) {
+                            if (device.getVendorId() == deviceVendorProductID[USB_VENDOR_ID] && device.getProductId() == deviceVendorProductID[USB_PRODUCT_ID]) {
+                                recognisedDeviceConnector = deviceConnector;
+                                break;
+                            }
+                        }
+                    }
+                }
 			
-				if (deviceReconised) {
-					if (DEBUG) Log.d(TAG, "Adaptronic ECU recognised");									
+				if (recognisedDeviceConnector != null) {
+					if (DEBUG) Log.d(TAG, String.format("%s recognised", recognisedDeviceConnector.getConnectorName()));
 					
 					UsbDeviceConnection connection = mUsbManager.openDevice(device);
-					
-					if (!connection.claimInterface(device.getInterface(0), true)) {
+
+                    if (!connection.claimInterface(device.getInterface(0), true)) {
 						connectionError(device.getDeviceName(), "Could not claim device interface", handler);
 						return null;
 					}
-					
-					//Control codes for Silicon Labs CP201x USB to UART @ 250000 baud
-					connection.controlTransfer(0x40, 0x00, 0xff, 0xff, null, 0, 0);
-					connection.controlTransfer(0x40, 0x01, 0x00, 0x02, null, 0, 0);
-					connection.controlTransfer(0x40, 0x01, 0x0f, 0x00, null, 0, 0);
+
+                    recognisedDeviceConnector.InitialiseConnection(connection);
 					
 					UsbEndpoint inEndpoint = null;
 					UsbEndpoint outEndpoint = null;
