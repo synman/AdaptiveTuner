@@ -67,6 +67,9 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 	        
 	        while (true) {
 		
+				// bail if cancelled
+				if (cancelled) return;
+
 	        	try {            	
 	    	        btd = bt.getRemoteDevice(addr);        		
 
@@ -143,6 +146,7 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 		
 		public void cancel() {
 			cancelled = true;
+	        if (DEBUG) Log.d(TAG, "Connect Thread Canceled");
 			
 			if (bts != null) {
 				try {

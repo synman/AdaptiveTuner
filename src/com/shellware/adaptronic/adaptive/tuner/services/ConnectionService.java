@@ -56,13 +56,14 @@ public class ConnectionService extends Service {
         DISCONNECTED
     };
 
-    public final static String  	ACTION_CONNECT_BT = "com.shellware.adaptronic.adaptive.tuner.action.CONNECT_BT";
-    public final static String 	   ACTION_CONNECT_USB = "com.shellware.adaptronic.adaptive.tuner.action.CONNECT_USB";
-    public final static String  	ACTION_DISCONNECT = "com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT";
-    public final static String 	   ACTION_UI_INACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE";
-    public final static String   	 ACTION_UI_ACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE";
-    public final static String ACTION_UPDATE_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP";
-    public final static String 	 ACTION_SAVE_ECU_FILE = "com.shellware.adaptronic.adaptive.tuner.action.SAVE_ECU_FILE";
+    public final static String  		ACTION_CONNECT_BT = "com.shellware.adaptronic.adaptive.tuner.action.CONNECT_BT";
+    public final static String 	   	   ACTION_CONNECT_USB = "com.shellware.adaptronic.adaptive.tuner.action.CONNECT_USB";
+    public final static String  		ACTION_DISCONNECT = "com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT";
+    public final static String 	   	   ACTION_UI_INACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE";
+    public final static String   	 	 ACTION_UI_ACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE";
+    public final static String 	   ACTION_UPDATE_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP";
+    public final static String ACTION_UPDATE_CRANKING_MAP = "com.shellware.adaptronic.adaptive.tuner.action.UPDATE_CRANKING_MAP";
+    public final static String 	 	 ACTION_SAVE_ECU_FILE = "com.shellware.adaptronic.adaptive.tuner.action.SAVE_ECU_FILE";
 
 	public static final short CONNECTION_ERROR = 1;
 	public static final short DATA_READY = 2;
@@ -612,6 +613,10 @@ public class ConnectionService extends Service {
     	refreshHandler.removeCallbacks(RefreshRunnable);			
     	
 		try {
+			if (connectThread != null && connectThread.isAlive()) {
+				connectThread.cancel();
+				connectThread.join();
+			}
 	    	if (connectedThread != null && connectedThread.isAlive()) {
 	    		connectedThread.cancel();
 	    		connectedThread.join();
@@ -792,7 +797,7 @@ public class ConnectionService extends Service {
     		logItem.setReferenceAfr(Integer.parseInt(buf[13], 16) / 10f);
     		logItem.setAfr(Integer.parseInt(buf[14], 16) / 10f);
     		
-    		logItem.setKnock(Integer.parseInt(buf[15] + buf[16], 16));
+    		logItem.setKnock(Integer.parseInt(buf[15] + buf[16], 16) / 256);
     		logItem.setTps(Integer.parseInt(buf[17] + buf[18], 16));
     		
     		logItem.setVolts(Integer.parseInt(buf[21] + buf[22], 16) / 10f);

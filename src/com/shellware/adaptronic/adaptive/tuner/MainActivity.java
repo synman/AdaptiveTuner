@@ -104,7 +104,7 @@ public class MainActivity 	extends Activity
 									   OnClickListener {
 	
 	public static final String TAG = "Adaptive";
-	public static final boolean DEBUG = false;
+	public static final boolean DEBUG = true;
 
 	private static final int LONG_PAUSE = 250;
 

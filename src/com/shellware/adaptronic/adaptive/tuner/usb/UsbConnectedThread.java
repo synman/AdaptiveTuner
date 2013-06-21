@@ -62,7 +62,8 @@ public class UsbConnectedThread extends ConnectedThread {
 
     public static final UsbDeviceConnector[] SUPPORTED_DEVICES = new UsbDeviceConnector[] {
       new SelectECUConnector(), // Select ECU
-      new CL431SerialToUsbConnector()
+      new CL431SerialToUsbConnector(), // CL431
+      new PL2303SerialToUsbConnector() // PL2303
     };
 
 	private static UsbManager mUsbManager = null;
@@ -209,6 +210,8 @@ public class UsbConnectedThread extends ConnectedThread {
 	
 	public void cancel() {
 		disconnecting = true;
+        if (DEBUG) Log.d(TAG, "USB Connected Thread Canceled");
+
 	}
 	
 	public boolean isUsbDevice(UsbDevice usbDevice) {

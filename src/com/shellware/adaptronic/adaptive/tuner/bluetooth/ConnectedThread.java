@@ -65,8 +65,8 @@ public class ConnectedThread extends Thread {
         byte[] buffer = new byte[512];  // buffer store for the stream
         int bytes; // bytes returned from read()
 
-        // Keep listening to the InputStream until an exception occurs
-        while (true) {
+        // Keep listening to the InputStream until an exception or cancel occurs
+        while (!disconnecting) {
             try {
                 // Read from the InputStream
                 bytes = mmInStream.read(buffer);
@@ -136,6 +136,8 @@ public class ConnectedThread extends Thread {
     public void cancel() {
     	disconnecting = true;
     	
+        if (DEBUG) Log.d(TAG, "BT Connected Thread Canceled");
+
         if (mmInStream != null) {
             try {mmInStream.close();} catch (Exception e) {}
             mmInStream = null;
