@@ -5,6 +5,7 @@ Contributors
 ============
 Shell M. Shrader (Maintainer)
 Evan H. Dekker (initial OTG implementation)
+Matt Waddilove (RS232 Converter Support)
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
