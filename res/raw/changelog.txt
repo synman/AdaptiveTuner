@@ -19,6 +19,13 @@
     </style>
   </head>
   <body>
+$ 1.2.5
+  % Version 1.2.5
+  _ 2013-06-21
+  ! Winchiphead CH341 Support
+  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
+  	<p/>   	
+  	* Integrated Matt Waddilove's RS232 to USB adapter contributions into the Adaptive Tuner main branch
 $ 1.2.1
   % Version 1.2.1
   _ 2013-05-14
