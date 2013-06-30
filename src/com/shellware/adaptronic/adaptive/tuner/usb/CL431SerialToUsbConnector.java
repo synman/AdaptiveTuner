@@ -30,8 +30,9 @@ public class CL431SerialToUsbConnector extends UsbDeviceConnector {
     public static final int[][] SERIAL_TO_USB_DEVICES = new int[][] {
             //Format: {USB_VENDOR_ID, USB_PRODUCT_ID}
             new int[] {0x1A86, 0x7523} //, // Serial -> USB adapter Winchiphead CH341
-   //         new int[] {0x4348, 0x5523}  // Serial -> USB adapter (no idea quite which device this is for, but the linux kernel driver supports it too, so might as well.
-    };
+//            new int[] {0x4348, 0x5523},  // Serial -> USB adapter (no idea quite which device this is for, but the linux kernel driver supports it too, so might as well.
+//            new int[] {0x0403, 0x6001}  // FTDI FT232R UART
+        };
 
     @Override
     public int[][] GetSupportedDevices() {

@@ -6,4 +6,7 @@
     <!-- Winchiphead CH341 -->
     <usb-device vendor-id="6790" product-id="29987" />
     <usb-device vendor-id="17224" product-id="21795" />
+    
+    <!-- 0x0403 / 0x6001: FTDI FT232R UART -->
+    <usb-device vendor-id="1027" product-id="24577" />
 </resources>

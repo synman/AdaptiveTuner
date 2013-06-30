@@ -61,8 +61,8 @@ public class ConnectionService extends Service {
     public final static String  		ACTION_DISCONNECT = "com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT";
     public final static String 	   	   ACTION_UI_INACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE";
     public final static String   	 	 ACTION_UI_ACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE";
-    public final static String 	   ACTION_UPDATE_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP";
-    public final static String ACTION_UPDATE_CRANKING_MAP = "com.shellware.adaptronic.adaptive.tuner.action.UPDATE_CRANKING_MAP";
+    public final static String 	   ACTION_READ_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.READ_FUEL_MAP";
+    public final static String ACTION_READ_CRANKING_MAP = "com.shellware.adaptronic.adaptive.tuner.action.READ_CRANKING_MAP";
     public final static String 	 	 ACTION_SAVE_ECU_FILE = "com.shellware.adaptronic.adaptive.tuner.action.SAVE_ECU_FILE";
 
 	public static final short CONNECTION_ERROR = 1;
@@ -112,10 +112,12 @@ public class ConnectionService extends Service {
 	private static OutputStream saveStream;
 	
 	private static boolean mapMode = false;
+	private static boolean crankMode = false;
 	private static short mapOffset = 0;
 	
 	private final static StringBuffer mapOneData = new StringBuffer(1280);
 	private final static StringBuffer mapTwoData = new StringBuffer(1280);
+	private final static StringBuffer crankData = new StringBuffer(1280);
 	
 	private final static LogItems afrAlarmLogItems = new LogItems();
 	private final static LogItems logAllItems = new LogItems();
@@ -146,6 +148,7 @@ public class ConnectionService extends Service {
 	
 	private static boolean fuelMapOneVE = false;
 	private static boolean fuelMapTwoVE = false;
+	private static boolean crankMapVE = false;
 	
 	private static int rpmStepSize = 500;
 	private static int tuningMode = 0;
@@ -265,12 +268,22 @@ public class ConnectionService extends Service {
         }
         
         // map mode
-        if (action.equals(ACTION_UPDATE_FUEL_MAP)) {
+        if (action.equals(ACTION_READ_FUEL_MAP)) {
         	mapMode = true;
         	mapOffset = 0;
         	
         	mapOneData.setLength(0);
         	mapTwoData.setLength(0);
+        	
+        	sendRequest(mapOffset);
+        }
+        
+        // cranking map mode
+        if (action.equals(ACTION_READ_CRANKING_MAP)) {
+        	crankMode = true;
+        	mapOffset = 2570;
+        	
+        	crankData.setLength(0);
         	
         	sendRequest(mapOffset);
         }
@@ -386,6 +399,14 @@ public class ConnectionService extends Service {
 	    	        			break;
 	    	        		}
 	    	        		
+	    	        		// if we're in crank mode process any crank map data if it exists
+	    	        		if (crankMode) {
+	    	        			if (data.startsWith(SIXTEEN_REGISTERS) && dataLength >= 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
+	    	        				populateCrankingFuelMap(data);
+	    	        			}
+	    	        			break;
+	    	        		}
+	    	        		
 	    	        		// if we're in save mode process any ecu data if it exists
 	    	        		if (saveMode) {
 	    	        			if (data.startsWith(SIXTEEN_REGISTERS) && dataLength == 37 && ModbusRTU.validCRC(data.trim().split(" "), 37)) {
@@ -408,7 +429,7 @@ public class ConnectionService extends Service {
 	    	        			break;
 	    	        		}
 	    	        		
-	    	        		// process applicible packet type
+	    	        		// process applicable packet type
 	    	        		switch (lastRegister) {
 	    	        			case REGISTER_4096_PLUS_NINE:
 			    	        		if (data.startsWith(TEN_REGISTERS) && dataLength == REGISTER_4096_LENGTH) {
@@ -452,6 +473,7 @@ public class ConnectionService extends Service {
 		}	
     }
 	
+	//TODO:  this is all broke -- don't know why
 	private static void saveEcuData(final byte[] data) {
 		
 		saveModeOffset+=16;
@@ -479,6 +501,29 @@ public class ConnectionService extends Service {
 			if (DEBUG) Log.d(TAG, "Error saving ECU data " + ex.getMessage()); 
 		}
 	}
+	
+	private static void populateCrankingFuelMap(final String data) {
+
+		mapOffset+=16;
+
+		String[] mapmap = data.trim().split(" ");
+		
+		for (int x = 3; x < 35; x++) {
+			crankData.append(mapmap[x]);
+			crankData.append(" ");
+		}
+
+		if (mapOffset < 2602) {
+			sendRequest(mapOffset);
+			return;
+		}
+
+		//TODO: figure out a better way to post results to the activity
+		MainActivity.crankReady = true;
+
+		lastRegister = REGISTER_4096_PLUS_NINE;
+		crankMode = false;		
+	}	
 	
 	private static void populateFuelMap(final String data) {
 
@@ -542,8 +587,8 @@ public class ConnectionService extends Service {
     	
     	short length;
     	
-    	if (mapMode || saveMode) {
-    		if (DEBUG) Log.d(TAG, (mapMode ? "Map" : "Save") + " Mode offset " + register + " requested");
+    	if (mapMode || saveMode || crankMode) {
+    		if (DEBUG) Log.d(TAG, (mapMode ? "Map" : (saveMode ? "Save" : "Crank")) + " Mode offset " + register + " requested");
 			length = 16;
     	} else {
 	    	// set our byte (16 bit) packet size
@@ -584,7 +629,6 @@ public class ConnectionService extends Service {
 		state = state == State.CONNECTING ? State.CONNECTED_BT : State.CONNECTED_USB;
 
 		sendRequest(REGISTER_2269_MAP_TYPES);
-//		sendRequest(REGISTER_4096_PLUS_SEVEN);
 		totalTimeMillis = 0;
 		updatesReceived = 0;
 
@@ -668,11 +712,12 @@ public class ConnectionService extends Service {
 			
             if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
             	
-        	Log.d(TAG, "Fuel Map One VE: " + fuelMapOneVE);
-        	Log.d(TAG, "Fuel Map Two VE: " + fuelMapTwoVE);
-        	Log.d(TAG, "  RPM Step Size: " + rpmStepSize);
-        	Log.d(TAG, "        Max MAP: " + maxMapValue);
-        	Log.d(TAG, "    Tuning Mode: " + tuningMode);
+        	Log.d(TAG, "  Fuel Map One VE: " + fuelMapOneVE);
+        	Log.d(TAG, "  Fuel Map Two VE: " + fuelMapTwoVE);
+        	Log.d(TAG, "Fuel Crank Map VE: " + crankMapVE);
+        	Log.d(TAG, "    RPM Step Size: " + rpmStepSize);
+        	Log.d(TAG, "          Max MAP: " + maxMapValue);
+        	Log.d(TAG, "      Tuning Mode: " + tuningMode);
 
         	sendRequest(REGISTER_4096_PLUS_NINE);            
             return;
@@ -748,6 +793,7 @@ public class ConnectionService extends Service {
 			
 			 fuelMapOneVE = (getBit(Integer.parseInt(buf[3] + buf[4], 16), 8) > 0); 
 			 fuelMapTwoVE = (getBit(Integer.parseInt(buf[3] + buf[4], 16), 9) > 0);
+			 crankMapVE =   (getBit(Integer.parseInt(buf[3] + buf[4], 16), 10) > 0);
 			
             if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_2611_RPM_STEP);            
@@ -938,6 +984,10 @@ public class ConnectionService extends Service {
 		return mapTwoData;
 	}
 
+	public StringBuffer getCrankData() {
+		return crankData;
+	}
+	
 	public float getAvgResponseMillis() {
 		try {
 			return totalTimeMillis / updatesReceived;			
@@ -952,6 +1002,10 @@ public class ConnectionService extends Service {
 
 	public boolean isFuelMapTwoVE() {
 		return fuelMapTwoVE;
+	}
+	
+	public boolean isCrankMapVE() {
+		return crankMapVE;
 	}
 
 	public int getRpmStepSize() {

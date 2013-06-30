@@ -63,7 +63,8 @@ public class UsbConnectedThread extends ConnectedThread {
     public static final UsbDeviceConnector[] SUPPORTED_DEVICES = new UsbDeviceConnector[] {
       new SelectECUConnector(), // Select ECU
       new CL431SerialToUsbConnector(), // CL431
-      new PL2303SerialToUsbConnector() // PL2303
+      new PL2303SerialToUsbConnector(), // PL2303
+      new FTDISerialToUsbConnector() // FTDI FT232R UART
     };
 
 	private static UsbManager mUsbManager = null;

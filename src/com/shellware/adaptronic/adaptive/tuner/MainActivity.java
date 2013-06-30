@@ -204,6 +204,9 @@ public class MainActivity 	extends Activity
 	private static boolean mapMode = false;
 	public static boolean mapReady = false;
 	
+	private static boolean crankMode = false;
+	public static boolean crankReady = false;
+	
 	private static boolean saveMode = false;
 	public static boolean saveReady = false;
 	private static String saveName = "";
@@ -216,6 +219,7 @@ public class MainActivity 	extends Activity
 
 	private RadioButton radioMapOne;
 	private RadioButton radioMapTwo;
+	private RadioButton radioMapCrank;
 	
 	private ArrayAdapter<String> fuelDataTop;
 	private ArrayAdapter<String> fuelData;
@@ -463,9 +467,11 @@ public class MainActivity 	extends Activity
         
         radioMapOne = (RadioButton) findViewById(R.id.radioMapOne);
         radioMapTwo = (RadioButton) findViewById(R.id.radioMapTwo);
+        radioMapCrank = (RadioButton) findViewById(R.id.radioMapCrank);
         
         radioMapOne.setOnClickListener(this);
         radioMapTwo.setOnClickListener(this);
+        radioMapCrank.setOnClickListener(this);
         
         usbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(usbReceiver, usbDetachedFilter);
@@ -702,6 +708,36 @@ public class MainActivity 	extends Activity
 	    			
 			    	mapMode = false;
 	        		mapReady = false;
+	    		}
+	    		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
+        		return;
+	    	}
+	    	
+	    	// show our cranking table
+	    	if (crankMode) {
+	    		if (crankReady) {
+	    			if (connectionService != null) {
+	    				fuelData.clear();
+	    				final String[] map = connectionService.getCrankData().toString().split(" ");
+	    				short cnt = 0;
+	    				
+//	    				while (cnt < 64) {
+////	    					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
+////									Integer.parseInt(map[cnt] + map[cnt+1], 16) / 
+////									(connectionService.isCrankMapVE() ? VE_DIVISOR : MS_DIVISOR)));
+//	    					fuelData.add(String.format("%d", Integer.parseInt(map[cnt] + map[cnt+1], 16)));
+//	    					cnt = (short) (cnt + 2);
+//	    				}
+	    				
+	    				for (int x = 0; x < 32; x++) {
+    					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
+								Integer.parseInt(map[x], 16) / 
+								(connectionService.isCrankMapVE() ? VE_DIVISOR : MS_DIVISOR)));
+	    					fuelData.add(String.format("%.2f", val));
+	    				}
+	    			}
+	    			crankMode = false;
+	    			crankReady = false;
 	    		}
 	    		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
         		return;
@@ -948,9 +984,11 @@ public class MainActivity 	extends Activity
 		}
 	}
 	
-//	String bla = Intseger.toHexString(150);
-
-
+	private void populateCrankTable() {
+    	crankReady = false;
+    	crankMode = true;
+    	startService(new Intent(ConnectionService.ACTION_READ_CRANKING_MAP));	    	
+	}
 	
     private String getTemperatureSymbol() {
     	switch (tempUomPref) {
@@ -1171,9 +1209,10 @@ public class MainActivity 	extends Activity
 	        	return true;
                 
 	        case R.id.menu_info:
-	        	final String info = String.format(Locale.US, "Map 1 VE: %d Map 2 VE: %d Mode: %d RPM Step: %d Max MAP: %d",
+	        	final String info = String.format(Locale.US, "Map 1 VE: %d Map 2 VE: %d Crank Map VE: %d Mode: %d RPM Step: %d Max MAP: %d",
 						        								connectionService.isFuelMapOneVE() ? 1 : 0,
 						        								connectionService.isFuelMapTwoVE() ? 1 : 0,
+						        								connectionService.isCrankMapVE() ? 1 : 0,
 						        								connectionService.getTuningMode(),
 						        								connectionService.getRpmStepSize(),
 						        								connectionService.getMaxMapValue());
@@ -1331,7 +1370,7 @@ public class MainActivity 	extends Activity
 	    										getResources().getString(R.string.read_fuel_map_message) + " ...");
 	    	progress.setCancelable(false);
 	    	
-        	startService(new Intent(ConnectionService.ACTION_UPDATE_FUEL_MAP));	
+        	startService(new Intent(ConnectionService.ACTION_READ_FUEL_MAP));	
 		} else {
 			final int rpmStepSize = connectionService != null ? connectionService.getRpmStepSize() : 500;
 			
@@ -1357,6 +1396,8 @@ public class MainActivity 	extends Activity
 	public void onClick(View view) {
 		
 		if (view.getId() == R.id.radioMapOne || view.getId() == R.id.radioMapTwo) {
+			
+			radioMapCrank.setChecked(false);
 
 			final RadioButton radio = (RadioButton) view;
 			
@@ -1454,7 +1495,14 @@ public class MainActivity 	extends Activity
 //			lastRPM = 1500;
 //			lastMAP = 60;
 //			setCurrentCell();
-		}	
+		} else {
+			if (view.getId() == R.id.radioMapCrank) {
+				radioMapOne.setChecked(false);
+				radioMapTwo.setChecked(false);
+				radioMapCrank.setChecked(true);
+				populateCrankTable();
+			}
+		}
 	}
 	
 	private OnItemLongClickListener cellEditListener = new OnItemLongClickListener() {
@@ -1531,6 +1579,7 @@ public class MainActivity 	extends Activity
 						final int offset = position / 17 + 1;
 						if (DEBUG) Log.d(TAG, "Position: " + (position - offset));
 						
+						//TODO: what about map 2 offset?
 						connectionService.updateRegister((short) (position - offset), value);
 				    }
 				  })

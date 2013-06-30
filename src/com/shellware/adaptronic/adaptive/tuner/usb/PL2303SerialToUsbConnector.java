@@ -138,29 +138,29 @@ public class PL2303SerialToUsbConnector extends UsbDeviceConnector {
         buffer[2]=(byte) ((baud >> 16) & 0xff);
         buffer[3]=(byte) ((baud >> 24) & 0xff);
         
-        // Setup Stopbits
-        switch (S) {
-        case S1: buffer[4] = 0; break;
-        case S2: buffer[4] = 2; break;
-        default: buffer[4] = 0; break;
-        }
-        
-        // Setup Parity
-        switch (P) {
-        case NONE: buffer[5] = 0; break;
-        case ODD: buffer[5] = 1; break;
-        case EVEN: buffer[5] = 2; break;
-        default: buffer[5] = 0; break;
-        }
-        
-        // Setup Databits
-        switch (D) {
-        case D5: buffer[6] = 5; break;
-        case D6: buffer[6] = 6; break;
-        case D7: buffer[6] = 7; break;
-        case D8: buffer[6] = 8; break;
-        default: buffer[6] = 8; break;
-        }
+//        // Setup Stopbits
+//        switch (S) {
+//        case S1: buffer[4] = 0; break;
+//        case S2: buffer[4] = 2; break;
+//        default: buffer[4] = 0; break;
+//        }
+//        
+//        // Setup Parity
+//        switch (P) {
+//        case NONE: buffer[5] = 0; break;
+//        case ODD: buffer[5] = 1; break;
+//        case EVEN: buffer[5] = 2; break;
+//        default: buffer[5] = 0; break;
+//        }
+//        
+//        // Setup Databits
+//        switch (D) {
+//        case D5: buffer[6] = 5; break;
+//        case D6: buffer[6] = 6; break;
+//        case D7: buffer[6] = 7; break;
+//        case D8: buffer[6] = 8; break;
+//        default: buffer[6] = 8; break;
+//        }
 
         // Set new configuration on PL2303 only if settings have changed
         //if (buffer != oldSettings) 

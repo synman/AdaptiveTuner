@@ -68,7 +68,8 @@
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT" />
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE" />
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE" />
- 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UPDATE_FUEL_MAP" />
+ 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.READ_FUEL_MAP" />
+ 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.READ_CRANKING_MAP" />
    			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.SAVE_ECU_FILE" />
  			</intent-filter>
 		</service>	
