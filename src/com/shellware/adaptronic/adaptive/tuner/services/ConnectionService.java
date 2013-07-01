@@ -40,8 +40,9 @@ import android.util.Log;
 
 import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 import com.shellware.adaptronic.adaptive.tuner.R;
-import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectThread;
-import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
+import com.shellware.adaptronic.adaptive.tuner.bluetooth.BluetoothConnectThread;
+import com.shellware.adaptronic.adaptive.tuner.bluetooth.BluetoothConnectedThread;
+import com.shellware.adaptronic.adaptive.tuner.modbus.ConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.modbus.ModbusRTU;
 import com.shellware.adaptronic.adaptive.tuner.usb.UsbConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.valueobjects.LogItems;
@@ -90,6 +91,9 @@ public class ConnectionService extends Service {
 	private static final short REGISTER_2050_TUNING_MODE = 2050;
 	private static final int REGISTER_2050_LENGTH = 7;
 	
+	public static final short REGISTER_2052_MASTER_TRIM = 2052;
+	private static final int REGISTER_2052_LENGTH = 7;
+	
 	private static final short REGISTER_2269_MAP_TYPES = 2269;
 	private static final int REGISTER_2269_LENGTH = 7;
 	
@@ -104,7 +108,7 @@ public class ConnectionService extends Service {
 	private static final String SIXTEEN_REGISTERS = "01 03 20";
 	private static final String ONE_REGISTER = "01 03 02";
 	
-	private static final int LONG_PAUSE = 150;
+	private static final int LONG_PAUSE = 200;
 	private static final int NOTIFICATION_ID = 1;
 	
 	private static boolean saveMode = false;
@@ -129,7 +133,7 @@ public class ConnectionService extends Service {
 	private final ConnectionHandler connectionHandler = new ConnectionHandler(this);
 	
 	private static ConnectedThread connectedThread;
-	private static ConnectThread connectThread;
+	private static BluetoothConnectThread bluetoothConnectThread;
 	
     public static State state = State.DISCONNECTED;	
 	private static boolean UI_THREAD_IS_ACTIVE = false;
@@ -153,6 +157,8 @@ public class ConnectionService extends Service {
 	private static int rpmStepSize = 500;
 	private static int tuningMode = 0;
 	private static int maxMapValue = 200;
+	private static int fuelTrim = 0;
+	private static int ignitionTrim = 0;
 	
 	private final static short NO_UPDATE_PENDING = -1;
 	private static short registerToSend = NO_UPDATE_PENDING;
@@ -222,9 +228,9 @@ public class ConnectionService extends Service {
         	state = State.CONNECTING;
             notifier.tickerText = String.format(getResources().getString(R.string.service_connecting), name);
             
-        	connectedThread = new ConnectedThread(connectionHandler);    	
-        	connectThread = new ConnectThread(connectionHandler, name, addr, connectedThread);
-        	connectThread.start();
+        	connectedThread = new BluetoothConnectedThread(connectionHandler);    	
+        	bluetoothConnectThread = new BluetoothConnectThread(connectionHandler, name, addr, (BluetoothConnectedThread) connectedThread);
+        	bluetoothConnectThread.start();
         }
         
         // initiate a USB connection
@@ -242,7 +248,6 @@ public class ConnectionService extends Service {
 	            notifier.tickerText = getResources().getString(R.string.service_usb_connected);
 
 	            sendRequest(REGISTER_2269_MAP_TYPES);
-//	            sendRequest(REGISTER_4096_PLUS_SEVEN);
 
 	    		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
 
@@ -370,7 +375,7 @@ public class ConnectionService extends Service {
 	        		final String name = message.getData().getString("name");
 	        		final String addr = message.getData().getString("addr");
 	        		
-	        		service.setupConnection(name, addr);
+	        		service.setupBluetoothConnection(name, addr);
 		    		break;
 		    		
 	        	case CONNECTION_ERROR:
@@ -388,7 +393,13 @@ public class ConnectionService extends Service {
 	    	        	// TODO: this could be a lot more efficient -- rethink all the data type conversions
 	    	        	final int dataLength = data.trim().split(" ").length;
 	    	        	
-	    	        	// first check that we've got the right device and mode
+    	        		if (dataLength > 7 && data.startsWith(DEVICE_ADDR_AND_PRESET_HEADER)) {
+    	        			// we got an update response let's validate it
+    	        			processUpdateResponse(data);
+    	        			break;
+    	        		}
+    	        		
+	    	        	// check that we've got the right device and mode
 	    	        	if (dataLength > 2 && data.startsWith(DEVICE_ADDR_AND_HOLDING_HEADER)) {
 	    	        		
 	    	        		// if we're in map mode process any map data if it exists
@@ -456,17 +467,17 @@ public class ConnectionService extends Service {
     		        					process2050Response(data);  
     		        				} 
     		        				break;
+	    	        			case REGISTER_2052_MASTER_TRIM:
+    		        				if (data.startsWith(ONE_REGISTER) && dataLength == REGISTER_2052_LENGTH) {
+    		        					process2052Response(data);  
+    		        				} 
+    		        				break;
 	    	        			case REGISTER_2048_MAX_MAP:
     		        				if (data.startsWith(ONE_REGISTER) && dataLength == REGISTER_2048_LENGTH) {
     		        					process2048Response(data);  
     		        				}
     		        				break;			
 	    		        	}
-	    	        	} else {
-	    	        		if (dataLength > 7 && data.startsWith(DEVICE_ADDR_AND_PRESET_HEADER)) {
-	    	        			// we got an update response let's validate it
-	    	        			processUpdateResponse(data);
-	    	        		}
 	    	        	}
     	        	}
 			}
@@ -599,6 +610,9 @@ public class ConnectionService extends Service {
 	    		case REGISTER_2050_TUNING_MODE:
 	    			length = 1;
 	    			break;
+	    		case REGISTER_2052_MASTER_TRIM:
+	    			length = 1;
+	    			break;
 				case REGISTER_2269_MAP_TYPES:
 					length = 1;
 					break;
@@ -625,8 +639,8 @@ public class ConnectionService extends Service {
 		}
 	}
 	
-	private void setupConnection(final String name, final String addr) {
-		state = state == State.CONNECTING ? State.CONNECTED_BT : State.CONNECTED_USB;
+	private void setupBluetoothConnection(final String name, final String addr) {
+		state = State.CONNECTED_BT;
 
 		sendRequest(REGISTER_2269_MAP_TYPES);
 		totalTimeMillis = 0;
@@ -657,9 +671,9 @@ public class ConnectionService extends Service {
     	refreshHandler.removeCallbacks(RefreshRunnable);			
     	
 		try {
-			if (connectThread != null && connectThread.isAlive()) {
-				connectThread.cancel();
-				connectThread.join();
+			if (bluetoothConnectThread != null && bluetoothConnectThread.isAlive()) {
+				bluetoothConnectThread.cancel();
+				bluetoothConnectThread.join();
 			}
 	    	if (connectedThread != null && connectedThread.isAlive()) {
 	    		connectedThread.cancel();
@@ -691,7 +705,14 @@ public class ConnectionService extends Service {
 		if (ModbusRTU.validCRC(buf, PRESET_RESPONSE_LENGTH)) {   
             if (DEBUG) Log.d(TAG, "Processed " + registerToSend + " update: " + data);
 			dataNotAvailable = false;
+			
+			final short reg = registerToSend;
 			registerToSend = NO_UPDATE_PENDING;
+			
+			if (reg == REGISTER_2052_MASTER_TRIM) {
+				// reload all static properties (restart message loop)
+				sendRequest(REGISTER_2269_MAP_TYPES);				
+			}
 		} else {
 			if (DEBUG) Log.d(TAG, "bad CRC for " + registerToSend + " update: " + data);
 			dataNotAvailable = true;
@@ -718,6 +739,8 @@ public class ConnectionService extends Service {
         	Log.d(TAG, "    RPM Step Size: " + rpmStepSize);
         	Log.d(TAG, "          Max MAP: " + maxMapValue);
         	Log.d(TAG, "      Tuning Mode: " + tuningMode);
+        	Log.d(TAG, " Master Fuel Trim: " + fuelTrim);
+        	Log.d(TAG, "  Master Ign Trim: " + ignitionTrim);
 
         	sendRequest(REGISTER_4096_PLUS_NINE);            
             return;
@@ -749,6 +772,42 @@ public class ConnectionService extends Service {
 		}
     }
     
+    private static void process2052Response(final String data) {
+    	
+		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, REGISTER_2052_LENGTH)) {   
+			dataNotAvailable = false;
+			
+			fuelTrim = Integer.parseInt(buf[4], 16);
+			
+			// TODO: ignition trim is broke
+			ignitionTrim = Integer.parseInt(buf[3], 16);
+			
+			// convert for negative trim
+			// TODO: still not sure why negatives are all ugly
+			// -100 == 156
+			if (fuelTrim > 150) {
+				fuelTrim = (256 - fuelTrim) * -1;
+			}
+			
+			// fuel cut enabled
+			Editor edit = prefs.edit();
+			
+			edit.putBoolean("prefs_fuel_cut", fuelTrim == -100 ? true : false);
+			edit.commit();
+
+			if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
+			sendRequest(REGISTER_2050_TUNING_MODE);            
+            return;
+            
+		} else {
+			if (DEBUG) Log.d(TAG, "bad CRC for " + lastRegister + ": " + data);
+			dataNotAvailable = true;
+			sendRequest();
+		}
+    }
+    
     private static void process2611Response(final String data) {
     	
 		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
@@ -768,7 +827,7 @@ public class ConnectionService extends Service {
 			 // validate our rpm step size -- for some reason it's buggy
 			 if (rpmStepSize == 200 || rpmStepSize == 250 || rpmStepSize == 300 || rpmStepSize == 500) {
 		            if (DEBUG) Log.d(TAG, "Processed " + lastRegister + " response: " + data);
-					sendRequest(REGISTER_2050_TUNING_MODE);            				 
+					sendRequest(REGISTER_2052_MASTER_TRIM);            				 
 			 } else {
 					if (DEBUG) Log.d(TAG, "invalid RPM STEP SIZE for " + lastRegister + ": " + data);
 					dataNotAvailable = true;
@@ -1018,5 +1077,13 @@ public class ConnectionService extends Service {
 
 	public int getMaxMapValue() {
 		return maxMapValue;
+	}
+	
+	public int getFuelTrim() {
+		return fuelTrim;
+	}	
+	
+	public int getIgnitionTrim() {
+		return ignitionTrim;
 	}
 }

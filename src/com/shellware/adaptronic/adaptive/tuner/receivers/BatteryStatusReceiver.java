@@ -31,63 +31,64 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 public class BatteryStatusReceiver extends BroadcastReceiver {
 	
+	private final static int BATTERY_PLUGGED_UNPLUGGED = 0;
+	
 	@Override
 	public void onReceive(final Context ctx, Intent intent) {
 		if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)){
-
+			
 			final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);	
 			
-			final int status = intent.getIntExtra("status", BatteryManager.BATTERY_STATUS_UNKNOWN);
-			final int lastStatus = prefs.getInt("last_battery_status", BatteryManager.BATTERY_STATUS_UNKNOWN);
+			final int status = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, BATTERY_PLUGGED_UNPLUGGED);
+			final int lastStatus = prefs.getInt("last_battery_status", BATTERY_PLUGGED_UNPLUGGED);
 			
-			// long winded way of acting if charging or full charge but 
-			// only if previous status was not charging or full charge
-			if (status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL) {
-				if (lastStatus != BatteryManager.BATTERY_STATUS_CHARGING && lastStatus != BatteryManager.BATTERY_STATUS_FULL) {
-					
-					final boolean enabled = prefs.getBoolean("prefs_connect_on_charge", false);
-					
-					if (enabled && ConnectionService.state == ConnectionService.State.DISCONNECTED) {
-				    	final String name = prefs.getString("prefs_remote_name", "");
-				    	final String addr = prefs.getString("prefs_remote_mac", "");
-				    	final int waitTime = (int) prefs.getFloat("prefs_connect_on_charge_wait_time", 30);
-				    	final boolean waiting = prefs.getBoolean("prefs_connect_on_charge_waiting", false);
-				    	
-			    		// only run if not active
-				    	if (addr.length() > 0  && !waiting) {
-				    		final Editor edit = prefs.edit();
-				    		edit.putBoolean("prefs_connect_on_charge_waiting", true);
-				    		edit.commit();
-				    		
-				    		if (MainActivity.DEBUG) Log.d(MainActivity.TAG, "waiting to connect");
-//				    		Toast.makeText(ctx,  "waiting to connect", Toast.LENGTH_LONG);
-				    		
-				    		new Handler().postDelayed(new Runnable() {
+			if (status != BATTERY_PLUGGED_UNPLUGGED && lastStatus == BATTERY_PLUGGED_UNPLUGGED) {
+				
+				final boolean enabled = prefs.getBoolean("prefs_connect_on_charge", false);
+		    	final boolean waiting = prefs.getBoolean("prefs_connect_on_charge_waiting", false);
+				
+				if (enabled && !waiting && ConnectionService.state == ConnectionService.State.DISCONNECTED) {
+			    	
+			    	final int waitTime = (int) prefs.getFloat("prefs_connect_on_charge_wait_time", 30);
 
-								public void run() {
-						    		
-						        	Intent service = new Intent(ConnectionService.ACTION_CONNECT_BT);
-						        	service.putExtra("name", name);
-						        	service.putExtra("addr", addr);
-						        	
-						        	ctx.startService(service);
-						        	
-						    		edit.putBoolean("prefs_connect_on_charge_waiting", false);
-						    		edit.commit();
-						    		
-						    		if (MainActivity.DEBUG) Log.d(MainActivity.TAG, "intent sent");
-//						    		Toast.makeText(ctx,  "intent sent", Toast.LENGTH_LONG);									
-								}
-								
-							} , waitTime * 1000);
-				    	}
-					}
+			    	final Editor edit = prefs.edit();
+		    		edit.putBoolean("prefs_connect_on_charge_waiting", true);
+		    		edit.commit();
+		    		
+		    		if (MainActivity.DEBUG) Log.d(MainActivity.TAG, "submitting auto connect intent");				    		
+
+			    	new Handler().postDelayed(new Runnable() {
+
+						public void run() {
+
+					    	final String name = prefs.getString("prefs_remote_name", "");
+					    	final String addr = prefs.getString("prefs_remote_mac", "");						    		
+				        	final boolean waiting = prefs.getBoolean("prefs_connect_on_charge_waiting", false);
+
+				        	if (waiting && addr.length() > 0) {
+					        	Intent service = new Intent(ConnectionService.ACTION_CONNECT_BT);
+					        	service.putExtra("name", name);
+					        	service.putExtra("addr", addr);
+					    		
+				        		ctx.startService(service);
+				        		
+					    		if (MainActivity.DEBUG) Log.d(MainActivity.TAG, "auto connect intent sent");
+				        	}						        	
+
+				        	edit.putBoolean("prefs_connect_on_charge_waiting", false);
+				    		edit.commit();
+					    	
+						}
+						
+					} , waitTime * 1000);
 				}
 			}
 			
 			final Editor edit = prefs.edit();
 			edit.putInt("last_battery_status", status);
 			edit.commit();
+
+    		if (MainActivity.DEBUG) Log.d(MainActivity.TAG, "charge status: " + status);
 		}
 	}
 

@@ -31,7 +31,7 @@ import android.util.Log;
 import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
-    public class ConnectThread extends Thread {
+    public class BluetoothConnectThread extends Thread {
 
     	private static final String TAG = MainActivity.TAG;
     	private static final boolean DEBUG = MainActivity.DEBUG;
@@ -41,7 +41,7 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
     	private final Handler handler;
     	private final String name;
     	private final String addr;
-    	private final ConnectedThread connectedThread;
+    	private final BluetoothConnectedThread connectedThread;
     	
     	private BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();
     	private BluetoothDevice btd;
@@ -49,7 +49,7 @@ import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 		private boolean cancelled;
     	
-    	public ConnectThread(final Handler handler, final String deviceName, final String addr, ConnectedThread connectedThread) {
+    	public BluetoothConnectThread(final Handler handler, final String deviceName, final String addr, BluetoothConnectedThread connectedThread) {
     		super();
     		this.handler = handler;
     		this.name = deviceName;

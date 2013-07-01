@@ -55,7 +55,13 @@
 	        android:orderInCategory="100"
 	        android:showAsAction="never" />
     </group>
-   	<group>
+	<group>
+	    <item android:id="@+id/menu_fuel_cut"
+	        android:title="@string/menu_fuel_cut"
+	        android:orderInCategory="100"
+	        android:showAsAction="never" />
+    </group>
+		<group>
 	    <item android:id="@+id/menu_exit"
 	        android:title="@string/menu_exit"
 	        android:orderInCategory="100"

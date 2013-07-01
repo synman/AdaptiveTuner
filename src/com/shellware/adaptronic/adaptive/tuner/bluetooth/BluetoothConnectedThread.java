@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+import com.shellware.adaptronic.adaptive.tuner.modbus.ConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 import android.bluetooth.BluetoothSocket;
@@ -29,29 +30,22 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-public class ConnectedThread extends Thread {
+public class BluetoothConnectedThread extends ConnectedThread {
 	
+	public BluetoothConnectedThread(Handler handler) {
+		super(handler);
+	}
+
 	private static final String TAG = MainActivity.TAG;
 	private static final boolean DEBUG = MainActivity.DEBUG;
 
     private BluetoothSocket mmSocket;
     private InputStream mmInStream;
     private OutputStream mmOutStream;
-    
-//EVAN    
-//	private final Handler handler;
-	protected final Handler handler;
-//END EVAN
+
 	
 	private String name;
 	
-	protected boolean disconnecting = false;
-
-	public ConnectedThread(Handler handler) {
-        this.handler = handler;
-        
-    }
-    
     public void setSocket(BluetoothSocket socket) {
     	mmSocket = socket;
 

@@ -24,6 +24,7 @@
     <string name="menu_disconnect">Disconnect</string>
     <string name="menu_save_map">Save ECU File</string>
     <string name="menu_info">Debug Info</string>
+    <string name="menu_fuel_cut">Fuel Cut</string>
     <string name="menu_exit">Quit</string>
     
     <string name="title_activity_main">Adaptive Tuner</string>

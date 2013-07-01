@@ -34,9 +34,7 @@ package com.shellware.adaptronic.adaptive.tuner.usb;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbDeviceConnection;
@@ -49,14 +47,14 @@ import android.os.Message;
 import android.util.Log;
 
 import com.shellware.adaptronic.adaptive.tuner.MainActivity;
-import com.shellware.adaptronic.adaptive.tuner.bluetooth.ConnectedThread;
+import com.shellware.adaptronic.adaptive.tuner.modbus.ConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 public class UsbConnectedThread extends ConnectedThread {
 	
 	private static final String TAG = MainActivity.TAG;
 	private static final boolean DEBUG = MainActivity.DEBUG;
-
+	
 	public static final int USB_VENDOR_ID 	= 0;
 	public static final int USB_PRODUCT_ID 	= 1;
 

@@ -106,7 +106,8 @@ public class MainActivity 	extends Activity
 	public static final String TAG = "Adaptive";
 	public static final boolean DEBUG = true;
 
-	private static final int LONG_PAUSE = 250;
+	private static final int LONG_PAUSE = 500;
+	private static final int SHORT_PAUSE = 200;
 
 //	private static final int AFR_MIN = 970;
 //	private static final int AFR_MAX = 1970;
@@ -196,8 +197,8 @@ public class MainActivity 	extends Activity
 	private static boolean waterTempPref = false;
 	private static float minimumWaterTemp = 0f;
 	private static float maximumWaterTemp = 210f;
-	private static String remoteMacAddr = "";
-	private static String remoteName = "";
+//	private static String remoteMacAddr = "";
+//	private static String remoteName = "";
 	private static boolean autoConnect = false;
 	private static boolean shuttingDown = false;
 	
@@ -475,6 +476,11 @@ public class MainActivity 	extends Activity
         
         usbDetachedFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(usbReceiver, usbDetachedFilter);
+
+        // kludge to ensure we're not stuck in a charge loop
+        Editor edit = prefs.edit();
+        edit.putBoolean("prefs_connect_on_charge_waiting", false);
+        edit.commit();
         
 	    batteryStatusReceiver = new BatteryStatusReceiver();
 	    registerReceiver(batteryStatusReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -544,8 +550,8 @@ public class MainActivity 	extends Activity
     	if (connectionService != null) connectionService.setAfrNotEqualTargetTolerance(afrNotEqualTargetTolerance);
     	
     	waterTempPref = prefs.getBoolean("prefs_watertemp_pref", false);    	
-    	remoteName = prefs.getString("prefs_remote_name", "");
-    	remoteMacAddr = prefs.getString("prefs_remote_mac", "");    	
+//    	remoteName = prefs.getString("prefs_remote_name", "");
+//    	remoteMacAddr = prefs.getString("prefs_remote_mac", "");    	
     	autoConnect = prefs.getBoolean("prefs_auto_connect", false);
     	
     	// need to set gauge scale based on uom selected
@@ -638,10 +644,12 @@ public class MainActivity 	extends Activity
 
 		unregisterReceiver(usbReceiver);
 		unregisterReceiver(batteryStatusReceiver);
+
+		speaker.stop();
+		speaker.shutdown();
 		
 		if (shuttingDown) {
 			stopService(new Intent(this, ConnectionService.class));
-			speaker.shutdown();
 		}
 		
     	unbindService(connectionServiceConnection);
@@ -656,14 +664,6 @@ public class MainActivity 	extends Activity
 					(connectionService.getState() != State.CONNECTED_BT &&
 					connectionService.getState() != State.CONNECTED_USB)) {
 		    	
-    			if (menuConnect != null && menuConnect.getTitle().equals(getResources().getString(R.string.menu_disconnect))) {
-    				menuConnect.setTitle(R.string.menu_connect);
-    			}
-				
-    			if (menuUsbConnect != null && menuUsbConnect.getTitle().equals(getResources().getString(R.string.menu_disconnect))) {
-    				menuUsbConnect.setTitle(R.string.menu_usb_connect);
-    			}
-
     			if (connectionService != null && connectionService.getState() == State.DISCONNECTED) {
     				
         			imgStatus.setBackgroundColor(Color.TRANSPARENT);
@@ -671,16 +671,15 @@ public class MainActivity 	extends Activity
         			if (progress != null && progress.isShowing()) {
     					progress.dismiss();
     				}
-    				if (autoConnect && remoteMacAddr.length() > 0) {
+    				if (autoConnect && prefs.getString("prefs_remote_mac", "").length() > 0) {
 			    		disconnect();
-			    		connect(remoteName,  remoteMacAddr);
+			    		bluetoothConnect(prefs.getString("prefs_remote_name", ""),  prefs.getString("prefs_remote_mac", ""));
 			    		
 			    		// short circuit repetitive reconnect attempts
 			    		autoConnect = false;
 			    	}
     			}
-    			
-    			//TODO: why am I respawning refreshHandler if the connection is dead?
+
         		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
 	    		return;
 			}
@@ -719,7 +718,7 @@ public class MainActivity 	extends Activity
 	    			if (connectionService != null) {
 	    				fuelData.clear();
 	    				final String[] map = connectionService.getCrankData().toString().split(" ");
-	    				short cnt = 0;
+//	    				short cnt = 0;
 	    				
 //	    				while (cnt < 64) {
 ////	    					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
@@ -816,7 +815,7 @@ public class MainActivity 	extends Activity
 			    		
     		if (rpm >= 200) lastRPM = rpm;
 
-    		txtData.setText(String.format("AVG: %.0f ms -- BAT: %.1f V", connectionService.getAvgResponseMillis(), item.getVolts()));
+    		txtData.setText(String.format("AVG: %.0f ms", connectionService.getAvgResponseMillis()));
 
 			if (frags[0].isVisible()) {
 				imgFWait.setBackgroundColor(fWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
@@ -900,10 +899,9 @@ public class MainActivity 	extends Activity
     		// dismiss the progress bar if it is visible
     		if (progress != null && progress.isShowing()) {
     			progress.dismiss();
-    			if (menuConnect != null) menuConnect.setTitle(R.string.menu_disconnect);
     		}
     		
-    		if (refreshHandler != null) refreshHandler.postDelayed(this, LONG_PAUSE);
+    		if (refreshHandler != null) refreshHandler.postDelayed(this, SHORT_PAUSE);
         }
     };
     
@@ -1033,7 +1031,7 @@ public class MainActivity 	extends Activity
             final String address = info[1];
             
             layoutDevices.setVisibility(View.INVISIBLE);
-            connect(name, address);
+            bluetoothConnect(name, address);
     	}
     };
     
@@ -1061,7 +1059,7 @@ public class MainActivity 	extends Activity
     	if (devices.getCount() > 0) layoutDevices.setVisibility(View.VISIBLE);
     }
     
-    private void connect(final String name, final String macAddr) {
+    private void bluetoothConnect(final String name, final String macAddr) {
     	
     	if (progress != null && progress.isShowing()) return;
     	
@@ -1080,11 +1078,8 @@ public class MainActivity 	extends Activity
     }
     
     private void disconnect() {
-		if (menuConnect != null) menuConnect.setTitle(R.string.menu_connect);
-		if (menuUsbConnect != null) menuUsbConnect.setTitle(R.string.menu_usb_connect);
 		
     	if (progress != null && progress.isShowing()) progress.dismiss();
-
     	imgStatus.setBackgroundColor(Color.TRANSPARENT);				
 
 		startService(new Intent(ConnectionService.ACTION_DISCONNECT));
@@ -1115,31 +1110,55 @@ public class MainActivity 	extends Activity
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		
-    	// show share button if logging
-    	if (connectionService != null)
+		myMenu.findItem(R.id.menu_save_map).setEnabled(false);
+		myMenu.findItem(R.id.menu_fuel_cut).setEnabled(false);
+
+		menuConnect.setEnabled(false);
+		menuUsbConnect.setEnabled(false);
+
+		menuShareLog.setVisible(false);
+
+		// show share button if logging
+    	if (connectionService != null) {
     		menuShareLog.setVisible((afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty()) ||
 					 (logAll && !connectionService.getLogAllItems().getItems().isEmpty()));
-		
-    	if (connectionService != null && connectionService.getState() == State.DISCONNECTED) {
-    		menuConnect.setTitle(R.string.menu_connect);
-    		menuUsbConnect.setTitle(R.string.menu_usb_connect);
-    		menuConnect.setEnabled(true);
-    		menuUsbConnect.setEnabled(true);
     		
-    		myMenu.findItem(R.id.menu_save_map).setEnabled(false);
-    	} else {
-    		myMenu.findItem(R.id.menu_save_map).setEnabled(true);
-    		if (connectionService != null && connectionService.getState() == State.CONNECTED_BT) {
-    			menuConnect.setTitle(R.string.menu_disconnect);
-        		menuConnect.setEnabled(true);
-        		menuUsbConnect.setEnabled(false);
-    		} else {
-        		if (connectionService != null && connectionService.getState() == State.CONNECTED_USB) {
-        			menuUsbConnect.setTitle(R.string.menu_disconnect);
+    		myMenu.findItem(R.id.menu_fuel_cut).setCheckable(true);
+    		myMenu.findItem(R.id.menu_fuel_cut).setChecked(prefs.getBoolean("prefs_fuel_cut", false));	
+
+    		switch (connectionService.getState()) {
+    			case DISCONNECTED:
+		    		menuConnect.setTitle(R.string.menu_connect);
+		    		menuUsbConnect.setTitle(R.string.menu_usb_connect);
+		    		menuConnect.setEnabled(true);
+		    		menuUsbConnect.setEnabled(true);
+		    				    		
+		    		break;
+	    	
+    			case CONNECTED_BT:
+    	    		myMenu.findItem(R.id.menu_save_map).setEnabled(true);
+    	    		myMenu.findItem(R.id.menu_fuel_cut).setEnabled(true);
+    				
+	    			menuConnect.setTitle(R.string.menu_disconnect);
+	        		menuConnect.setEnabled(true);
+	        		menuUsbConnect.setEnabled(false);
+	        		
+	        		break;
+
+    			case CONNECTED_USB:
+    	    		myMenu.findItem(R.id.menu_save_map).setEnabled(true);
+    	    		myMenu.findItem(R.id.menu_fuel_cut).setEnabled(true);
+
+    	    		menuUsbConnect.setTitle(R.string.menu_disconnect);
             		menuConnect.setEnabled(false);
             		menuUsbConnect.setEnabled(true);
-        		}
-    		}
+            		
+            		break;
+    				
+    			default:
+    				break;
+
+	    	}
     	}
      
 		return true;
@@ -1173,10 +1192,12 @@ public class MainActivity 	extends Activity
 	        		showDevices();
 	        	} else {
 	        		disconnect();
-	        		Editor edit = prefs.edit();
-	        		edit.putString("prefs_remote_name", "");
-	        		edit.putString("prefs_remote_mac", "");
-	        		edit.commit();
+//	        		Editor edit = prefs.edit();
+//	        		remoteName = "";
+//	        		remoteMacAddr = "";
+//	        		edit.putString("prefs_remote_name", remoteName);
+//	        		edit.putString("prefs_remote_mac", remoteMacAddr);
+//	        		edit.commit();
 	        	}
 	            return true;
 	            
@@ -1209,17 +1230,30 @@ public class MainActivity 	extends Activity
 	        	return true;
                 
 	        case R.id.menu_info:
-	        	final String info = String.format(Locale.US, "Map 1 VE: %d Map 2 VE: %d Crank Map VE: %d Mode: %d RPM Step: %d Max MAP: %d",
+	        	final String info = String.format(Locale.US, "Map 1 VE: %d Map 2 VE: %d Crank Map VE: %d Mode: %d RPM Step: %d Max MAP: %d Fuel Trim: %d Ign Trim: %d",
 						        								connectionService.isFuelMapOneVE() ? 1 : 0,
 						        								connectionService.isFuelMapTwoVE() ? 1 : 0,
 						        								connectionService.isCrankMapVE() ? 1 : 0,
 						        								connectionService.getTuningMode(),
 						        								connectionService.getRpmStepSize(),
-						        								connectionService.getMaxMapValue());
+						        								connectionService.getMaxMapValue(),
+						        								connectionService.getFuelTrim(),
+						        								connectionService.getIgnitionTrim());
 
 	        	Toast.makeText(getApplicationContext(), info, Toast.LENGTH_LONG).show();
 	        	return true;
 
+	        case R.id.menu_fuel_cut:
+	        	if (connectionService != null && connectionService.getState() != State.DISCONNECTED) {
+	        		if (item.isChecked()) {
+	        			connectionService.updateRegister((short) ConnectionService.REGISTER_2052_MASTER_TRIM, (short) 0);	        		
+		        	} else {
+						connectionService.updateRegister((short) ConnectionService.REGISTER_2052_MASTER_TRIM, (short) 156);
+		        	}
+	        	}
+	        	
+	        	return true;
+	        	
         	default:
                 return super.onOptionsItemSelected(item);
         }
