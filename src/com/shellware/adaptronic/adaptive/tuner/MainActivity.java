@@ -723,6 +723,7 @@ public class MainActivity 	extends Activity
 	    				short cnt = 0;
 	    				short temp = -30;
 	    				
+	    				//TODO: this is currently broke (work in progress)
 	    				while (cnt < 32) {	    					
 	    					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
 									Integer.parseInt(map[cnt] + map[cnt+1], 16) / 
