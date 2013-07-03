@@ -18,14 +18,12 @@ package com.shellware.adaptronic.adaptive.tuner.usb;
  */
 
 import android.hardware.usb.UsbDeviceConnection;
-import android.util.Log;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 
 public class FTDISerialToUsbConnector extends UsbDeviceConnector {
 
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
     @Override
     public String getConnectorName() {

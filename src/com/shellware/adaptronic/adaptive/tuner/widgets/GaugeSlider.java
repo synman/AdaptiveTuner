@@ -18,18 +18,16 @@ package com.shellware.adaptronic.adaptive.tuner.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 
 public class GaugeSlider extends ImageView {
 
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
 	private int minValue = 0;
 	private int maxValue = 360;
@@ -55,7 +53,7 @@ public class GaugeSlider extends ImageView {
 		if (usableUnits == 0) {
 			final RelativeLayout parent = (RelativeLayout) getParent();
 			usableUnits = parent.getWidth();
-			if (DEBUG) Log.d(TAG, "slider usable: " + usableUnits);
+			logger.log("GaugeSlider usable units: " + usableUnits);
 		}
 				
 		final float multiplier = usableUnits / (float) (maxValue - minValue);
@@ -65,7 +63,7 @@ public class GaugeSlider extends ImageView {
 		
 		setLayoutParams(params);
 		
-		if (DEBUG) Log.d(TAG, "slider : " + value + " - " + params.leftMargin);
+		logger.log("GaugeSlider value and left margin: " + value + " - " + params.leftMargin);
 		this.setLayoutParams(params);
 		
 		final RelativeLayout frame = (RelativeLayout) getParent().getParent();

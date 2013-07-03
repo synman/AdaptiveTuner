@@ -32,11 +32,10 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
-import android.util.Log;
 import android.view.MenuItem;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
 import com.shellware.adaptronic.adaptive.tuner.R;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 
 public class AdaptivePreferences extends PreferenceActivity {
 
@@ -49,8 +48,8 @@ public class AdaptivePreferences extends PreferenceActivity {
     // Local Bluetooth adapter
 //    private static BluetoothAdapter bta = null;
     
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
+
     
     public static final float MIN_WATER_TEMP_CELCIUS = 72f;
     public static final float MAX_WATER_TEMP_CELCIUS = 98f;
@@ -64,7 +63,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 //    	requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
     	super.onCreate(savedInstanceState);
         
-        if (DEBUG) Log.d(TAG, "Preferences onCreate");
+        logger.log("Preferences onCreate");
 
         // Get local Bluetooth adapter
 //        bta = BluetoothAdapter.getDefaultAdapter();
@@ -96,9 +95,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-
-	    if (DEBUG) Log.d(TAG, "Preferences onResume");
-
+	    logger.log("Preferences onResume");
 	}
 
 	public static class GeneralFragment extends PreferenceFragment {

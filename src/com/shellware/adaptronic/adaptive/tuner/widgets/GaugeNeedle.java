@@ -18,15 +18,13 @@ package com.shellware.adaptronic.adaptive.tuner.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.widget.ImageView;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 
 public class GaugeNeedle extends ImageView {
 
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
 	private final int NOT_SET_YET = Integer.MAX_VALUE;
 	
@@ -81,7 +79,7 @@ public class GaugeNeedle extends ImageView {
 		setRotation(newValue);
 				
 //		lastValue = newValue;
-		if (DEBUG) Log.d(TAG, String.format("%s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
+		logger.log(String.format("GaugeNeedle %s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
 	}
 	
 	public int getMinValue() {

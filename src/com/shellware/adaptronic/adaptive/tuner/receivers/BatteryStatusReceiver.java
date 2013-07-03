@@ -24,13 +24,14 @@ import android.content.SharedPreferences.Editor;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 public class BatteryStatusReceiver extends BroadcastReceiver {
 	
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
+
 	private final static int BATTERY_PLUGGED_UNPLUGGED = 0;
 	
 	@Override
@@ -55,7 +56,7 @@ public class BatteryStatusReceiver extends BroadcastReceiver {
 		    		edit.putBoolean("prefs_connect_on_charge_waiting", true);
 		    		edit.commit();
 		    		
-		    		if (MainActivity.DEBUG) Log.d(MainActivity.TAG, "submitting auto connect intent");				    		
+		    		logger.log("BatteryStatusReceiver submitting auto connect intent");				    		
 
 			    	new Handler().postDelayed(new Runnable() {
 
@@ -72,7 +73,7 @@ public class BatteryStatusReceiver extends BroadcastReceiver {
 					    		
 				        		ctx.startService(service);
 				        		
-					    		if (MainActivity.DEBUG) Log.d(MainActivity.TAG, "auto connect intent sent");
+					    		logger.log("BatteryStatusReceiver auto connect intent sent");
 				        	}						        	
 
 				        	edit.putBoolean("prefs_connect_on_charge_waiting", false);
@@ -88,7 +89,7 @@ public class BatteryStatusReceiver extends BroadcastReceiver {
 			edit.putInt("last_battery_status", status);
 			edit.commit();
 
-    		if (MainActivity.DEBUG) Log.d(MainActivity.TAG, "charge status: " + status);
+    		logger.log("BatteryStatusReceiver charge status: " + status);
 		}
 	}
 

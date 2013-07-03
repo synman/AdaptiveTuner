@@ -20,15 +20,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
-import com.shellware.adaptronic.adaptive.tuner.modbus.ConnectedThread;
-import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
-
 import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
+
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger.Level;
+import com.shellware.adaptronic.adaptive.tuner.modbus.ConnectedThread;
+import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 public class BluetoothConnectedThread extends ConnectedThread {
 	
@@ -36,10 +36,9 @@ public class BluetoothConnectedThread extends ConnectedThread {
 		super(handler);
 	}
 
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
-    private BluetoothSocket mmSocket;
+	private BluetoothSocket mmSocket;
     private InputStream mmInStream;
     private OutputStream mmOutStream;
 
@@ -65,13 +64,7 @@ public class BluetoothConnectedThread extends ConnectedThread {
                 // Read from the InputStream
                 bytes = mmInStream.read(buffer);
                                     
-		        if (DEBUG)  {
-	                Log.d(TAG, String.format("Received %d bytes", bytes));
-	                
-//			        for (int x = 0; x < bytes; x++) {
-//			        	Log.d(TAG, String.format("%X", buffer[x]));
-//			        }
-		        }
+		        logger.log(String.format("Received %d bytes", bytes));
                 
                 // Send the obtained bytes to the UI activity
 		        Bundle b = new Bundle();
@@ -97,7 +90,8 @@ public class BluetoothConnectedThread extends ConnectedThread {
     	        Message msg = new Message();
     	        msg.setData(b);
     	        
-    	        if (DEBUG) Log.d(TAG, "Connection lost on read - " + e.getMessage()); 
+    	        logger.log(Level.ERROR, "Connection lost on read - " + e.getMessage()); 
+    	        
     	        handler.sendMessage(msg);
 		        break;
             }
@@ -121,7 +115,7 @@ public class BluetoothConnectedThread extends ConnectedThread {
 	        Message msg = new Message();
 	        msg.setData(b);
 	        
-	        if (DEBUG) Log.d(TAG, "Connection lost on write - " + e.getMessage()); 
+	        logger.log(Level.ERROR, "Connection lost on write - " + e.getMessage()); 
 	        handler.sendMessage(msg);
         }
     }
@@ -130,7 +124,7 @@ public class BluetoothConnectedThread extends ConnectedThread {
     public void cancel() {
     	disconnecting = true;
     	
-        if (DEBUG) Log.d(TAG, "BT Connected Thread Canceled");
+        logger.log("BT Connected Thread Canceled");
 
         if (mmInStream != null) {
             try {mmInStream.close();} catch (Exception e) {}

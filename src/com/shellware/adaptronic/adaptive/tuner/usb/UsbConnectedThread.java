@@ -44,16 +44,15 @@ import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger.Level;
 import com.shellware.adaptronic.adaptive.tuner.modbus.ConnectedThread;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 public class UsbConnectedThread extends ConnectedThread {
 	
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 	
 	public static final int USB_VENDOR_ID 	= 0;
 	public static final int USB_PRODUCT_ID 	= 1;
@@ -80,7 +79,7 @@ public class UsbConnectedThread extends ConnectedThread {
 		mInEndpoint = inEndpoint;
 		mOutEndpoint = outEndpoint;
 		
-		if (DEBUG) Log.d(TAG, "UsbConnectedThread created");
+		logger.log("UsbConnectedThread created");
 		
 		start();
 	}
@@ -90,7 +89,7 @@ public class UsbConnectedThread extends ConnectedThread {
 			mUsbManager = (UsbManager)context.getSystemService(Context.USB_SERVICE);
 		}
 		
-		if (DEBUG) Log.d(TAG, "Checking for connected USB devices");
+		logger.log("Checking for connected USB devices");
 		
     	HashMap<String, UsbDevice> deviceList = mUsbManager.getDeviceList();
     	Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
@@ -98,7 +97,7 @@ public class UsbConnectedThread extends ConnectedThread {
     	while (deviceIterator.hasNext()) {
 			UsbDevice device = deviceIterator.next();
 			
-			if (DEBUG) Log.d(TAG, "Found USB device");
+			logger.log("Found USB device");
 			
 			try {
 
@@ -116,7 +115,7 @@ public class UsbConnectedThread extends ConnectedThread {
                 }
 			
 				if (recognisedDeviceConnector != null) {
-					if (DEBUG) Log.d(TAG, String.format("%s recognised", recognisedDeviceConnector.getConnectorName()));
+					logger.log(String.format("%s recognised", recognisedDeviceConnector.getConnectorName()));
 					
 					UsbDeviceConnection connection = mUsbManager.openDevice(device);
 
@@ -138,10 +137,10 @@ public class UsbConnectedThread extends ConnectedThread {
 							
 							if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
 								if (endpoint.getDirection() == UsbConstants.USB_DIR_IN) {
-									if (DEBUG) Log.d(TAG, "In Endpoint Found");	
+									logger.log("In Endpoint Found");	
 									inEndpoint = endpoint;
 								} else if (endpoint.getDirection() == UsbConstants.USB_DIR_OUT) {
-									if (DEBUG) Log.d(TAG, "Out Endpoint Found");
+									logger.log("Out Endpoint Found");
 									outEndpoint = endpoint;
 								}
 							}
@@ -171,13 +170,7 @@ public class UsbConnectedThread extends ConnectedThread {
 			if (bytes == -1) {
 //				if (DEBUG) Log.d(TAG, "Bulk Transfer In Error");
 			} else {
-		        if (DEBUG)  {
-	                Log.d(TAG, String.format("Received %d bytes", bytes));
-	                
-//			        for (int x = 0; x < bytes; x++) {
-//			        	Log.d(TAG, String.format("%X", buffer[x]));
-//			        }
-		        }
+				logger.log(String.format("Received %d bytes", bytes));
                 
                 // Send the obtained bytes to the connection service
 		        Bundle b = new Bundle();
@@ -201,15 +194,15 @@ public class UsbConnectedThread extends ConnectedThread {
 	
 	public void write(byte[] bytes) {
 		if (mConnection.bulkTransfer(mOutEndpoint, bytes, bytes.length, 5) == -1) {
-			if (DEBUG) Log.d(TAG, "Bulk Transfer Out Error");
+			logger.log(Level.ERROR, "Bulk Transfer Out Error");
 		} else {
-			if (DEBUG) Log.d(TAG, "Bulk Transfer Out Successful");
+			logger.log("Bulk Transfer Out Successful");
 		}
 	}
 	
 	public void cancel() {
 		disconnecting = true;
-        if (DEBUG) Log.d(TAG, "USB Connected Thread Canceled");
+		logger.log("USB Connected Thread Canceled");
 
 	}
 	
@@ -227,7 +220,7 @@ public class UsbConnectedThread extends ConnectedThread {
         Message msg = new Message();
         msg.setData(b);
         
-        if (DEBUG) Log.d(TAG, "Connection error - " + message); 
+        logger.log(Level.ERROR, "UsbConnectedThread Connection error - " + message); 
         handler.sendMessage(msg);
 	}
 }

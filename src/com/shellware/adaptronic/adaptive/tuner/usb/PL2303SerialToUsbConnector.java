@@ -35,16 +35,14 @@ package com.shellware.adaptronic.adaptive.tuner.usb;
 
 import java.io.IOException;
 
-import com.shellware.adaptronic.adaptive.tuner.MainActivity;
-
-import android.hardware.usb.UsbConstants;
 import android.hardware.usb.UsbDeviceConnection;
-import android.util.Log;
+
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger.Level;
 
 public class PL2303SerialToUsbConnector extends UsbDeviceConnector {
 
-	private static final String TAG = MainActivity.TAG;
-	private static final boolean DEBUG = MainActivity.DEBUG;
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
     @Override
     public String getConnectorName() {
@@ -82,10 +80,9 @@ public class PL2303SerialToUsbConnector extends UsbDeviceConnector {
             connection.controlTransfer(VENDOR_WRITE_REQUEST_TYPE, VENDOR_WRITE_REQUEST, 1, 0, null, 0, 100);
             connection.controlTransfer(VENDOR_WRITE_REQUEST_TYPE, VENDOR_WRITE_REQUEST, 2, 0x24, null, 0, 100);
             
-            if (DEBUG) Log.d(TAG, "PL2303 successfully opened");
+            logger.log("PL2303 successfully opened");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.log(Level.ERROR, "unable to initialize PL2303 " + e.getMessage());
 		}
         return true;
 

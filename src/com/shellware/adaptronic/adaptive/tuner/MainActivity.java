@@ -58,13 +58,10 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.Engine;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
-
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -89,6 +86,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.shellware.adaptronic.adaptive.tuner.changelog.ChangeLog;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
+import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger.Level;
 import com.shellware.adaptronic.adaptive.tuner.preferences.AdaptivePreferences;
 import com.shellware.adaptronic.adaptive.tuner.receivers.BatteryStatusReceiver;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
@@ -103,14 +102,11 @@ public class MainActivity 	extends Activity
 							implements ActionBar.TabListener, 
 									   OnClickListener {
 	
-	public static final String TAG = "Adaptive";
-	public static final boolean DEBUG = true;
-
+	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
+	
 	private static final int LONG_PAUSE = 500;
 	private static final int SHORT_PAUSE = 200;
 
-//	private static final int AFR_MIN = 970;
-//	private static final int AFR_MAX = 1970;
 	private static final int AFR_MIN = 800;
 	private static final int AFR_MAX = 1800;
 
@@ -192,13 +188,14 @@ public class MainActivity 	extends Activity
 	private static int tempUomPref = 1;
 	
 	private static boolean wakeLock = true;
+
 	private static boolean afrNotEqualTargetPref = false;
 	private static float afrNotEqualTargetTolerance = 5f;
+	
 	private static boolean waterTempPref = false;
 	private static float minimumWaterTemp = 0f;
 	private static float maximumWaterTemp = 210f;
-//	private static String remoteMacAddr = "";
-//	private static String remoteName = "";
+
 	private static boolean autoConnect = false;
 	private static boolean shuttingDown = false;
 	
@@ -488,12 +485,12 @@ public class MainActivity 	extends Activity
 		connectionServiceConnection = new ServiceConnection() {
 		    public void onServiceConnected(ComponentName className, IBinder service) {
 		        connectionService = ((ConnectionService.ServiceBinder) service).getService();
-		        if (DEBUG) Log.d(TAG, "service bound");
+		        logger.log("service bound");
 		    }
 
 		    public void onServiceDisconnected(ComponentName className) {
 		        connectionService = null;
-		        if (DEBUG) Log.d(TAG, "service unbound");
+		        logger.log("service unbound");
 		    }
 		};
 		
@@ -617,7 +614,7 @@ public class MainActivity 	extends Activity
         String action = getIntent().getAction();
 
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
-        	if (DEBUG) Log.d(TAG, "USB Device Attached");
+        	logger.log("USB Device Attached");
         	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
         }   	
 
@@ -695,7 +692,7 @@ public class MainActivity 	extends Activity
 	    	// show our fuel table fragment if an updated
 	    	// map is available (because we asked it for)
 	    	if (mapMode) {
-	    		if (mapReady) {
+	    		if (mapReady) {	
 	    			// ensure the first map isn't selected if it is not selectable
 	    			if (connectionService != null) {
 	    				if (connectionService.getTuningMode() == 7) {
@@ -712,29 +709,40 @@ public class MainActivity 	extends Activity
         		return;
 	    	}
 	    	
-	    	// show our cranking table
+	    	// show our cranking table (because we asked for it)
 	    	if (crankMode) {
 	    		if (crankReady) {
 	    			if (connectionService != null) {
+		    			// do a couple resets
 	    				fuelData.clear();
-	    				final String[] map = connectionService.getCrankData().toString().split(" ");
-//	    				short cnt = 0;
+
+	    				fuelGrid.setNumColumns(4);
+		    			fuelGridHeaderTop.setVisibility(View.INVISIBLE);
+
+		    			final String[] map = connectionService.getCrankData().toString().split(" ");
+	    				short cnt = 0;
+	    				short temp = -30;
 	    				
-//	    				while (cnt < 64) {
-////	    					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
-////									Integer.parseInt(map[cnt] + map[cnt+1], 16) / 
-////									(connectionService.isCrankMapVE() ? VE_DIVISOR : MS_DIVISOR)));
-//	    					fuelData.add(String.format("%d", Integer.parseInt(map[cnt] + map[cnt+1], 16)));
-//	    					cnt = (short) (cnt + 2);
-//	    				}
-	    				
-	    				for (int x = 0; x < 32; x++) {
-    					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
-								Integer.parseInt(map[x], 16) / 
-								(connectionService.isCrankMapVE() ? VE_DIVISOR : MS_DIVISOR)));
-	    					fuelData.add(String.format("%.2f", val));
+	    				while (cnt < 32) {	    					
+	    					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
+									Integer.parseInt(map[cnt] + map[cnt+1], 16) / 
+									(connectionService.isCrankMapVE() ? VE_DIVISOR : MS_DIVISOR)));
+
+	    					fuelData.add(String.format("%d\u00B0", temp));
+	    					fuelData.add(String.format("%d", Math.round(val)));
+	    					
+	    					final double val2 = Double.parseDouble(String.format(Locale.US, "%.2f", 
+									Integer.parseInt(map[cnt+30] + map[cnt+31], 16) / 
+									(connectionService.isCrankMapVE() ? VE_DIVISOR : MS_DIVISOR)));
+
+	    					fuelData.add(String.format("%d\u00B0", temp + 80));
+	    					fuelData.add(String.format("%d", Math.round(val2)));	
+	    					
+	    					cnt = (short) (cnt + 2);
+	    					temp = (short) (temp + 5);
 	    				}
 	    			}
+	    			
 	    			crankMode = false;
 	    			crankReady = false;
 	    		}
@@ -948,7 +956,7 @@ public class MainActivity 	extends Activity
 	    	}
 
     	} catch (Exception ex) {
-    		Log.d(TAG, "Unknown exception thrown in setCurrentCell");
+    		logger.log(Level.ERROR, "Unknown exception thrown in setCurrentCell - " + ex.getMessage());
     	}
     }
     
@@ -973,12 +981,12 @@ public class MainActivity 	extends Activity
 	
 					fuelData.add(String.format("%.2f", val));
 	
-					if (DEBUG) Log.d(TAG, String.format("%d:%d = %.2f", x, y, val));
+					logger.log(String.format("fuel table %d:%d = %.2f", x, y, val));
 					cnt = (short) (cnt + 2);
 				}
 			}			
 		} catch (Exception ex) {
-			// do nothing
+    		logger.log(Level.ERROR, "Unknown exception thrown in populateFuelTable - " + ex.getMessage());
 		}
 	}
 	
@@ -1015,7 +1023,7 @@ public class MainActivity 	extends Activity
         public void onReceive(Context context, Intent intent) {
             if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction()) &&
             		connectionService != null && connectionService.getState() == State.CONNECTED_USB) {
-    			if (DEBUG) Log.d(TAG, "USB Device Detached");
+    			logger.log("USB Device Detached");
   
     			disconnect();
     			imgStatus.setBackgroundColor(Color.TRANSPARENT);
@@ -1053,7 +1061,7 @@ public class MainActivity 	extends Activity
 	    	
 	    	lvDevices.setAdapter(devices);
     	} catch(Exception ex) {
-    		// do nothing
+    		logger.log(Level.ERROR, "Unknown exception thrown in showDevices - " + ex.getMessage());
     	}
     	
     	if (devices.getCount() > 0) layoutDevices.setVisibility(View.VISIBLE);
@@ -1090,7 +1098,7 @@ public class MainActivity 	extends Activity
     	try {
 			Thread.sleep(millis);
 		} catch (InterruptedException e) {
-			// do nothing
+    		logger.log(Level.ERROR, "Interupted exception thrown in sleep - " + e.getMessage());
 		}
     }
     
@@ -1192,17 +1200,10 @@ public class MainActivity 	extends Activity
 	        		showDevices();
 	        	} else {
 	        		disconnect();
-//	        		Editor edit = prefs.edit();
-//	        		remoteName = "";
-//	        		remoteMacAddr = "";
-//	        		edit.putString("prefs_remote_name", remoteName);
-//	        		edit.putString("prefs_remote_mac", remoteMacAddr);
-//	        		edit.commit();
 	        	}
 	            return true;
 	            
 	        case R.id.menu_usb_connect:
-	        	if (DEBUG) Log.d(TAG, "USB Connect Selected");
 	        	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
 	        	return true;
 	        	
@@ -1295,7 +1296,7 @@ public class MainActivity 	extends Activity
 														 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
 				
 				Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
-				if (DEBUG) Log.d(TAG, logLocation);
+				logger.log("Saving log as: " + logLocation);
 
 				Intent share = new Intent(Intent.ACTION_SEND);
 				share.setType("text/plain");
@@ -1303,6 +1304,7 @@ public class MainActivity 	extends Activity
 				startActivity(Intent.createChooser(share, getText(R.string.share_afr_log_heading)));
 
 			} catch (Exception e) {
+	    		logger.log(Level.ERROR, "Unknown exception thrown in AFR shareLog - " + e.getMessage());
 				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 		}
@@ -1341,7 +1343,7 @@ public class MainActivity 	extends Activity
 														 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
 				
 				Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
-				if (DEBUG) Log.d(TAG, logLocation);
+				logger.log("Saving log as: " + logLocation);
 
 				Intent share = new Intent(Intent.ACTION_SEND);
 				share.setType("text/plain");
@@ -1349,6 +1351,7 @@ public class MainActivity 	extends Activity
 				startActivity(Intent.createChooser(share, getText(R.string.share_log_all_heading)));
 
 			} catch (Exception e) {
+	    		logger.log(Level.ERROR, "Unknown exception thrown in setCurrentCell");
 				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 		}
@@ -1431,6 +1434,9 @@ public class MainActivity 	extends Activity
 		
 		if (view.getId() == R.id.radioMapOne || view.getId() == R.id.radioMapTwo) {
 			
+			// do a couple resets
+			fuelGrid.setNumColumns(17);
+			fuelGridHeaderTop.setVisibility(View.VISIBLE);
 			radioMapCrank.setChecked(false);
 
 			final RadioButton radio = (RadioButton) view;
@@ -1579,6 +1585,7 @@ public class MainActivity 	extends Activity
 						try {
 							tvv = Float.parseFloat(userInput.getText().toString());
 						} catch (Exception ex) {
+				    		logger.log(Level.ERROR, "Bad user input from cellValueWidget - " + ex.getMessage());
 							return;
 						}
 						
@@ -1611,7 +1618,7 @@ public class MainActivity 	extends Activity
 						
 						// determine offset
 						final int offset = position / 17 + 1;
-						if (DEBUG) Log.d(TAG, "Position: " + (position - offset));
+						logger.log("Fuel Table Position: " + (position - offset));
 						
 						//TODO: what about map 2 offset?
 						connectionService.updateRegister((short) (position - offset), value);
