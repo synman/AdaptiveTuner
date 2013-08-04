@@ -41,7 +41,7 @@ public class AdaptiveLogger {
 	
 	// set releaseVersion to true when releasing Adaptive Tuner
 	// to Google Play
-	private static boolean releaseVersion = false;
+	private static boolean releaseVersion = true;
 	
 	private Level level = DEFAULT_LEVEL;
 	private String tag = DEFAULT_TAG;

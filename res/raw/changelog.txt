@@ -19,6 +19,17 @@
     </style>
   </head>
   <body>
+$ 1.2.6
+  % Version 1.2.6
+  _ 2013-08-04
+  ! Fuel Cut Switch
+  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
+  	<p/>   	
+  	* Cranking fuel table (initial / unstable)
+	* Additional RS232 to USB adapters (unstable)
+	* Fuel cut switch (initial) 
+	* <b>Fuel Cut will currently reset your master fuel trim to ZERO</b>
+	* Disabled editing for fuel map 2 and crank table (bug)
 $ 1.2.5
   % Version 1.2.5
   _ 2013-06-21

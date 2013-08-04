@@ -724,7 +724,7 @@ public class MainActivity 	extends Activity
 	    				short temp = -30;
 	    				
 	    				//TODO: this is currently broke (work in progress)
-	    				while (cnt < 32) {	    					
+	    				while (cnt < 30) {	    					
 	    					final double val = Double.parseDouble(String.format(Locale.US, "%.2f", 
 									Integer.parseInt(map[cnt] + map[cnt+1], 16) / 
 									(connectionService.isCrankMapVE() ? VE_DIVISOR : MS_DIVISOR)));
@@ -1553,6 +1553,9 @@ public class MainActivity 	extends Activity
 			if (connectionService == null || connectionService.getState() == State.DISCONNECTED) {
 				return true;
 			}
+			
+			//TODO: add support for more maps
+			if (!radioMapOne.isChecked()) return true;
 			
 			final TextView tv = (TextView) view;
 //			tv.setBackgroundColor(Color.GRAY);

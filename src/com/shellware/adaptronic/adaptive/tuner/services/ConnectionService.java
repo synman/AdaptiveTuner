@@ -63,8 +63,8 @@ public class ConnectionService extends Service {
     public final static String  		ACTION_DISCONNECT = "com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT";
     public final static String 	   	   ACTION_UI_INACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE";
     public final static String   	 	 ACTION_UI_ACTIVE = "com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE";
-    public final static String 	   ACTION_READ_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.READ_FUEL_MAP";
-    public final static String ACTION_READ_CRANKING_MAP = "com.shellware.adaptronic.adaptive.tuner.action.READ_CRANKING_MAP";
+    public final static String 	   	 ACTION_READ_FUEL_MAP = "com.shellware.adaptronic.adaptive.tuner.action.READ_FUEL_MAP";
+    public final static String 	 ACTION_READ_CRANKING_MAP = "com.shellware.adaptronic.adaptive.tuner.action.READ_CRANKING_MAP";
     public final static String 	 	 ACTION_SAVE_ECU_FILE = "com.shellware.adaptronic.adaptive.tuner.action.SAVE_ECU_FILE";
 
 	public static final short CONNECTION_ERROR = 1;
