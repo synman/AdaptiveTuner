@@ -6,6 +6,7 @@ Contributors
   Shell M. Shrader (Maintainer)
   Evan H. Dekker (initial OTG implementation)
   Matt Waddilove (RS232 Converter Support)
+  Tim Kent (AUX-T Logging)
 
 License
 =======
