@@ -209,7 +209,21 @@ public class AdaptivePreferences extends PreferenceActivity {
 			        wakeLockPref.setTitle(R.string.prefs_connection_keep_device_awake);
 				        
 		        connectionPrefCat.addPreference(wakeLockPref);		       
-		        		   
+		 
+        	PreferenceCategory displayPrefCat = new PreferenceCategory(ctx);
+        	displayPrefCat.setTitle(R.string.prefs_display_category);
+        	generalPref.addPreference(displayPrefCat);
+	        
+		        CheckBoxPreference showAuxTPref = new CheckBoxPreference(ctx);
+		        showAuxTPref.setPersistent(true);
+		        showAuxTPref.setKey("prefs_show_auxt");
+		        showAuxTPref.setDefaultValue(false);
+		        showAuxTPref.setSummaryOn(R.string.enabled);
+		        showAuxTPref.setSummaryOff(R.string.disabled);
+		        showAuxTPref.setTitle(R.string.prefs_show_auxt_on_adaptive_tab);
+			        
+		        displayPrefCat.addPreference(showAuxTPref);
+
 	        setPreferenceScreen(generalPref);
         }
     }

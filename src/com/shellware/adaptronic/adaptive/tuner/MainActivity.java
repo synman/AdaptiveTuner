@@ -48,7 +48,6 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.hardware.usb.UsbManager;
 import android.media.AudioManager;
@@ -70,7 +69,6 @@ import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -186,6 +184,7 @@ public class MainActivity 	extends Activity
 //	private static int screenHeight = 0;
 	
 	private static int tempUomPref = 1;
+	private static boolean displayAuxTPref = false;
 	
 	private static boolean wakeLock = true;
 
@@ -262,12 +261,12 @@ public class MainActivity 	extends Activity
 	
 	private BatteryStatusReceiver batteryStatusReceiver;
 	
-	@Override
-	public void onAttachedToWindow() {
-	    super.onAttachedToWindow();
-	    Window window = getWindow();
-	    window.setFormat(PixelFormat.RGBA_8888);
-	}
+//	@Override
+//	public void onAttachedToWindow() {
+//	    super.onAttachedToWindow();
+//	    Window window = getWindow();
+//	    window.setFormat(PixelFormat.RGBA_8888);
+//	}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -381,7 +380,9 @@ public class MainActivity 	extends Activity
         dataArray.add("AFR\n --.- (--.-)");
         dataArray.add("TAFR\n --.-");
         dataArray.add("WAT\n ---\u00B0");
-        dataArray.add("AUXT\n ---\u00B0");
+
+        if (displayAuxTPref) dataArray.add("AUXT\n ---\u00B0");
+
         dataArray.add("TPS\n---%");
         dataArray.add("KNOCK\n---");
         dataArray.add("BAT\n--.-v");
@@ -538,6 +539,8 @@ public class MainActivity 	extends Activity
     	
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
     	if (connectionService != null) connectionService.setTempUomPref(tempUomPref);
+
+    	displayAuxTPref = prefs.getBoolean("prefs_show_auxt", false);
     	
     	wakeLock = prefs.getBoolean("prefs_wake_lock", true);
     	if (connectionService != null) connectionService.setWakeLock(wakeLock);
@@ -845,7 +848,9 @@ public class MainActivity 	extends Activity
 	    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
 	    		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
 	    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
-	    		dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
+	    		
+	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
+	    		
 	    		dataArray.add(String.format("TPS\n%d%%", lastTPS));
 	    		dataArray.add(String.format("KNOCK\n%d", knock));
 	    		dataArray.add(String.format("BAT\n%.1fv", volts));

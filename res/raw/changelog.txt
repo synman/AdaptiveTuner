@@ -19,6 +19,14 @@
     </style>
   </head>
   <body>
+$ 1.2.7
+  % Version 1.2.7
+  _ 2013-08-19
+  ! AUX-T Display & Logging
+  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
+  	<p/>   	
+  	* Added logging and display of AUX-T (Tim Kent)
+  	* Added Preference Checkbox for displaying AUX-T on the Adaptive Tab
 $ 1.2.6
   % Version 1.2.6
   _ 2013-08-04
