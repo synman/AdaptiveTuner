@@ -39,6 +39,7 @@ public class LogItems {
 		LogItem newItem = newLogItem();
 		
 		newItem.afr = item.afr;
+		newItem.auxt = item.auxt;
 		newItem.closedLoop = item.closedLoop;
 		newItem.learningFLoad = item.learningFLoad;
 		newItem.learningFRpm = item.learningFRpm;
@@ -67,6 +68,7 @@ public class LogItems {
 		private int map = 0;
 		private int wat = 0;
 		private int mat = 0;
+		private int auxt = 0;
 		private int tps = 0;		
 		private int knock = 0;
 		
@@ -115,6 +117,14 @@ public class LogItems {
 
 		public void setMat(final int mat) {
 			this.mat = mat;
+		}
+
+		public int getAuxt() {
+			return auxt;
+		}
+
+		public void setAuxt(final int auxt) {
+			this.auxt = auxt;
 		}
 
 		public int getTps() {
@@ -227,7 +237,7 @@ public class LogItems {
 
 		public String getLogString() {
 			
-			final String str = String.format(Locale.US, "%d, %d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d, %d, %.1f\n", 
+			final String str = String.format(Locale.US, "%d, %d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d, %d, %d, %.1f\n", 
 												timestamp,
 												rpm,
 												map,
@@ -238,6 +248,7 @@ public class LogItems {
 												tps,
 												wat,
 												mat,
+												auxt,
 												knock,
 												volts);
 			

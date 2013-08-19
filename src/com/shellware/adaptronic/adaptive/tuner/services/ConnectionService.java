@@ -898,6 +898,7 @@ public class ConnectionService extends Service {
     		logItem.setMap(Integer.parseInt(buf[5] + buf[6], 16));
     		logItem.setMat(getTemperatureValue(buf[7] + buf[8]));
     		logItem.setWat(getTemperatureValue(buf[9] + buf[10]));
+    		logItem.setAuxt(getTemperatureValue(buf[11] + buf[12]));
     		
     		logItem.setReferenceAfr(Integer.parseInt(buf[13], 16) / 10f);
     		logItem.setAfr(Integer.parseInt(buf[14], 16) / 10f);

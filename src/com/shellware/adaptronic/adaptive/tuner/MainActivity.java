@@ -114,7 +114,7 @@ public class MainActivity 	extends Activity
 	private static final float VE_DIVISOR = 128f;
 	private static final float MS_DIVISOR = 1500f;
 	
-	private static final String LOG_HEADER = "timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat, knock, volts\n";
+	private static final String LOG_HEADER = "timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat, auxt, knock, volts\n";
 	
 	private final Fragment[] frags = { null, null, null };
 	private static final short FRAGS_COUNT = 3;
@@ -381,6 +381,7 @@ public class MainActivity 	extends Activity
         dataArray.add("AFR\n --.- (--.-)");
         dataArray.add("TAFR\n --.-");
         dataArray.add("WAT\n ---\u00B0");
+        dataArray.add("AUXT\n ---\u00B0");
         dataArray.add("TPS\n---%");
         dataArray.add("KNOCK\n---");
         dataArray.add("BAT\n--.-v");
@@ -784,6 +785,7 @@ public class MainActivity 	extends Activity
 			final int tps = item.getTps(); lastTPS = tps;
 			final int mat = item.getMat();
 			final int wat = item.getWat();
+			final int auxt = item.getAuxt();
 			final int map = item.getMap(); lastMAP = map;
 			
 			final int rpm = item.getRpm();
@@ -843,6 +845,7 @@ public class MainActivity 	extends Activity
 	    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
 	    		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
 	    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
+	    		dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
 	    		dataArray.add(String.format("TPS\n%d%%", lastTPS));
 	    		dataArray.add(String.format("KNOCK\n%d", knock));
 	    		dataArray.add(String.format("BAT\n%.1fv", volts));
