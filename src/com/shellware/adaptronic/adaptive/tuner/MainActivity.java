@@ -377,11 +377,12 @@ public class MainActivity 	extends Activity
         dataArray.add("RPM\n ----");
         dataArray.add("MAP\n ---");
         dataArray.add("MAT\n ---\u00B0");
+
+        if (displayAuxTPref) dataArray.add("AUXT\n ---\u00B0");
+
         dataArray.add("AFR\n --.- (--.-)");
         dataArray.add("TAFR\n --.-");
         dataArray.add("WAT\n ---\u00B0");
-
-        if (displayAuxTPref) dataArray.add("AUXT\n ---\u00B0");
 
         dataArray.add("TPS\n---%");
         dataArray.add("KNOCK\n---");
@@ -845,11 +846,12 @@ public class MainActivity 	extends Activity
 				dataArray.add(String.format("RPM\n%d", lastRPM));
 	    		dataArray.add(String.format("MAP\n%d kPa", map));
 	    		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
+
+	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
+
 	    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
 	    		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
 	    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
-	    		
-	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
 	    		
 	    		dataArray.add(String.format("TPS\n%d%%", lastTPS));
 	    		dataArray.add(String.format("KNOCK\n%d", knock));
