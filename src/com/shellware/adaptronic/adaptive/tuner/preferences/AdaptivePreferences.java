@@ -51,8 +51,8 @@ public class AdaptivePreferences extends PreferenceActivity {
 	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
     
-    public static final float MIN_WATER_TEMP_CELCIUS = 72f;
-    public static final float MAX_WATER_TEMP_CELCIUS = 98f;
+    public static final float MIN_WATER_TEMP_CELSIUS = 72f;
+    public static final float MAX_WATER_TEMP_CELSIUS = 98f;
     
     public static final float MIN_WATER_TEMP_FAHRENHEIT = 160f;
     public static final float MAX_WATER_TEMP_FAHRENHEIT = 210f;
@@ -131,8 +131,8 @@ public class AdaptivePreferences extends PreferenceActivity {
 					        // reset our water temp alarms as they are no longer valid
 					        switch (Integer.parseInt((String) arg1)) {
 						        case 0:
-							        edit.putFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS);
-							        edit.putFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS);
+							        edit.putFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELSIUS);
+							        edit.putFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELSIUS);
 							        break;
 						        case 1:
 							        edit.putFloat("prefs_min_water_temp", MIN_WATER_TEMP_FAHRENHEIT);
@@ -495,18 +495,18 @@ public class AdaptivePreferences extends PreferenceActivity {
 			        });
 			        
 			        switch (Integer.parseInt(prefs.getString("prefs_uom_temp", "1"))) {
-			        	case 0:  // celcius
-					        minWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS)));
+			        	case 0:  // celsius
+					        minWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELSIUS)));
 					        minWaterTempPref.setMinValue(-20f);
 					        minWaterTempPref.setMaxValue(120f);
 					        minWaterTempPref.setScale(2.5f);
-					        minWaterTempPref.setDefaultValue(prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELCIUS));
+					        minWaterTempPref.setDefaultValue(prefs.getFloat("prefs_min_water_temp", MIN_WATER_TEMP_CELSIUS));
 	
-					        maxWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS)));
+					        maxWaterTempPref.setSummary(String.format("%.0f\u00B0", prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELSIUS)));
 					        maxWaterTempPref.setMinValue(-20f);
 					        maxWaterTempPref.setMaxValue(120f);
 					        maxWaterTempPref.setScale(2.5f);
-					        maxWaterTempPref.setDefaultValue(prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELCIUS));
+					        maxWaterTempPref.setDefaultValue(prefs.getFloat("prefs_max_water_temp", MAX_WATER_TEMP_CELSIUS));
 					        
 					        break;
 			        		

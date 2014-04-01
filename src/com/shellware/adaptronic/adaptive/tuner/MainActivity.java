@@ -559,11 +559,11 @@ public class MainActivity 	extends Activity
     	// need to set gauge scale based on uom selected
     	switch (tempUomPref) {
     		case 0:
-    	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_CELCIUS);
-    	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_CELCIUS);
+    	    	minimumWaterTemp = prefs.getFloat("prefs_min_water_temp", AdaptivePreferences.MIN_WATER_TEMP_CELSIUS);
+    	    	maximumWaterTemp = prefs.getFloat("prefs_max_water_temp", AdaptivePreferences.MAX_WATER_TEMP_CELSIUS);
 
     	        iatNeedle.setMaxValue(100);
-    	        imgIat.setImageResource(R.drawable.iatgauge_celcius);
+    	        imgIat.setImageResource(R.drawable.iatgauge_celsius);
     	        break;
 
     		case 1:

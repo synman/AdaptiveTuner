@@ -19,7 +19,7 @@
 <resources>
     
 	<string-array name="temperature_uom_names">
-		<item>Celcius</item>
+		<item>Celsius</item>
 		<item>Fahrenheit</item>
 <!-- 		<item>Kelvin</item>
 		<item>Newton</item> -->
