@@ -63,12 +63,16 @@ import android.speech.tts.TextToSpeech.OnInitListener;
 import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
 import android.util.TypedValue;
 import android.view.Display;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -219,12 +223,54 @@ public class MainActivity 	extends Activity
 	private ArrayAdapter<String> fuelDataTop;
 	private ArrayAdapter<String> fuelData;
 
-//	private static final int SWIPE_MIN_DISTANCE = 120;
-//	private static final int SWIPE_MAX_OFF_PATH = 250;
-//	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
-//
-//	private GestureDetector gestureDetector;
-//	View.OnTouchListener gestureListener;
+	SimpleOnGestureListener simpleOnGestureListener = new SimpleOnGestureListener() {
+
+        private static final int SWIPE_THRESHOLD = 100;
+        private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+        
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            boolean result = false;
+            try {
+                float diffY = e2.getY() - e1.getY();
+                float diffX = e2.getX() - e1.getX();
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                    	int itemPosition = getActionBar().getSelectedNavigationIndex();
+                        if (diffX > 0) {
+                        	if (itemPosition == 0) itemPosition = 3;                        	
+                        	itemPosition--;
+                        } else {
+                        	if (itemPosition == 2) itemPosition = -1;                        	
+                        	itemPosition++;
+                        }
+                    	getActionBar().setSelectedNavigationItem(itemPosition);                    	
+                    }
+                    result = true;
+                } 
+                else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffY > 0) {
+                            // do nothing
+                        } else {
+                            //do nothing
+                        }
+                    }
+//                    result = true;
+
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+            return result;
+        }
+	};
+	
+   private GestureDetector gestureDetector = new GestureDetector(simpleOnGestureListener);
+    
+   @Override
+   public boolean onTouchEvent(MotionEvent event) {
+    // TODO Auto-generated method stub
+      return gestureDetector.onTouchEvent(event);
+   }
 		
     // TextToSpeech
     private static TextToSpeech speaker;
@@ -348,6 +394,7 @@ public class MainActivity 	extends Activity
             bar.addTab(bar.newTab().setText(R.string.tab_gauges).setTabListener(this), false);
             bar.addTab(bar.newTab().setText(R.string.tab_fuel_map).setTabListener(this), false);
         }
+        
 
         txtData = (TextView) findViewById(R.id.txtData);
         lvDevices = (ListView) findViewById(R.id.lvDevices);
@@ -447,6 +494,13 @@ public class MainActivity 	extends Activity
         
         // lotsa stuff happens here
         fuelGrid.setOnItemLongClickListener(cellEditListener);
+        fuelGrid.setOnTouchListener(new OnTouchListener () {
+
+			public boolean onTouch(View v, MotionEvent event) {
+				// TODO Auto-generated method stub
+				return gestureDetector.onTouchEvent(event);
+			}
+		});
         
         fuelGridHeaderTop = (GridView) findViewById(R.id.gridFuelHeaderTop);
         fuelDataTop = new ArrayAdapter<String>(this, R.layout.tiny_list_item_bold);
@@ -1380,21 +1434,21 @@ public class MainActivity 	extends Activity
 //        dataArray.add("TPS\n90%");
 //        dataArray.add("KNOCK\n0");
 //        dataArray.add("BAT\n14.1v");
-		
-		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
+
+//		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
 		ft.show(frags[tab.getPosition()]);
 	}
 	
 	public void onTabUnselected(Tab tab, FragmentTransaction ft) {
 
-		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
+//		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
 		ft.hide(frags[tab.getPosition()]);
 	}
 	
 	
 	public void onTabSelected(Tab tab, FragmentTransaction ft) {
 		
-		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
+//		ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
 		if (tab.getPosition() == 2) getFuelMaps();
 		ft.show(frags[tab.getPosition()]);
 		
@@ -1556,6 +1610,11 @@ public class MainActivity 	extends Activity
 	
 	private OnItemLongClickListener cellEditListener = new OnItemLongClickListener() {
 		public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+
+			// bail if fuel grid not active
+			if (getActionBar().getSelectedNavigationIndex() != 2) return true;
+			
+        	Toast.makeText(getApplicationContext(), "cell clicked", Toast.LENGTH_LONG).show();
 
 			// bail if not connected
 			if (connectionService == null || connectionService.getState() == State.DISCONNECTED) {
