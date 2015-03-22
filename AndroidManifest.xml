@@ -18,13 +18,13 @@
  -->
  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shellware.adaptronic.adaptive.tuner"
-    android:versionCode="2012"
-    android:versionName="1.2.7"
+    android:versionCode="2013"
+    android:versionName="1.2.8"
     android:installLocation="preferExternal">
 
     <uses-sdk
         android:minSdkVersion="12"
-        android:targetSdkVersion="17" />
+        android:targetSdkVersion="21" />
     
 	<uses-permission android:name="android.permission.WAKE_LOCK"/>  
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -61,7 +61,7 @@
         
         <service 
             android:name=".services.ConnectionService" 
-            android:exported="false">
+            android:exported="true">
 			<intent-filter>
 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.CONNECT_BT" />
  			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.CONNECT_USB" />

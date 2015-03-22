@@ -672,15 +672,18 @@ public class MainActivity 	extends Activity
 
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
         	AdaptiveLogger.log("USB Device Attached");
-        	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
+        	Intent intent = new Intent(ConnectionService.ACTION_CONNECT_USB);
+        	intent.setPackage(ctx.getPackageName());
+        	startService(intent);	
         }   	
 
         // refresh the screen (atleast) once
         refreshHandler = new Handler();
 		refreshHandler.postDelayed(RefreshRunnable, LONG_PAUSE);
 		
-		startService(new Intent(ConnectionService.ACTION_UI_ACTIVE));
-	}
+		Intent intent = new Intent(ConnectionService.ACTION_UI_ACTIVE);
+		intent.setPackage(ctx.getPackageName());
+		startService(intent);	}
 
     @Override
     protected void onPause() {
@@ -689,7 +692,11 @@ public class MainActivity 	extends Activity
     	refreshHandler.removeCallbacks(RefreshRunnable);
     	refreshHandler = null;
     	
-    	if (!shuttingDown) startService(new Intent(ConnectionService.ACTION_UI_INACTIVE));
+    	if (!shuttingDown) {
+    		Intent intent = new Intent(ConnectionService.ACTION_UI_INACTIVE);
+    		intent.setPackage(ctx.getPackageName());
+    		startService(intent);
+    	}
     }
     
     @Override
@@ -1056,7 +1063,10 @@ public class MainActivity 	extends Activity
 	private void populateCrankTable() {
     	crankReady = false;
     	crankMode = true;
-    	startService(new Intent(ConnectionService.ACTION_READ_CRANKING_MAP));	    	
+    	
+		Intent intent = new Intent(ConnectionService.ACTION_READ_CRANKING_MAP);
+		intent.setPackage(ctx.getPackageName());
+		startService(intent);
 	}
 	
     private String getTemperatureSymbol() {
@@ -1135,6 +1145,7 @@ public class MainActivity 	extends Activity
     	if (progress != null && progress.isShowing()) return;
     	
     	Intent service = new Intent(ConnectionService.ACTION_CONNECT_BT);
+    	service.setPackage(ctx.getPackageName());
     	service.putExtra("name", name);
     	service.putExtra("addr", macAddr);
     	
@@ -1153,7 +1164,9 @@ public class MainActivity 	extends Activity
     	if (progress != null && progress.isShowing()) progress.dismiss();
     	imgStatus.setBackgroundColor(Color.TRANSPARENT);				
 
-		startService(new Intent(ConnectionService.ACTION_DISCONNECT));
+    	Intent intent = new Intent(ConnectionService.ACTION_DISCONNECT);
+    	intent.setPackage(ctx.getPackageName());
+    	startService(intent);
     }
     
     @SuppressWarnings("unused")
@@ -1267,7 +1280,9 @@ public class MainActivity 	extends Activity
 	            return true;
 	            
 	        case R.id.menu_usb_connect:
-	        	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
+	        	Intent intent = new Intent(ConnectionService.ACTION_CONNECT_USB);
+	        	intent.setPackage(ctx.getPackageName());
+	        	startService(intent);
 	        	return true;
 	        	
 	        case R.id.menu_prefs:
@@ -1288,6 +1303,7 @@ public class MainActivity 	extends Activity
 		    	progress.setCancelable(false);
 
 		    	final Intent sm = new Intent(ConnectionService.ACTION_SAVE_ECU_FILE);
+		    	sm.setPackage(ctx.getPackageName());
 	        	sm.putExtra("map_filename", saveName);
 		    	
 	        	startService(sm);	
@@ -1470,7 +1486,9 @@ public class MainActivity 	extends Activity
 	    										getResources().getString(R.string.read_fuel_map_message) + " ...");
 	    	progress.setCancelable(false);
 	    	
-        	startService(new Intent(ConnectionService.ACTION_READ_FUEL_MAP));	
+        	Intent intent = new Intent(ConnectionService.ACTION_READ_FUEL_MAP);
+        	intent.setPackage(ctx.getPackageName());
+        	startService(intent);	
 		} else {
 			final int rpmStepSize = connectionService != null ? connectionService.getRpmStepSize() : 500;
 			
@@ -1613,8 +1631,6 @@ public class MainActivity 	extends Activity
 
 			// bail if fuel grid not active
 			if (getActionBar().getSelectedNavigationIndex() != 2) return true;
-			
-        	Toast.makeText(getApplicationContext(), "cell clicked", Toast.LENGTH_LONG).show();
 
 			// bail if not connected
 			if (connectionService == null || connectionService.getState() == State.DISCONNECTED) {
@@ -1632,7 +1648,7 @@ public class MainActivity 	extends Activity
 	    	// get edit_cell_dialog.xml view
 	    	final LayoutInflater li = LayoutInflater.from(ctx);
 	    	
-	    	final View promptsView = li.inflate(R.layout.edit_cell_dialog, null);
+	    	final View promptsView = li.inflate(R.layout.edit_cell_dialog, parent, false);
     		alertDialogBuilder.setView(promptsView);
 	    	
 	    	final CellValueWidget cellValueWidget = (CellValueWidget) promptsView.findViewById(R.id.cellValueWidget1);
