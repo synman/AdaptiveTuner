@@ -47,10 +47,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 	
     // Local Bluetooth adapter
 //    private static BluetoothAdapter bta = null;
-    
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
-    
     public static final float MIN_WATER_TEMP_CELSIUS = 72f;
     public static final float MAX_WATER_TEMP_CELSIUS = 98f;
     
@@ -63,7 +60,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 //    	requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
     	super.onCreate(savedInstanceState);
         
-        logger.log("Preferences onCreate");
+        AdaptiveLogger.log("Preferences onCreate");
 
         // Get local Bluetooth adapter
 //        bta = BluetoothAdapter.getDefaultAdapter();
@@ -95,7 +92,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-	    logger.log("Preferences onResume");
+	    AdaptiveLogger.log("Preferences onResume");
 	}
 
 	public static class GeneralFragment extends PreferenceFragment {

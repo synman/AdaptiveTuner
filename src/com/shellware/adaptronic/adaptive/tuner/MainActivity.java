@@ -100,8 +100,6 @@ public class MainActivity 	extends Activity
 							implements ActionBar.TabListener, 
 									   OnClickListener {
 	
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
-	
 	private static final int LONG_PAUSE = 500;
 	private static final int SHORT_PAUSE = 200;
 
@@ -488,12 +486,12 @@ public class MainActivity 	extends Activity
 		connectionServiceConnection = new ServiceConnection() {
 		    public void onServiceConnected(ComponentName className, IBinder service) {
 		        connectionService = ((ConnectionService.ServiceBinder) service).getService();
-		        logger.log("service bound");
+		        AdaptiveLogger.log("service bound");
 		    }
 
 		    public void onServiceDisconnected(ComponentName className) {
 		        connectionService = null;
-		        logger.log("service unbound");
+		        AdaptiveLogger.log("service unbound");
 		    }
 		};
 		
@@ -619,7 +617,7 @@ public class MainActivity 	extends Activity
         String action = getIntent().getAction();
 
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) { 
-        	logger.log("USB Device Attached");
+        	AdaptiveLogger.log("USB Device Attached");
         	startService(new Intent(ConnectionService.ACTION_CONNECT_USB));	
         }   	
 
@@ -967,7 +965,7 @@ public class MainActivity 	extends Activity
 	    	}
 
     	} catch (Exception ex) {
-    		logger.log(Level.ERROR, "Unknown exception thrown in setCurrentCell - " + ex.getMessage());
+    		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in setCurrentCell - " + ex.getMessage());
     	}
     }
     
@@ -992,12 +990,12 @@ public class MainActivity 	extends Activity
 	
 					fuelData.add(String.format("%.2f", val));
 	
-					logger.log(String.format("fuel table %d:%d = %.2f", x, y, val));
+					AdaptiveLogger.log(String.format(Locale.US, "fuel table %d:%d = %.2f", x, y, val));
 					cnt = (short) (cnt + 2);
 				}
 			}			
 		} catch (Exception ex) {
-    		logger.log(Level.ERROR, "Unknown exception thrown in populateFuelTable - " + ex.getMessage());
+    		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in populateFuelTable - " + ex.getMessage());
 		}
 	}
 	
@@ -1034,7 +1032,7 @@ public class MainActivity 	extends Activity
         public void onReceive(Context context, Intent intent) {
             if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(intent.getAction()) &&
             		connectionService != null && connectionService.getState() == State.CONNECTED_USB) {
-    			logger.log("USB Device Detached");
+    			AdaptiveLogger.log("USB Device Detached");
   
     			disconnect();
     			imgStatus.setBackgroundColor(Color.TRANSPARENT);
@@ -1072,7 +1070,7 @@ public class MainActivity 	extends Activity
 	    	
 	    	lvDevices.setAdapter(devices);
     	} catch(Exception ex) {
-    		logger.log(Level.ERROR, "Unknown exception thrown in showDevices - " + ex.getMessage());
+    		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in showDevices - " + ex.getMessage());
     	}
     	
     	if (devices.getCount() > 0) layoutDevices.setVisibility(View.VISIBLE);
@@ -1109,7 +1107,7 @@ public class MainActivity 	extends Activity
     	try {
 			Thread.sleep(millis);
 		} catch (InterruptedException e) {
-    		logger.log(Level.ERROR, "Interupted exception thrown in sleep - " + e.getMessage());
+    		AdaptiveLogger.log(Level.ERROR, "Interupted exception thrown in sleep - " + e.getMessage());
 		}
     }
     
@@ -1307,7 +1305,7 @@ public class MainActivity 	extends Activity
 														 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
 				
 				Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
-				logger.log("Saving log as: " + logLocation);
+				AdaptiveLogger.log("Saving log as: " + logLocation);
 
 				Intent share = new Intent(Intent.ACTION_SEND);
 				share.setType("text/plain");
@@ -1315,7 +1313,7 @@ public class MainActivity 	extends Activity
 				startActivity(Intent.createChooser(share, getText(R.string.share_afr_log_heading)));
 
 			} catch (Exception e) {
-	    		logger.log(Level.ERROR, "Unknown exception thrown in AFR shareLog - " + e.getMessage());
+	    		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in AFR shareLog - " + e.getMessage());
 				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 		}
@@ -1354,7 +1352,7 @@ public class MainActivity 	extends Activity
 														 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
 				
 				Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
-				logger.log("Saving log as: " + logLocation);
+				AdaptiveLogger.log("Saving log as: " + logLocation);
 
 				Intent share = new Intent(Intent.ACTION_SEND);
 				share.setType("text/plain");
@@ -1362,7 +1360,7 @@ public class MainActivity 	extends Activity
 				startActivity(Intent.createChooser(share, getText(R.string.share_log_all_heading)));
 
 			} catch (Exception e) {
-	    		logger.log(Level.ERROR, "Unknown exception thrown in setCurrentCell");
+	    		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in setCurrentCell");
 				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 		}
@@ -1599,7 +1597,7 @@ public class MainActivity 	extends Activity
 						try {
 							tvv = Float.parseFloat(userInput.getText().toString());
 						} catch (Exception ex) {
-				    		logger.log(Level.ERROR, "Bad user input from cellValueWidget - " + ex.getMessage());
+				    		AdaptiveLogger.log(Level.ERROR, "Bad user input from cellValueWidget - " + ex.getMessage());
 							return;
 						}
 						
@@ -1632,7 +1630,7 @@ public class MainActivity 	extends Activity
 						
 						// determine offset
 						final int offset = position / 17 + 1;
-						logger.log("Fuel Table Position: " + (position - offset));
+						AdaptiveLogger.log("Fuel Table Position: " + (position - offset));
 						
 						//TODO: what about map 2 offset?
 						connectionService.updateRegister((short) (position - offset), value);

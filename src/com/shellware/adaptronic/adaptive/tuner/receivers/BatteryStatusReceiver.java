@@ -29,8 +29,6 @@ import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 import com.shellware.adaptronic.adaptive.tuner.services.ConnectionService;
 
 public class BatteryStatusReceiver extends BroadcastReceiver {
-	
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
 	private final static int BATTERY_PLUGGED_UNPLUGGED = 0;
 	
@@ -56,7 +54,7 @@ public class BatteryStatusReceiver extends BroadcastReceiver {
 		    		edit.putBoolean("prefs_connect_on_charge_waiting", true);
 		    		edit.commit();
 		    		
-		    		logger.log("BatteryStatusReceiver submitting auto connect intent");				    		
+		    		AdaptiveLogger.log("BatteryStatusReceiver submitting auto connect intent");				    		
 
 			    	new Handler().postDelayed(new Runnable() {
 
@@ -73,7 +71,7 @@ public class BatteryStatusReceiver extends BroadcastReceiver {
 					    		
 				        		ctx.startService(service);
 				        		
-					    		logger.log("BatteryStatusReceiver auto connect intent sent");
+					    		AdaptiveLogger.log("BatteryStatusReceiver auto connect intent sent");
 				        	}						        	
 
 				        	edit.putBoolean("prefs_connect_on_charge_waiting", false);
@@ -89,7 +87,7 @@ public class BatteryStatusReceiver extends BroadcastReceiver {
 			edit.putInt("last_battery_status", status);
 			edit.commit();
 
-    		logger.log("BatteryStatusReceiver charge status: " + status);
+    		AdaptiveLogger.log("BatteryStatusReceiver charge status: " + status);
 		}
 	}
 

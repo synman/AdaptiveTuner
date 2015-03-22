@@ -27,8 +27,12 @@ import android.util.Log;
  *
  */
 
-public class AdaptiveLogger {
+public final class AdaptiveLogger {
 	
+	private AdaptiveLogger() {
+		super();
+	}
+
 	public static enum Level {
 		DEBUG,
 		INFO,
@@ -41,32 +45,27 @@ public class AdaptiveLogger {
 	
 	// set releaseVersion to true when releasing Adaptive Tuner
 	// to Google Play
-	private static boolean releaseVersion = true;
+	private static boolean releaseVersion = false;
 	
-	private Level level = DEFAULT_LEVEL;
-	private String tag = DEFAULT_TAG;
-	
-	public AdaptiveLogger() {	
-	}
-	
-	public AdaptiveLogger(final Level level, final String tag) {
-		this.level = level;
-		this.tag = tag;
-	}
+	private static Level level = DEFAULT_LEVEL;
+	private static String tag = DEFAULT_TAG;
+//	
+//	public AdaptiveLogger() {	
+//	}
 
-	public void log(String msg) {
+	public static void log(String msg) {
 		log(level, tag, msg);
 	}
 	
-	public void log(String tag, String msg) {
+	public static void log(String tag, String msg) {
 		log(level, tag, msg);
 	}
 
-	public void log(Level level, String msg) {
+	public static void log(Level level, String msg) {
 		log(level, tag, msg);
 	}
 	
-	public void log(Level level, String tag, String msg) {
+	public static void log(Level level, String tag, String msg) {
 		
 		if (releaseVersion) return;
 		
@@ -98,7 +97,7 @@ public class AdaptiveLogger {
 	 * @param level the level to set
 	 */
 	public void setLevel(Level level) {
-		this.level = level;
+		AdaptiveLogger.level = level;
 	}
 
 	/**
@@ -112,6 +111,6 @@ public class AdaptiveLogger {
 	 * @param tag the tag to set
 	 */
 	public void setTag(String tag) {
-		this.tag = tag;
+		AdaptiveLogger.tag = tag;
 	}
 }

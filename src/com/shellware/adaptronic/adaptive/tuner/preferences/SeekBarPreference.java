@@ -6,6 +6,8 @@
  */
 package com.shellware.adaptronic.adaptive.tuner.preferences;
 
+import java.util.Locale;
+
 import android.content.Context;
 import android.preference.DialogPreference;
 import android.view.View;
@@ -17,8 +19,6 @@ import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 
 public class SeekBarPreference extends DialogPreference implements SeekBar.OnSeekBarChangeListener {
 
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
-	
 	private float startingValue = 0;
 	private float barValue = 0;
 	private float displayValue = 0;
@@ -59,7 +59,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		splashTextView = (TextView) view.findViewById(R.id.splashText);
 		splashTextView.setText(getTitle());
 		
-		logger.log("SeekbarPreference bound");
+		AdaptiveLogger.log("SeekbarPreference bound");
 		super.onBindDialogView(view);
 	}
 
@@ -67,7 +67,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		barValue = progress;
 		displayValue = barValue * scale + minValue;
 		valueTextView.setText(String.format("%.2f%s", displayValue, suffix));
-		logger.log(String.format("SeekbarPreference changed value %.2f/%.2f", displayValue, barValue));
+		AdaptiveLogger.log(String.format(Locale.US, "SeekbarPreference changed value %.2f/%.2f", displayValue, barValue));
 	}
 
 	@Override
@@ -75,14 +75,14 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		if (positiveResult) {
 			callChangeListener(displayValue);
 			startingValue = displayValue;
-			logger.log(String.format("SeekbarPreference close positive value %.2f/%.2f", displayValue, barValue));
+			AdaptiveLogger.log(String.format(Locale.US, "SeekbarPreference close positive value %.2f/%.2f", displayValue, barValue));
 		} else {
 
 			displayValue = startingValue;
 			barValue = (displayValue - minValue) / scale;
 			seekBarView.setProgress((int) barValue);
 
-			logger.log(String.format("SeekbarPreference close negative value %.2f/%.2f", displayValue, barValue));
+			AdaptiveLogger.log(String.format(Locale.US, "SeekbarPreference close negative value %.2f/%.2f", displayValue, barValue));
 		}
 		super.onDialogClosed(positiveResult);
 	}
@@ -97,7 +97,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 		barValue = (displayValue - minValue) / scale;
 		startingValue = displayValue;
 
-		logger.log(String.format("SeekbarPreference initial value %.2f/%.2f", displayValue, barValue));
+		AdaptiveLogger.log(String.format(Locale.US, "SeekbarPreference initial value %.2f/%.2f", displayValue, barValue));
 	}
 
 	public void setMinValue(float minValue) {

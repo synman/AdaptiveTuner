@@ -27,8 +27,6 @@ import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 
 public class GaugeSlider extends ImageView {
 
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
-
 	private int minValue = 0;
 	private int maxValue = 360;
 	
@@ -53,7 +51,7 @@ public class GaugeSlider extends ImageView {
 		if (usableUnits == 0) {
 			final RelativeLayout parent = (RelativeLayout) getParent();
 			usableUnits = parent.getWidth();
-			logger.log("GaugeSlider usable units: " + usableUnits);
+			AdaptiveLogger.log("GaugeSlider usable units: " + usableUnits);
 		}
 				
 		final float multiplier = usableUnits / (float) (maxValue - minValue);
@@ -63,7 +61,7 @@ public class GaugeSlider extends ImageView {
 		
 		setLayoutParams(params);
 		
-		logger.log("GaugeSlider value and left margin: " + value + " - " + params.leftMargin);
+		AdaptiveLogger.log("GaugeSlider value and left margin: " + value + " - " + params.leftMargin);
 		this.setLayoutParams(params);
 		
 		final RelativeLayout frame = (RelativeLayout) getParent().getParent();

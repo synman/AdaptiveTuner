@@ -71,8 +71,6 @@ public class ConnectionService extends Service {
 	public static final short DATA_READY = 2;
 	public static final short CONNECTED = 3;
 	
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
-	
 	private static final byte SLAVE_ADDRESS = 0x01;
 	private static final byte HOLDING_REGISTER = 0x03;
 	
@@ -215,7 +213,7 @@ public class ConnectionService extends Service {
 		
 		// bail if no intent 
 		if (action == null) return START_NOT_STICKY;
-		logger.log(Level.INFO, "ConnectionService start intent: " + action);
+		AdaptiveLogger.log(Level.INFO, "ConnectionService start intent: " + action);
 
         PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
                 new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
@@ -268,7 +266,7 @@ public class ConnectionService extends Service {
 
 	        	sendRequest(saveModeOffset);        	
 			} catch (FileNotFoundException e) {
-				logger.log(Level.ERROR, "ConnectionService unable to open ecu file " + e.getMessage());
+				AdaptiveLogger.log(Level.ERROR, "ConnectionService unable to open ecu file " + e.getMessage());
 			}  
         }
         
@@ -328,7 +326,7 @@ public class ConnectionService extends Service {
 		stopForeground(true);
 		state = State.DISCONNECTED;
 		
-		logger.log(Level.INFO, "ConnectionService destroy");
+		AdaptiveLogger.log(Level.INFO, "ConnectionService destroy");
 	}
 	
 	private final static Runnable RefreshRunnable = new Runnable() {
@@ -340,10 +338,10 @@ public class ConnectionService extends Service {
         		dataNotAvailable = true;
 
         		if (registerToSend == NO_UPDATE_PENDING) {
-	        		logger.log(lastRegister + " response timed out: " + dataBuffer.toString());
+	        		AdaptiveLogger.log(lastRegister + " response timed out: " + dataBuffer.toString());
 	        		sendRequest();
 	        	} else {
-	        		logger.log(registerToSend + " update timed out: " + dataBuffer.toString());
+	        		AdaptiveLogger.log(registerToSend + " update timed out: " + dataBuffer.toString());
 	    			setSingleRegister(registerToSend, registerToSendValue);
 	        	}
 	    	}
@@ -365,7 +363,7 @@ public class ConnectionService extends Service {
 			
 			ConnectionService service = theService.get();
 			if (service == null) {
-				logger.log(Level.ERROR, "ConnectionService weak reference is null");
+				AdaptiveLogger.log(Level.ERROR, "ConnectionService weak reference is null");
 				return;
 			}
 		
@@ -428,7 +426,7 @@ public class ConnectionService extends Service {
 	    	        		
 	    	        		// do we have a bad message?
 	    	        		if (!(data.startsWith(TEN_REGISTERS) || data.startsWith(SEVEN_REGISTERS) || data.startsWith(ONE_REGISTER))) {
-	    	            		logger.log(lastRegister + " response discarded: " + data);
+	    	            		AdaptiveLogger.log(lastRegister + " response discarded: " + data);
 	    	            		dataNotAvailable = true;
 	    	        			sendRequest();
 	    	        			break;
@@ -509,7 +507,7 @@ public class ConnectionService extends Service {
 			lastRegister = REGISTER_4096_PLUS_NINE;
 
 		} catch (Exception ex) {
-			logger.log(Level.ERROR, "ConnectionService Error saving ECU data " + ex.getMessage()); 
+			AdaptiveLogger.log(Level.ERROR, "ConnectionService Error saving ECU data " + ex.getMessage()); 
 		}
 	}
 	
@@ -599,7 +597,7 @@ public class ConnectionService extends Service {
     	short length;
     	
     	if (mapMode || saveMode || crankMode) {
-    		logger.log(Level.INFO, "ConnectionService " + (mapMode ? "Map" : (saveMode ? "Save" : "Crank")) + " Mode offset " + register + " requested");
+    		AdaptiveLogger.log(Level.INFO, "ConnectionService " + (mapMode ? "Map" : (saveMode ? "Save" : "Crank")) + " Mode offset " + register + " requested");
 			length = 16;
     	} else {
 	    	// set our byte (16 bit) packet size
@@ -703,7 +701,7 @@ public class ConnectionService extends Service {
 		final String[] buf = data.substring(data.indexOf(DEVICE_ADDR_AND_PRESET_HEADER), data.length()).split(" ");
 
 		if (ModbusRTU.validCRC(buf, PRESET_RESPONSE_LENGTH)) {   
-            logger.log("ConnectionService processed " + registerToSend + " update: " + data);
+            AdaptiveLogger.log("ConnectionService processed " + registerToSend + " update: " + data);
 			dataNotAvailable = false;
 			
 			final short reg = registerToSend;
@@ -714,7 +712,7 @@ public class ConnectionService extends Service {
 				sendRequest(REGISTER_2269_MAP_TYPES);				
 			}
 		} else {
-			logger.log("ConnectionService bad CRC for " + registerToSend + " update: " + data);
+			AdaptiveLogger.log("ConnectionService bad CRC for " + registerToSend + " update: " + data);
 			dataNotAvailable = true;
 			setSingleRegister(registerToSend, registerToSendValue);
 		}
@@ -731,22 +729,22 @@ public class ConnectionService extends Service {
 			
 			maxMapValue = Integer.parseInt(buf[3] + buf[4], 16);
 			
-            logger.log("Processed " + lastRegister + " response: " + data);
+            AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
             	
-        	logger.log(Level.INFO, "  Fuel Map One VE: " + fuelMapOneVE);
-        	logger.log(Level.INFO, "  Fuel Map Two VE: " + fuelMapTwoVE);
-        	logger.log(Level.INFO, "Fuel Crank Map VE: " + crankMapVE);
-        	logger.log(Level.INFO, "    RPM Step Size: " + rpmStepSize);
-        	logger.log(Level.INFO, "          Max MAP: " + maxMapValue);
-        	logger.log(Level.INFO, "      Tuning Mode: " + tuningMode);
-        	logger.log(Level.INFO, " Master Fuel Trim: " + fuelTrim);
-        	logger.log(Level.INFO, "  Master Ign Trim: " + ignitionTrim);
+        	AdaptiveLogger.log(Level.INFO, "  Fuel Map One VE: " + fuelMapOneVE);
+        	AdaptiveLogger.log(Level.INFO, "  Fuel Map Two VE: " + fuelMapTwoVE);
+        	AdaptiveLogger.log(Level.INFO, "Fuel Crank Map VE: " + crankMapVE);
+        	AdaptiveLogger.log(Level.INFO, "    RPM Step Size: " + rpmStepSize);
+        	AdaptiveLogger.log(Level.INFO, "          Max MAP: " + maxMapValue);
+        	AdaptiveLogger.log(Level.INFO, "      Tuning Mode: " + tuningMode);
+        	AdaptiveLogger.log(Level.INFO, " Master Fuel Trim: " + fuelTrim);
+        	AdaptiveLogger.log(Level.INFO, "  Master Ign Trim: " + ignitionTrim);
 
         	sendRequest(REGISTER_4096_PLUS_NINE);            
             return;
             
 		} else {
-			logger.log("ConnectionService bad CRC for " + lastRegister + ": " + data);
+			AdaptiveLogger.log("ConnectionService bad CRC for " + lastRegister + ": " + data);
 			dataNotAvailable = true;
 			sendRequest();
 		}
@@ -761,12 +759,12 @@ public class ConnectionService extends Service {
 			
 			tuningMode = Integer.parseInt(buf[3] + buf[4], 16);
 			
-            logger.log("Processed " + lastRegister + " response: " + data);
+            AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_2048_MAX_MAP);            
             return;
             
 		} else {
-			logger.log("bad CRC for " + lastRegister + ": " + data);
+			AdaptiveLogger.log("bad CRC for " + lastRegister + ": " + data);
 			dataNotAvailable = true;
 			sendRequest();
 		}
@@ -797,12 +795,12 @@ public class ConnectionService extends Service {
 			edit.putBoolean("prefs_fuel_cut", fuelTrim == -100 ? true : false);
 			edit.commit();
 
-			logger.log("Processed " + lastRegister + " response: " + data);
+			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_2050_TUNING_MODE);            
             return;
             
 		} else {
-			logger.log("bad CRC for " + lastRegister + ": " + data);
+			AdaptiveLogger.log("bad CRC for " + lastRegister + ": " + data);
 			dataNotAvailable = true;
 			sendRequest();
 		}
@@ -826,10 +824,10 @@ public class ConnectionService extends Service {
 			
 			 // validate our rpm step size -- for some reason it's buggy
 			 if (rpmStepSize == 200 || rpmStepSize == 250 || rpmStepSize == 300 || rpmStepSize == 500) {
-				 logger.log("Processed " + lastRegister + " response: " + data);
+				 AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 					sendRequest(REGISTER_2052_MASTER_TRIM);            				 
 			 } else {
-				 	logger.log(Level.ERROR, "invalid RPM STEP SIZE for " + lastRegister + ": " + data);
+				 	AdaptiveLogger.log(Level.ERROR, "invalid RPM STEP SIZE for " + lastRegister + ": " + data);
 					dataNotAvailable = true;
 					sendRequest();				 
 			 }
@@ -837,7 +835,7 @@ public class ConnectionService extends Service {
             return;
             
 		} else {
-			logger.log("bad CRC for " + lastRegister + ": " + data);
+			AdaptiveLogger.log("bad CRC for " + lastRegister + ": " + data);
 			dataNotAvailable = true;
 			sendRequest();
 		}
@@ -854,12 +852,12 @@ public class ConnectionService extends Service {
 			 fuelMapTwoVE = (getBit(Integer.parseInt(buf[3] + buf[4], 16), 9) > 0);
 			 crankMapVE =   (getBit(Integer.parseInt(buf[3] + buf[4], 16), 10) > 0);
 			
-			 logger.log("Processed " + lastRegister + " response: " + data);
+			 AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_2611_RPM_STEP);            
             return;
             
 		} else {
-			logger.log("bad CRC for " + lastRegister + ": " + data);
+			AdaptiveLogger.log("bad CRC for " + lastRegister + ": " + data);
 			dataNotAvailable = true;
 			sendRequest();
 		}
@@ -876,12 +874,12 @@ public class ConnectionService extends Service {
 			logItem.setTargetAfr(Integer.parseInt(buf[3] + buf[4], 16) / 10f);
 			logItem.setClosedLoop(getBit(Integer.parseInt(buf[9] + buf[10], 16), 8) > 0); 
 			
-			logger.log("Processed " + lastRegister + " response: " + data);
+			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_4096_PLUS_NINE);            
             return;
             
 		} else {
-			logger.log("bad CRC for " + lastRegister + ": " + data);
+			AdaptiveLogger.log("bad CRC for " + lastRegister + ": " + data);
 			dataNotAvailable = true;
 			sendRequest();
 		}
@@ -921,12 +919,12 @@ public class ConnectionService extends Service {
     			logAllItems.addLogItem(logItem);
     		}
     		
-            logger.log("Processed " + lastRegister + " response: " + data);
+            AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
     		sendRequest(REGISTER_4140_PLUS_SIX);
             return;
             
 		} else {
-			logger.log("bad CRC for " + lastRegister + ": " + data);
+			AdaptiveLogger.log("bad CRC for " + lastRegister + ": " + data);
 			dataNotAvailable = true;
     		sendRequest();
 		}

@@ -42,8 +42,6 @@ import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger.Level;
 
 public class PL2303SerialToUsbConnector extends UsbDeviceConnector {
 
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
-
     @Override
     public String getConnectorName() {
         return "Prolific PL2303 Serial -> USB Adapter";
@@ -80,9 +78,9 @@ public class PL2303SerialToUsbConnector extends UsbDeviceConnector {
             connection.controlTransfer(VENDOR_WRITE_REQUEST_TYPE, VENDOR_WRITE_REQUEST, 1, 0, null, 0, 100);
             connection.controlTransfer(VENDOR_WRITE_REQUEST_TYPE, VENDOR_WRITE_REQUEST, 2, 0x24, null, 0, 100);
             
-            logger.log("PL2303 successfully opened");
+            AdaptiveLogger.log("PL2303 successfully opened");
 		} catch (IOException e) {
-			logger.log(Level.ERROR, "unable to initialize PL2303 " + e.getMessage());
+			AdaptiveLogger.log(Level.ERROR, "unable to initialize PL2303 " + e.getMessage());
 		}
         return true;
 

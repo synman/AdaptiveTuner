@@ -24,8 +24,6 @@ import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 
 public class GaugeNeedle extends ImageView {
 
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
-
 	private final int NOT_SET_YET = Integer.MAX_VALUE;
 	
 	private int offsetCenterInDegrees = NOT_SET_YET;
@@ -79,7 +77,7 @@ public class GaugeNeedle extends ImageView {
 		setRotation(newValue);
 				
 //		lastValue = newValue;
-		logger.log(String.format("GaugeNeedle %s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
+		AdaptiveLogger.log(String.format("GaugeNeedle %s - %s - %s", String.valueOf(value), String.valueOf(newValue), String.valueOf(scale)));
 	}
 	
 	public int getMinValue() {

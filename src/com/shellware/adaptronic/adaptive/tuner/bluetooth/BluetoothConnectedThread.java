@@ -19,6 +19,7 @@ package com.shellware.adaptronic.adaptive.tuner.bluetooth;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Locale;
 
 import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
@@ -35,8 +36,6 @@ public class BluetoothConnectedThread extends ConnectedThread {
 	public BluetoothConnectedThread(Handler handler) {
 		super(handler);
 	}
-
-	private static AdaptiveLogger logger = new AdaptiveLogger(AdaptiveLogger.DEFAULT_LEVEL, AdaptiveLogger.DEFAULT_TAG);
 
 	private BluetoothSocket mmSocket;
     private InputStream mmInStream;
@@ -64,7 +63,7 @@ public class BluetoothConnectedThread extends ConnectedThread {
                 // Read from the InputStream
                 bytes = mmInStream.read(buffer);
                                     
-		        logger.log(String.format("Received %d bytes", bytes));
+		        AdaptiveLogger.log(String.format(Locale.US, "Received %d bytes", bytes));
                 
                 // Send the obtained bytes to the UI activity
 		        Bundle b = new Bundle();
@@ -90,7 +89,7 @@ public class BluetoothConnectedThread extends ConnectedThread {
     	        Message msg = new Message();
     	        msg.setData(b);
     	        
-    	        logger.log(Level.ERROR, "Connection lost on read - " + e.getMessage()); 
+    	        AdaptiveLogger.log(Level.ERROR, "Connection lost on read - " + e.getMessage()); 
     	        
     	        handler.sendMessage(msg);
 		        break;
@@ -115,7 +114,7 @@ public class BluetoothConnectedThread extends ConnectedThread {
 	        Message msg = new Message();
 	        msg.setData(b);
 	        
-	        logger.log(Level.ERROR, "Connection lost on write - " + e.getMessage()); 
+	        AdaptiveLogger.log(Level.ERROR, "Connection lost on write - " + e.getMessage()); 
 	        handler.sendMessage(msg);
         }
     }
@@ -124,7 +123,7 @@ public class BluetoothConnectedThread extends ConnectedThread {
     public void cancel() {
     	disconnecting = true;
     	
-        logger.log("BT Connected Thread Canceled");
+        AdaptiveLogger.log("BT Connected Thread Canceled");
 
         if (mmInStream != null) {
             try {mmInStream.close();} catch (Exception e) {}
