@@ -43,6 +43,7 @@
 	  	         android:layout_marginTop="4dp"
 	  	         android:text="@string/tps_gauge"
 	  	         android:textAppearance="?android:attr/textAppearanceSmall"
+	  	         android:id="@+id/tpstitle" 
 	  	         android:layout_alignParentTop="true"
 	  	         android:layout_centerHorizontal="true" />
 	  	     

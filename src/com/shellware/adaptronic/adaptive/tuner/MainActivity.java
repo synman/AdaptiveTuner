@@ -472,13 +472,19 @@ public class MainActivity 	extends Activity
 
         rpmNeedle.setPivotPoint(.5f);
         rpmNeedle.setMinValue(0);
-        rpmNeedle.setMaxValue(9000);
-        rpmNeedle.setMinDegrees(-130);
-        rpmNeedle.setMaxDegrees(157); 
+        rpmNeedle.setMaxValue(10000);
+        rpmNeedle.setMinDegrees(-180);
+        rpmNeedle.setMaxDegrees(90); 
         
         tpsSlider.setMinValue(0);
         tpsSlider.setMaxValue(100);
         tpsSlider.setSuffix("%");
+        
+        //tps text
+       TextView tpsTitle = (TextView) findViewById(R.id.tpstitle);
+       tpsTitle.setTypeface(Typeface.createFromAsset(ctx.getAssets(), "fonts/digital_7.ttf"));
+//       tpsTitle.setTextSize
+
         
         afrGaugeAlarm = (ImageView) findViewById(R.id.afrmeteralarm);
         waterGaugeAlarm = (ImageView) findViewById(R.id.watermeteralarm);

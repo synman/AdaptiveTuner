@@ -66,6 +66,7 @@ public class BatteryStatusReceiver extends BroadcastReceiver {
 
 				        	if (waiting && addr.length() > 0) {
 					        	Intent service = new Intent(ConnectionService.ACTION_CONNECT_BT);
+					        	service.setPackage(ctx.getPackageName());
 					        	service.putExtra("name", name);
 					        	service.putExtra("addr", addr);
 					    		

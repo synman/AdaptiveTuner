@@ -19,13 +19,15 @@
     </style>
   </head>
   <body>
-$ 1.2.8
-  % Version 1.2.8
-  _ 2015-03-22
-  ! Swipe between tabs
+$ 1.2.9
+  % Version 1.2.9
+  _ 2015-03-23
+  ! Swipe and Tach
   	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
   	<p/>   	
   	* You can now swipe between tabs
+  	* Reskinned tachometer
+  	* Fixed various 5.0 issues
   	* Refactored logger as static
   	* Explicit intents for startService()
 $ 1.2.7

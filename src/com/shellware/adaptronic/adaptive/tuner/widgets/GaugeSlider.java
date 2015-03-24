@@ -17,6 +17,7 @@
 package com.shellware.adaptronic.adaptive.tuner.widgets;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -27,6 +28,7 @@ import com.shellware.adaptronic.adaptive.tuner.logging.AdaptiveLogger;
 
 public class GaugeSlider extends ImageView {
 
+	private Context context;
 	private int minValue = 0;
 	private int maxValue = 360;
 	
@@ -36,12 +38,15 @@ public class GaugeSlider extends ImageView {
 
 	public GaugeSlider(Context context) {
 		super(context);
+		this.context = context;
 	}
 	public GaugeSlider(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
+		super(context, attrs, defStyle);	
+		this.context = context;
 	}
 	public GaugeSlider(Context context, AttributeSet attrs) {
 		super(context, attrs);
+		this.context = context;
 	}
 
 	public void setValue(final float value) {
@@ -94,5 +99,12 @@ public class GaugeSlider extends ImageView {
 	}
 	public void setSuffix(String suffix) {
 		this.suffix = suffix;
+		
+		final RelativeLayout frame = (RelativeLayout) getParent().getParent();
+		
+		for (int i = 3;i > 0; i--) {
+			final TextView text = (TextView) frame.getChildAt(frame.getChildCount() - i);
+			text.setTypeface(Typeface.createFromAsset(context.getAssets(), "fonts/digital_7.ttf"), Typeface.BOLD);			
+		}
 	}
 }

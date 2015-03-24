@@ -226,6 +226,7 @@ public class AdaptivePreferences extends PreferenceActivity {
     }
     
     public static class AlertsFragment extends PreferenceFragment {
+    	
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -614,5 +615,10 @@ public class AdaptivePreferences extends PreferenceActivity {
         // commit any sharedpreferences changes
         edit.commit();
     }
+    
+    @Override
+    protected boolean isValidFragment(String fragmentName) {
+    	  return GeneralFragment.class.getName().equals(fragmentName) || AlertsFragment.class.getName().equals(fragmentName);
+	}
 }
 

@@ -953,6 +953,9 @@ public class ConnectionService extends Service {
     		temp = (65536 - temp) * -1;
     	}
     	
+    	// TODO: hack for IAT / MAT
+    	if (temp > 200) temp = 0;
+    	
     	switch (tempUomPref) {
     		case 1:
     			return temp * 9 / 5 + 32; 

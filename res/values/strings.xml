@@ -87,7 +87,7 @@
 	<string name="tachometer">Tachometer</string>
 	<string name="water_gauge">Water Temperature Gauge</string>
 	<string name="iat_gauge">Intake Temperature Gauge</string>
-	<string name="tps_gauge">Throttle Position</string>
+	<string name="tps_gauge">Throttle</string>
 		
 	<string name="edit_cell_message">Edit Fuel Cell</string>
 	
