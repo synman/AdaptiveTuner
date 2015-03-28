@@ -613,6 +613,8 @@ public class MainActivity 	extends Activity
     	            ((ImageView) findViewById(R.id.map)).setImageResource(R.drawable.boost_vac);
     	            break;
     		}
+        } else {
+            ((ImageView) findViewById(R.id.map)).setImageResource(R.drawable.boost_vac);        	
         }
                
     	wakeLock = prefs.getBoolean("prefs_wake_lock", true);
@@ -957,14 +959,15 @@ public class MainActivity 	extends Activity
 			    	//TODO: formula for map to psi (MAP - 102) / 6.894 
 			    	//TODO: formula for psi to inhg  * 2.036025
 			        mapNeedle.setMinValue(0);
-			        mapNeedle.setMaxValue(maxBoost == 0 ? 15 : 30);
 					
 					if (map < 102) {
+				        mapNeedle.setMaxValue(30);
 				        mapNeedle.setMinDegrees(-180);
 				        mapNeedle.setMaxDegrees(-90);
 
 				        mapNeedle.setValue(30f + (((map - 102) / 6.894f) * 2.036025f));						
 					} else {
+				        mapNeedle.setMaxValue(maxBoost == 0 ? 15 : 30);
 				        mapNeedle.setMinDegrees(-90);
 				        mapNeedle.setMaxDegrees(90);
 
