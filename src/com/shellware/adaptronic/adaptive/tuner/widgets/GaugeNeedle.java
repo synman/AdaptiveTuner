@@ -84,25 +84,37 @@ public class GaugeNeedle extends ImageView {
 		return minValue;
 	}
 	public void setMinValue(int minValue) {
-		this.minValue = minValue;
+		if (minValue != this.minValue) {
+			offsetCenterInDegrees = NOT_SET_YET;
+			this.minValue = minValue;
+		}
 	}
 	public int getMaxValue() {
 		return maxValue;
 	}
 	public void setMaxValue(int maxValue) {
-		this.maxValue = maxValue;
+		if (maxValue != this.maxValue) {
+			offsetCenterInDegrees = NOT_SET_YET;
+			this.maxValue = maxValue;
+		}
 	}
 	public int getMinDegrees() {
 		return minDegrees;
 	}
 	public void setMinDegrees(int minDegrees) {
-		this.minDegrees = minDegrees;
+		if (minDegrees != this.minDegrees) {
+			offsetCenterInDegrees = NOT_SET_YET;
+			this.minDegrees = minDegrees;
+		}
 	}
 	public int getMaxDegrees() {
 		return maxDegrees;
 	}
 	public void setMaxDegrees(int maxDegrees) {
-		this.maxDegrees = maxDegrees;
+		if (maxDegrees != this.maxDegrees) {
+			offsetCenterInDegrees = NOT_SET_YET;
+			this.maxDegrees = maxDegrees;
+		}
 	}
 	public float getPivotPoint() {
 		return pivotPoint;

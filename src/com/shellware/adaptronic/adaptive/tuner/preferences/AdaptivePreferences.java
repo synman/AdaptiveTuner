@@ -220,7 +220,47 @@ public class AdaptivePreferences extends PreferenceActivity {
 		        showAuxTPref.setTitle(R.string.prefs_show_auxt_on_adaptive_tab);
 			        
 		        displayPrefCat.addPreference(showAuxTPref);
+	
+		        final CheckBoxPreference showBoostPref = new CheckBoxPreference(ctx);
+		        showBoostPref.setPersistent(true);
+		        showBoostPref.setKey("prefs_show_boost");
+		        showBoostPref.setDefaultValue(false);
+		        showBoostPref.setSummaryOn(R.string.enabled);
+		        showBoostPref.setSummaryOff(R.string.disabled);
+		        showBoostPref.setTitle(R.string.prefs_show_boost_gauge);
+		        
+		        displayPrefCat.addPreference(showBoostPref);
+		        
+		        // List preference
+		        final ListPreference maxBoostPref = new ListPreference(ctx);
+		        maxBoostPref.setEnabled(showBoostPref.isChecked());
+		        maxBoostPref.setPersistent(true);
+		        maxBoostPref.setKey("prefs_max_boost");
+		        maxBoostPref.setEntries(R.array.max_boost_names);
+		        maxBoostPref.setEntryValues(R.array.max_boost_values);
+		        maxBoostPref.setDialogTitle(R.string.prefs_max_boost);
+		        maxBoostPref.setTitle(R.string.prefs_max_boost);
+		        maxBoostPref.setDefaultValue("0");
+		        maxBoostPref.setSummary(res.getStringArray(R.array.max_boost_names) 
+		        		[Integer.parseInt(prefs.getString("prefs_max_boost", "0"))]);
+			        
+		        maxBoostPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+					public boolean onPreferenceChange(Preference arg0, final Object arg1) {
+				        maxBoostPref.setSummary(res.getStringArray(R.array.max_boost_names) 
+				        		[Integer.parseInt((String) arg1)]);	
+						return true;
+					}
+		        });
+		        
+	        displayPrefCat.addPreference(maxBoostPref);
 
+		        showBoostPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+					public boolean onPreferenceChange(Preference arg0, final Object arg1) {
+						maxBoostPref.setEnabled((Boolean) arg1);
+						return true;
+					}        	
+		        });
+		        	
 	        setPreferenceScreen(generalPref);
         }
     }

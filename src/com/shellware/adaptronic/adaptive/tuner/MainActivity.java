@@ -197,6 +197,9 @@ public class MainActivity 	extends Activity
 	private static float minimumWaterTemp = 0f;
 	private static float maximumWaterTemp = 210f;
 
+	private static boolean showBoost = true;
+	private static int maxBoost = 0;
+
 	private static boolean autoConnect = false;
 	private static boolean shuttingDown = false;
 	
@@ -439,7 +442,7 @@ public class MainActivity 	extends Activity
         
         waterNeedle = (GaugeNeedle) findViewById(R.id.waterneedle);
         iatNeedle = (GaugeNeedle) findViewById(R.id.iatneedle);
-        mapNeedle = (GaugeNeedle) findViewById(R.id.mapneedle);
+        mapNeedle = (GaugeNeedle) findViewById(R.id.mapneedle);        
         afrNeedle = (GaugeNeedle) findViewById(R.id.afrneedle);
         targetAfrNeedle = (GaugeNeedle) findViewById(R.id.targetafrneedle);
         rpmNeedle = (GaugeNeedle) findViewById(R.id.rpmneedle);
@@ -463,7 +466,7 @@ public class MainActivity 	extends Activity
         targetAfrNeedle.setMaxValue(AFR_MAX);
         targetAfrNeedle.setMinDegrees(-180);
         targetAfrNeedle.setMaxDegrees(90);
-        
+
         mapNeedle.setPivotPoint(.5f);
         mapNeedle.setMinValue(0);
         mapNeedle.setMaxValue(200);
@@ -483,8 +486,6 @@ public class MainActivity 	extends Activity
         //tps text
        TextView tpsTitle = (TextView) findViewById(R.id.tpstitle);
        tpsTitle.setTypeface(Typeface.createFromAsset(ctx.getAssets(), "fonts/digital_7.ttf"));
-//       tpsTitle.setTextSize
-
         
         afrGaugeAlarm = (ImageView) findViewById(R.id.afrmeteralarm);
         waterGaugeAlarm = (ImageView) findViewById(R.id.watermeteralarm);
@@ -600,7 +601,20 @@ public class MainActivity 	extends Activity
     	if (connectionService != null) connectionService.setTempUomPref(tempUomPref);
 
     	displayAuxTPref = prefs.getBoolean("prefs_show_auxt", false);
-    	
+    	showBoost = prefs.getBoolean("prefs_show_boost", false);
+    	maxBoost = Integer.parseInt(prefs.getString("prefs_max_boost", "0"));
+
+    	if (showBoost) {
+    		switch (maxBoost) {
+    			case 0:
+    	            ((ImageView) findViewById(R.id.map)).setImageResource(R.drawable.boost_vac_15);
+    	            break;
+    			case 1:
+    	            ((ImageView) findViewById(R.id.map)).setImageResource(R.drawable.boost_vac);
+    	            break;
+    		}
+        }
+               
     	wakeLock = prefs.getBoolean("prefs_wake_lock", true);
     	if (connectionService != null) connectionService.setWakeLock(wakeLock);
     	
@@ -931,7 +945,33 @@ public class MainActivity 	extends Activity
 				tpsSlider.setValue(tps);			
 				iatNeedle.setValue(mat); 
 				waterNeedle.setValue(convertWat(wat));
-				mapNeedle.setValue(map); 
+
+				if (!showBoost) {
+			        mapNeedle.setMinValue(0);
+			        mapNeedle.setMaxValue(200);
+			        mapNeedle.setMinDegrees(-150);
+			        mapNeedle.setMaxDegrees(140);
+
+			        mapNeedle.setValue(map);
+				} else {				
+			    	//TODO: formula for map to psi (MAP - 102) / 6.894 
+			    	//TODO: formula for psi to inhg  * 2.036025
+			        mapNeedle.setMinValue(0);
+			        mapNeedle.setMaxValue(maxBoost == 0 ? 15 : 30);
+					
+					if (map < 102) {
+				        mapNeedle.setMinDegrees(-180);
+				        mapNeedle.setMaxDegrees(-90);
+
+				        mapNeedle.setValue(30f + (((map - 102) / 6.894f) * 2.036025f));						
+					} else {
+				        mapNeedle.setMinDegrees(-90);
+				        mapNeedle.setMaxDegrees(90);
+
+				        mapNeedle.setValue((map - 102) / 6.894f);
+					}
+				}
+				
 				afrNeedle.setValue(afrVal);
 				targetAfrNeedle.setValue(targetAfrVal);
 				

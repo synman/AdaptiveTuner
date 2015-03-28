@@ -82,6 +82,9 @@
 	<string name="prefs_logging_category">General Logging</string>
 	<string name="prefs_logging_enabled">Log All Data</string>
 	
+	<string name="prefs_show_boost_gauge">Show Boost Gauge instead of MAP</string>
+	<string name="prefs_max_boost">Maximum Boost Pressure</string>
+	
 	<string name="afr_gauge">AFR Gauge</string>
 	<string name="map_gauge">MAP Gauge</string>
 	<string name="tachometer">Tachometer</string>

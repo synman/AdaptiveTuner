@@ -18,8 +18,8 @@
  -->
  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shellware.adaptronic.adaptive.tuner"
-    android:versionCode="2015"
-    android:versionName="1.2.9"
+    android:versionCode="2016"
+    android:versionName="1.2.10"
     android:installLocation="preferExternal">
 
     <uses-sdk
