@@ -614,7 +614,7 @@ public class MainActivity 	extends Activity
     	            break;
     		}
         } else {
-            ((ImageView) findViewById(R.id.map)).setImageResource(R.drawable.boost_vac);        	
+            ((ImageView) findViewById(R.id.map)).setImageResource(R.drawable.mapgauge);        	
         }
                
     	wakeLock = prefs.getBoolean("prefs_wake_lock", true);
