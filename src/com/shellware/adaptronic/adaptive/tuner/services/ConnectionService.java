@@ -83,6 +83,9 @@ public class ConnectionService extends Service {
 	private static final short REGISTER_4140_PLUS_SIX = 4140;
 	private static final int REGISTER_4140_LENGTH = 19;
 	
+	private static final short REGISTER_4215_PLUS_FOUR = 4215;
+	private static final int REGISTER_4215_LENGTH = 15;
+	
 	private static final short REGISTER_2048_MAX_MAP = 2048;
 	private static final int REGISTER_2048_LENGTH = 7;
 
@@ -101,6 +104,7 @@ public class ConnectionService extends Service {
 	private static final String DEVICE_ADDR_AND_HOLDING_HEADER = "01 03 ";
 	private static final String DEVICE_ADDR_AND_PRESET_HEADER = "01 06 ";
 
+	private static final String FIVE_REGISTERS = "01 03 0A ";
 	private static final String SEVEN_REGISTERS = "01 03 0E ";
 	private static final String TEN_REGISTERS = "01 03 14 ";
 	private static final String SIXTEEN_REGISTERS = "01 03 20";
@@ -147,6 +151,7 @@ public class ConnectionService extends Service {
 	private static boolean wakeLock = true;
 	private static boolean afrAlarmLogging = false;
 	private static float afrNotEqualTargetTolerance = 5f;
+	private static boolean ssi4Enabled = false;
 	
 	private static boolean fuelMapOneVE = false;
 	private static boolean fuelMapTwoVE = false;
@@ -201,6 +206,7 @@ public class ConnectionService extends Service {
     	wakeLock = prefs.getBoolean("prefs_wake_lock", true);
     	afrAlarmLogging = prefs.getBoolean("prefs_afr_alarm_logging", false); 
     	afrNotEqualTargetTolerance = prefs.getFloat("prefs_afrnottarget_tolerance_pref", 5f);
+    	ssi4Enabled = prefs.getBoolean("prefs_ssi4_enabled", false);
 	    
 		pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 		wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK + PowerManager.ON_AFTER_RELEASE, getResources().getString(R.string.app_name));
@@ -425,8 +431,11 @@ public class ConnectionService extends Service {
 	    	        		}
 	    	        		
 	    	        		// do we have a bad message?
-	    	        		if (!(data.startsWith(TEN_REGISTERS) || data.startsWith(SEVEN_REGISTERS) || data.startsWith(ONE_REGISTER))) {
+	    	        		if (!(data.startsWith(TEN_REGISTERS) || data.startsWith(SEVEN_REGISTERS) || 
+	    	        			 data.startsWith(FIVE_REGISTERS) || data.startsWith(ONE_REGISTER))) {
+	    	        			
 	    	            		AdaptiveLogger.log(lastRegister + " response discarded: " + data);
+	    	            		
 	    	            		dataNotAvailable = true;
 	    	        			sendRequest();
 	    	        			break;
@@ -448,6 +457,11 @@ public class ConnectionService extends Service {
 	    	        			case REGISTER_4140_PLUS_SIX:
 	    		        			if (data.startsWith(SEVEN_REGISTERS) && dataLength == REGISTER_4140_LENGTH) {
 	    		        				process4140Response(data);
+	    		        			}
+	    		        			break;
+	    	        			case REGISTER_4215_PLUS_FOUR:
+	    		        			if (data.startsWith(SEVEN_REGISTERS) && dataLength == REGISTER_4140_LENGTH) {
+	    		        				process4215Response(data);
 	    		        			}
 	    		        			break;
 	    	        			case REGISTER_2269_MAP_TYPES:
@@ -623,6 +637,9 @@ public class ConnectionService extends Service {
 	    		case REGISTER_4140_PLUS_SIX:
 	    			length = 7;
 	    			break;
+	    		case REGISTER_4215_PLUS_FOUR:
+	    			length = 5;
+	    			break;
 				default:
 					length = 16;
 					break;
@@ -719,7 +736,6 @@ public class ConnectionService extends Service {
 
     }
 
-    
     private static void process2048Response(final String data) {
     	
 		final String[] buf = data.substring(data.indexOf(ONE_REGISTER), data.length()).split(" ");
@@ -863,6 +879,27 @@ public class ConnectionService extends Service {
 		}
     }
     
+	private static void process4215Response(final String data) {
+		    	
+		final String[] buf = data.substring(data.indexOf(FIVE_REGISTERS), data.length()).split(" ");
+
+		if (ModbusRTU.validCRC(buf, REGISTER_4215_LENGTH)) {   
+			dataNotAvailable = false;
+			
+    		logItem.setFuelpres(Integer.parseInt(buf[3] + buf[4], 16));
+    		logItem.setOilpres(Integer.parseInt(buf[5] + buf[6], 16));
+    		logItem.setAuxpres(Integer.parseInt(buf[7] + buf[8], 16));
+    		
+			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
+			sendRequest(REGISTER_4096_PLUS_NINE);            
+            return;
+            
+		} else {
+			AdaptiveLogger.log("bad CRC for " + lastRegister + ": " + data);
+			dataNotAvailable = true;
+			sendRequest();
+		}
+	}    
 	private static void process4140Response(final String data) {
 		    	
 		final String[] buf = data.substring(data.indexOf(SEVEN_REGISTERS), data.length()).split(" ");
@@ -875,7 +912,7 @@ public class ConnectionService extends Service {
 			logItem.setClosedLoop(getBit(Integer.parseInt(buf[9] + buf[10], 16), 8) > 0); 
 			
 			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
-			sendRequest(REGISTER_4096_PLUS_NINE);            
+			sendRequest(ssi4Enabled ? REGISTER_4215_PLUS_FOUR : REGISTER_4096_PLUS_NINE);            
             return;
             
 		} else {

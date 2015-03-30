@@ -252,7 +252,7 @@ public class AdaptivePreferences extends PreferenceActivity {
 					}
 		        });
 		        
-	        displayPrefCat.addPreference(maxBoostPref);
+		        displayPrefCat.addPreference(maxBoostPref);
 
 		        showBoostPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 					public boolean onPreferenceChange(Preference arg0, final Object arg1) {
@@ -260,6 +260,16 @@ public class AdaptivePreferences extends PreferenceActivity {
 						return true;
 					}        	
 		        });
+		        
+		        CheckBoxPreference ssi4Pref = new CheckBoxPreference(ctx);
+		        ssi4Pref.setPersistent(true);
+		        ssi4Pref.setKey("prefs_ssi4_enabled");
+		        ssi4Pref.setDefaultValue(false);
+		        ssi4Pref.setSummaryOn(R.string.enabled);
+		        ssi4Pref.setSummaryOff(R.string.disabled);
+		        ssi4Pref.setTitle(R.string.prefs_show_ssi4_on_adaptive_tab);
+		        
+		        displayPrefCat.addPreference(ssi4Pref);
 		        	
 	        setPreferenceScreen(generalPref);
         }
@@ -656,8 +666,9 @@ public class AdaptivePreferences extends PreferenceActivity {
         edit.commit();
     }
     
-    @Override
-    protected boolean isValidFragment(String fragmentName) {
+    //@Override
+    @SuppressLint("Override")
+	protected boolean isValidFragment(String fragmentName) {
     	  return GeneralFragment.class.getName().equals(fragmentName) || AlertsFragment.class.getName().equals(fragmentName);
 	}
 }

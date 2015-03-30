@@ -56,6 +56,9 @@ public class LogItems {
 		newItem.wat = item.wat;
 		newItem.knock = item.knock;
 		newItem.volts = item.volts;
+		newItem.fuelpres = item.fuelpres;
+		newItem.oilpres = item.oilpres;
+		newItem.auxpres = item.auxpres;
 		
 		items.add(newItem);
 	}
@@ -71,12 +74,18 @@ public class LogItems {
 		private int auxt = 0;
 		private int tps = 0;		
 		private int knock = 0;
+		private int oilpres = 0;
+		private int fuelpres = 0;
+		private int auxpres = 0;
+
+		//TODO: add safety cut functions
 		
 		private float afr = 0f;
 		private float referenceAfr = 0f;
 		private float targetAfr = 0f;
 		private float volts = 0f;
-		
+		private float channelOneVolts = 0f;
+				
 		private boolean learningIWait = false;
 		private boolean learningIRpm = false;
 		private boolean learningILoad = false;
@@ -174,6 +183,30 @@ public class LogItems {
 		public void setKnock(int knock) {
 			this.knock = knock;
 		}
+		
+		public int getOilpres() {
+			return oilpres;
+		}
+
+		public void setOilpres(int oilpres) {
+			this.oilpres = oilpres;
+		}
+
+		public int getFuelpres() {
+			return fuelpres;
+		}
+
+		public void setFuelpres(int fuelpres) {
+			this.fuelpres = fuelpres;
+		}
+
+		public int getAuxpres() {
+			return auxpres;
+		}
+
+		public void setAuxpres(int auxpres) {
+			this.auxpres = auxpres;
+		}
 
 		public boolean isLearningIWait() {
 			return learningIWait;
@@ -237,7 +270,7 @@ public class LogItems {
 
 		public String getLogString() {
 			
-			final String str = String.format(Locale.US, "%d, %d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d, %d, %d, %.1f\n", 
+			final String str = String.format(Locale.US, "%d, %d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d, %d, %d, %.1f, %d, %d, %d\n", 
 												timestamp,
 												rpm,
 												map,
@@ -250,7 +283,10 @@ public class LogItems {
 												mat,
 												auxt,
 												knock,
-												volts);
+												volts,
+												fuelpres,
+												oilpres,
+												auxpres);
 			
 			return str;										
 		}

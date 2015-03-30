@@ -114,7 +114,7 @@ public class MainActivity 	extends Activity
 	private static final float VE_DIVISOR = 128f;
 	private static final float MS_DIVISOR = 1500f;
 	
-	private static final String LOG_HEADER = "timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat, auxt, knock, volts\n";
+	private static final String LOG_HEADER = "timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat, auxt, knock, volts, fuelpres, oilpres, auxpres\n";
 	
 	private final Fragment[] frags = { null, null, null };
 	private static final short FRAGS_COUNT = 3;
@@ -187,6 +187,7 @@ public class MainActivity 	extends Activity
 	
 	private static int tempUomPref = 1;
 	private static boolean displayAuxTPref = false;
+	private static boolean ssi4Enabled = false;
 	
 	private static boolean wakeLock = true;
 
@@ -426,8 +427,6 @@ public class MainActivity 	extends Activity
         dataArray.add("MAP\n ---");
         dataArray.add("MAT\n ---\u00B0");
 
-        if (displayAuxTPref) dataArray.add("AUXT\n ---\u00B0");
-
         dataArray.add("AFR\n --.- (--.-)");
         dataArray.add("TAFR\n --.-");
         dataArray.add("WAT\n ---\u00B0");
@@ -435,7 +434,18 @@ public class MainActivity 	extends Activity
         dataArray.add("TPS\n---%");
         dataArray.add("KNOCK\n---");
         dataArray.add("BAT\n--.-v");
- 
+
+        
+        if (ssi4Enabled) dataArray.add("FPRES\n ---");
+        
+        if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
+        if (displayAuxTPref) dataArray.add("AUXT\n ---\u00B0");
+        if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
+        
+        if (ssi4Enabled) dataArray.add("OPRES\n ---");
+
+        //        	dataArray.add("APRES\n ---");
+
         gridData.setAdapter(dataArray);   
 
         lvDevices.setOnItemClickListener(DevicesClickListener);
@@ -603,6 +613,7 @@ public class MainActivity 	extends Activity
     	displayAuxTPref = prefs.getBoolean("prefs_show_auxt", false);
     	showBoost = prefs.getBoolean("prefs_show_boost", false);
     	maxBoost = Integer.parseInt(prefs.getString("prefs_max_boost", "0"));
+    	ssi4Enabled = prefs.getBoolean("prefs_ssi4_enabled", false);
 
     	if (showBoost) {
     		switch (maxBoost) {
@@ -880,6 +891,9 @@ public class MainActivity 	extends Activity
 			final float targetAfr = item.getTargetAfr();
 			final float referenceAfr = item.getReferenceAfr();
 			final float volts = item.getVolts();
+			
+			final float fuelpres = item.getFuelpres();
+			final float  oilpres =  item.getOilpres();
 
 			float afrVal = afr * 100;
     		float targetAfrVal = targetAfr * 100;
@@ -928,8 +942,6 @@ public class MainActivity 	extends Activity
 	    		dataArray.add(String.format("MAP\n%d kPa", map));
 	    		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
 
-	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
-
 	    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
 	    		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
 	    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
@@ -937,7 +949,15 @@ public class MainActivity 	extends Activity
 	    		dataArray.add(String.format("TPS\n%d%%", lastTPS));
 	    		dataArray.add(String.format("KNOCK\n%d", knock));
 	    		dataArray.add(String.format("BAT\n%.1fv", volts));
+
+	    		if (ssi4Enabled) dataArray.add(String.format("FPRES\n%d", fuelpres));
 	    		
+	            if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
+	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
+	            if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
+	            
+	            if (ssi4Enabled) dataArray.add(String.format("OPRES\n%d", oilpres));
+
 				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
 	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
 			}

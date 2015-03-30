@@ -57,6 +57,7 @@
     
     <string name="prefs_display_category">Display Settings</string>
     <string name="prefs_show_auxt_on_adaptive_tab">Show AUX-T on Adaptive Tab</string>
+    <string name="prefs_show_ssi4_on_adaptive_tab">Innovate SSI-4 Support</string>
     
     <string name="prefs_alerts_pref">Alerts &amp; Logging</string>
     
