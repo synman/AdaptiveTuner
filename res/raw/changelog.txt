@@ -20,8 +20,15 @@
   </head>
   <body>
   
+$ 1.2.11
+  % Version 1.2.11
+  _ 2015-03-30
+  ! Initial SSI-4 Support
+  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
+  	<p/>   	
+  	* SSI-4 support enabled in General Prefs.  Fuel and Oil Pressure will display on Adaptive tab
 $ 1.2.10
-  % Version 1.2.9
+  % Version 1.2.10
   _ 2015-03-27
   ! Boost / Vacuum vs MAP
   	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.

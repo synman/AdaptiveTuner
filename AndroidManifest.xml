@@ -18,8 +18,8 @@
  -->
  <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shellware.adaptronic.adaptive.tuner"
-    android:versionCode="2017"
-    android:versionName="1.2.10"
+    android:versionCode="2018"
+    android:versionName="1.2.11"
     android:installLocation="preferExternal">
 
     <uses-sdk
