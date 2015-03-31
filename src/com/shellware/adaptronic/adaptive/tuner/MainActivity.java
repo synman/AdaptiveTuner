@@ -611,9 +611,12 @@ public class MainActivity 	extends Activity
     	if (connectionService != null) connectionService.setTempUomPref(tempUomPref);
 
     	displayAuxTPref = prefs.getBoolean("prefs_show_auxt", false);
+
     	showBoost = prefs.getBoolean("prefs_show_boost", false);
     	maxBoost = Integer.parseInt(prefs.getString("prefs_max_boost", "0"));
+    	
     	ssi4Enabled = prefs.getBoolean("prefs_ssi4_enabled", false);
+    	if (connectionService != null) connectionService.setSsi4Enabled(ssi4Enabled);
 
     	if (showBoost) {
     		switch (maxBoost) {
@@ -950,13 +953,13 @@ public class MainActivity 	extends Activity
 	    		dataArray.add(String.format("KNOCK\n%d", knock));
 	    		dataArray.add(String.format("BAT\n%.1fv", volts));
 
-	    		if (ssi4Enabled) dataArray.add(String.format("FPRES\n%d", fuelpres));
+	    		if (ssi4Enabled) dataArray.add(String.format("FPRES\n%.0f", fuelpres));
 	    		
 	            if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
 	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
 	            if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
 	            
-	            if (ssi4Enabled) dataArray.add(String.format("OPRES\n%d", oilpres));
+	            if (ssi4Enabled) dataArray.add(String.format("OPRES\n%.0f", oilpres));
 
 				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
 	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);

@@ -18,15 +18,6 @@ package com.shellware.adaptronic.adaptive.tuner.logging;
 
 import android.util.Log;
 
-/**
- * @author shell
- * 
- * I really wanted to do this as a static class but got hung up
- * on potential threading issues so everyone gets there own
- * personal copy of it.
- *
- */
-
 public final class AdaptiveLogger {
 	
 	private AdaptiveLogger() {
@@ -45,7 +36,7 @@ public final class AdaptiveLogger {
 	
 	// set releaseVersion to true when releasing Adaptive Tuner
 	// to Google Play
-	private static boolean releaseVersion = false;
+	private static boolean releaseVersion = true;
 	
 	private static Level level = DEFAULT_LEVEL;
 	private static String tag = DEFAULT_TAG;

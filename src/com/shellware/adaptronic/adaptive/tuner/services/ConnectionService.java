@@ -460,7 +460,7 @@ public class ConnectionService extends Service {
 	    		        			}
 	    		        			break;
 	    	        			case REGISTER_4215_PLUS_FOUR:
-	    		        			if (data.startsWith(SEVEN_REGISTERS) && dataLength == REGISTER_4140_LENGTH) {
+	    		        			if (data.startsWith(FIVE_REGISTERS) && dataLength == REGISTER_4215_LENGTH) {
 	    		        				process4215Response(data);
 	    		        			}
 	    		        			break;
@@ -888,7 +888,7 @@ public class ConnectionService extends Service {
 			
     		logItem.setFuelpres(Integer.parseInt(buf[3] + buf[4], 16));
     		logItem.setOilpres(Integer.parseInt(buf[5] + buf[6], 16));
-    		logItem.setAuxpres(Integer.parseInt(buf[7] + buf[8], 16));
+    		logItem.setAuxpres(Integer.parseInt(buf[9] + buf[10], 16));
     		
 			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_4096_PLUS_NINE);            
@@ -1030,6 +1030,10 @@ public class ConnectionService extends Service {
 		tempUomPref = val;
     }
     
+    public void setSsi4Enabled(final boolean ssi4) {
+    	ssi4Enabled = ssi4;
+    }
+
 	@SuppressLint("Wakelock")
 	public void setWakeLock(boolean val) {
 		wakeLock = val;
