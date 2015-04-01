@@ -34,7 +34,7 @@
     
     <string name="share_afr_log_heading">Share AFR Alerts using</string>
     <string name="share_log_all_heading">Share Log using</string>
-    <string name="share_log_message" formatted="false">Log saved as %s%s%s</string>
+    <string name="share_log_message" formatted="false">Log saved as %s</string>
     <string name="share_ecu_file_heading">Share ECU File using</string>
     
     <string name="tab_adaptive">Adaptive Monitor</string>

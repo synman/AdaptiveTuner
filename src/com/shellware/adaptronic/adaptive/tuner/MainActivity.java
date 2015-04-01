@@ -17,9 +17,7 @@
 package com.shellware.adaptronic.adaptive.tuner;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -133,6 +131,7 @@ public class MainActivity 	extends Activity
 	private GridView gridData;
 	private ImageView imgStatus;
 	
+	private TextView txtIgnitionLearn;
 	private TextView txtFuelLearn;
 	private ImageView imgIWait;
 	private ImageView imgIRpm;
@@ -407,7 +406,11 @@ public class MainActivity 	extends Activity
         layoutDevices = (RelativeLayout) findViewById(R.id.layoutDevices);
         imgStatus = (ImageView) findViewById(R.id.imgStatus);
         
+        txtIgnitionLearn = (TextView) findViewById(R.id.ignitionlearn);
         txtFuelLearn = (TextView) findViewById(R.id.fuellearn);
+        
+        txtIgnitionLearn.setTypeface(Typeface.createFromAsset(ctx.getAssets(), "fonts/digital_7.ttf"), Typeface.BOLD);
+        txtFuelLearn.setTypeface(Typeface.createFromAsset(ctx.getAssets(), "fonts/digital_7.ttf"), Typeface.BOLD);
         
         imgIWait = (ImageView) findViewById(R.id.imgIWait);
 		imgIRpm = (ImageView) findViewById(R.id.imgIRpm);
@@ -748,6 +751,14 @@ public class MainActivity 	extends Activity
 		speaker.shutdown();
 		
 		if (shuttingDown) {
+			String filename = null;
+
+			if (afrAlarmLogging) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.afr.csv'", Locale.US).format(new Date());
+			if (logAll) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.all.csv'", Locale.US).format(new Date());
+
+			if (filename != null) saveLog(filename, logAll ? connectionService.getLogAllItems().getItems() : 
+															 connectionService.getAfrAlarmLogItems().getItems());		
+			
 			stopService(new Intent(this, ConnectionService.class));
 		}
 		
@@ -766,6 +777,18 @@ public class MainActivity 	extends Activity
     			if (connectionService != null && connectionService.getState() == State.DISCONNECTED) {
     				
         			imgStatus.setBackgroundColor(Color.TRANSPARENT);
+        			
+        			if ((logAll && !connectionService.getLogAllItems().getItems().isEmpty()) ||
+        				 (afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty())) {
+        				
+	        			String filename = null;
+	
+	        			if (afrAlarmLogging) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.afr.csv'", Locale.US).format(new Date());
+	        			if (logAll) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.all.csv'", Locale.US).format(new Date());
+	
+	        			if (filename != null) saveLog(filename, logAll ? connectionService.getLogAllItems().getItems() : 
+	        															 connectionService.getAfrAlarmLogItems().getItems());
+        			}
 
         			if (progress != null && progress.isShowing()) {
     					progress.dismiss();
@@ -1241,6 +1264,18 @@ public class MainActivity 	extends Activity
     	Intent intent = new Intent(ConnectionService.ACTION_DISCONNECT);
     	intent.setPackage(ctx.getPackageName());
     	startService(intent);
+    	
+		if ((logAll && !connectionService.getLogAllItems().getItems().isEmpty()) ||
+				 (afrAlarmLogging && !connectionService.getAfrAlarmLogItems().getItems().isEmpty())) {
+				
+   			String filename = null;
+
+   			if (afrAlarmLogging) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.afr.csv'", Locale.US).format(new Date());
+   			if (logAll) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.all.csv'", Locale.US).format(new Date());
+
+   			if (filename != null) saveLog(filename, logAll ? connectionService.getLogAllItems().getItems() : 
+   															 connectionService.getAfrAlarmLogItems().getItems());
+		}
     }
     
     @SuppressWarnings("unused")
@@ -1415,41 +1450,36 @@ public class MainActivity 	extends Activity
 	
 	private void shareLog() {
 
-
-		final File sdcard = Environment.getExternalStorageDirectory();
-		final File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
-		
 		String filename = null;
-		dir.mkdirs();
 
 		// if we're logging save the log file
 		if (afrAlarmLogging) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.afr.csv'", Locale.US).format(new Date());
 		if (logAll) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.all.csv'", Locale.US).format(new Date());
 		
+		// we shouldn't be here
 		if (filename == null) return;
 		
-		saveLog(dir, filename, logAll ? connectionService.getLogAllItems().getItems() : 
-			                            connectionService.getAfrAlarmLogItems().getItems());
-		
-		final String logLocation = String.format(getResources().getString(R.string.share_log_message), 
-				 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
-
-		Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
-		AdaptiveLogger.log(logLocation);
+		final File file = saveLog(filename, logAll ? connectionService.getLogAllItems().getItems() : 
+			                                connectionService.getAfrAlarmLogItems().getItems());		
+		//bail if no file
+		if (file == null) return;
 		
 		Intent share = new Intent(Intent.ACTION_SEND);
 		share.setType("text/csv");
-		share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + dir.getAbsolutePath() + "/" + filename));
-		startActivity(Intent.createChooser(share, getText(R.string.share_afr_log_heading)));
-
-		connectionService.getLogAllItems().getItems().clear();
-		connectionService.getAfrAlarmLogItems().getItems().clear();
-		
-		menuShareLog.setVisible(false);
+		share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getAbsolutePath()));
+		startActivity(Intent.createChooser(share, getText(logAll ? R.string.share_log_all_heading : R.string.share_afr_log_heading)));
 	}
 	
-	private void saveLog(final File dir, final String filename, final ArrayList<LogItem> items) {
+	private File saveLog(final String filename, final ArrayList<LogItem> items) {
 		
+		final File sdcard = Environment.getExternalStorageDirectory();
+		final File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
+		
+		// bail if our arraylist is empty
+		if (items.isEmpty()) return null;
+		
+		dir.mkdirs();
+
 		File file = new File(dir, filename);
 		FileOutputStream f;
 		
@@ -1468,11 +1498,25 @@ public class MainActivity 	extends Activity
 
 			f.flush();
 			f.close();
+
+			connectionService.getLogAllItems().getItems().clear();
+			connectionService.getAfrAlarmLogItems().getItems().clear();			
+			menuShareLog.setVisible(false);
+			
+			final String logLocation = String.format(getResources().getString(R.string.share_log_message), 
+					 file.getAbsolutePath());
+
+			Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
+			AdaptiveLogger.log(logLocation);
 			
 		} catch (Exception e) {
     		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in saveLog - " + e.getMessage());
 			Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+			
+			file = null;
 		}
+		
+		return file;
 	}
 
 	public void onTabReselected(Tab tab, FragmentTransaction ft) {
