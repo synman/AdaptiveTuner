@@ -113,6 +113,8 @@ public class ConnectionService extends Service {
 	private static final int LONG_PAUSE = 200;
 	private static final int NOTIFICATION_ID = 1;
 	
+	private static final float KPA_TO_PSI = 0.145037738f;
+	
 	private static boolean saveMode = false;
 	private static short saveModeOffset = 0;
 	private static OutputStream saveStream;
@@ -886,9 +888,9 @@ public class ConnectionService extends Service {
 		if (ModbusRTU.validCRC(buf, REGISTER_4215_LENGTH)) {   
 			dataNotAvailable = false;
 			
-    		logItem.setFuelpres(Integer.parseInt(buf[3] + buf[4], 16));
-    		logItem.setOilpres(Integer.parseInt(buf[5] + buf[6], 16));
-    		logItem.setAuxpres(Integer.parseInt(buf[9] + buf[10], 16));
+    		logItem.setOilpres(Math.round((Integer.parseInt(buf[3] + buf[4], 16) * KPA_TO_PSI)));
+    		logItem.setFuelpres(Math.round((Integer.parseInt(buf[5] + buf[6], 16) * KPA_TO_PSI)));
+    		logItem.setAuxpres(Math.round(Integer.parseInt(buf[9] + buf[10], 16)));
     		
 			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_4096_PLUS_NINE);            

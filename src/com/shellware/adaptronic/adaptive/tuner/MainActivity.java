@@ -17,7 +17,9 @@
 package com.shellware.adaptronic.adaptive.tuner;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -436,13 +438,13 @@ public class MainActivity 	extends Activity
         dataArray.add("BAT\n--.-v");
 
         
-        if (ssi4Enabled) dataArray.add("FPRES\n ---");
+        if (ssi4Enabled) dataArray.add("Fuel P\n --- PSI");
         
         if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
         if (displayAuxTPref) dataArray.add("AUXT\n ---\u00B0");
         if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
         
-        if (ssi4Enabled) dataArray.add("OPRES\n ---");
+        if (ssi4Enabled) dataArray.add("Oil P\n --- PSI");
 
         //        	dataArray.add("APRES\n ---");
 
@@ -895,8 +897,8 @@ public class MainActivity 	extends Activity
 			final float referenceAfr = item.getReferenceAfr();
 			final float volts = item.getVolts();
 			
-			final float fuelpres = item.getFuelpres();
-			final float  oilpres =  item.getOilpres();
+			final int fuelpres = item.getFuelpres();
+			final int  oilpres =  item.getOilpres();
 
 			float afrVal = afr * 100;
     		float targetAfrVal = targetAfr * 100;
@@ -953,13 +955,13 @@ public class MainActivity 	extends Activity
 	    		dataArray.add(String.format("KNOCK\n%d", knock));
 	    		dataArray.add(String.format("BAT\n%.1fv", volts));
 
-	    		if (ssi4Enabled) dataArray.add(String.format("FPRES\n%.0f", fuelpres));
+	    		if (ssi4Enabled) dataArray.add(String.format("Fuel P\n%d PSI", fuelpres));
 	    		
 	            if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
 	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
 	            if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
 	            
-	            if (ssi4Enabled) dataArray.add(String.format("OPRES\n%.0f", oilpres));
+	            if (ssi4Enabled) dataArray.add(String.format("Oil P\n%d PSI", oilpres));
 
 				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
 	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
@@ -1412,99 +1414,64 @@ public class MainActivity 	extends Activity
     } 
 	
 	private void shareLog() {
+
+
+		final File sdcard = Environment.getExternalStorageDirectory();
+		final File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
 		
+		String filename = null;
+		dir.mkdirs();
+
 		// if we're logging save the log file
-		if (afrAlarmLogging) {		
-			try {
-				final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.afr.csv'", Locale.US).format(new Date());
-
-				File sdcard = Environment.getExternalStorageDirectory();
-				File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
-				dir.mkdirs();
-				
-				File file = new File(dir, filename);
-				FileOutputStream f = new FileOutputStream(file);
-				
-				// write our header
-				f.write(LOG_HEADER.getBytes());
-				
-				ArrayList<LogItem> items = connectionService.getAfrAlarmLogItems().getItems();
-				Iterator<LogItem> iterator = items.iterator();
-				
-				while (iterator.hasNext()) {
-					final LogItem item = (LogItem) iterator.next();
-					f.write(item.getLogBytes());
-				}
-				
-				connectionService.getAfrAlarmLogItems().getItems().clear();
-				
-				f.flush();
-				f.close();
-				
-				menuShareLog.setVisible(false);
-				
-				final String logLocation = String.format(getResources().getString(R.string.share_log_message), 
-														 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
-				
-				Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
-				AdaptiveLogger.log("Saving log as: " + logLocation);
-
-				Intent share = new Intent(Intent.ACTION_SEND);
-				share.setType("text/plain");
-				share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getPath()));
-				startActivity(Intent.createChooser(share, getText(R.string.share_afr_log_heading)));
-
-			} catch (Exception e) {
-	    		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in AFR shareLog - " + e.getMessage());
-				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-			}
-		}
+		if (afrAlarmLogging) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.afr.csv'", Locale.US).format(new Date());
+		if (logAll) filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.all.csv'", Locale.US).format(new Date());
 		
-		//TODO: normalize log share code
-		if (logAll) {		
-			try {
-				final String filename = new SimpleDateFormat("yyyyMMdd_HHmmss'.all.csv'", Locale.US).format(new Date());
+		if (filename == null) return;
+		
+		saveLog(dir, filename, logAll ? connectionService.getLogAllItems().getItems() : 
+			                            connectionService.getAfrAlarmLogItems().getItems());
+		
+		final String logLocation = String.format(getResources().getString(R.string.share_log_message), 
+				 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
 
-				File sdcard = Environment.getExternalStorageDirectory();
-				File dir = new File (sdcard.getAbsolutePath() + "/AdaptiveTuner/");
-				dir.mkdirs();
-				
-				File file = new File(dir, filename);
-				FileOutputStream f = new FileOutputStream(file);
-				
-				// write our header
-				f.write(LOG_HEADER.getBytes());
-				
-				ArrayList<LogItem> items = connectionService.getLogAllItems().getItems();
-				Iterator<LogItem> iterator = items.iterator();
-				
-				while (iterator.hasNext()) {
-					final LogItem item = (LogItem) iterator.next();
-					f.write(item.getLogBytes());
-				}
-				
-				connectionService.getLogAllItems().getItems().clear();
-				
-				f.flush();
-				f.close();
-				
-				menuShareLog.setVisible(false);
-				
-				final String logLocation = String.format(getResources().getString(R.string.share_log_message), 
-														 sdcard.getAbsolutePath(), "/AdaptiveTuner/", filename);
-				
-				Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
-				AdaptiveLogger.log("Saving log as: " + logLocation);
+		Toast.makeText(getApplicationContext(), logLocation, Toast.LENGTH_LONG).show();
+		AdaptiveLogger.log(logLocation);
+		
+		Intent share = new Intent(Intent.ACTION_SEND);
+		share.setType("text/csv");
+		share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + dir.getAbsolutePath() + "/" + filename));
+		startActivity(Intent.createChooser(share, getText(R.string.share_afr_log_heading)));
 
-				Intent share = new Intent(Intent.ACTION_SEND);
-				share.setType("text/plain");
-				share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getPath()));
-				startActivity(Intent.createChooser(share, getText(R.string.share_log_all_heading)));
-
-			} catch (Exception e) {
-	    		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in setCurrentCell");
-				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+		connectionService.getLogAllItems().getItems().clear();
+		connectionService.getAfrAlarmLogItems().getItems().clear();
+		
+		menuShareLog.setVisible(false);
+	}
+	
+	private void saveLog(final File dir, final String filename, final ArrayList<LogItem> items) {
+		
+		File file = new File(dir, filename);
+		FileOutputStream f;
+		
+		try {
+			f = new FileOutputStream(file);
+		
+			// write our header
+			f.write(LOG_HEADER.getBytes());
+			
+			Iterator<LogItem> iterator = items.iterator();
+			
+			while (iterator.hasNext()) {
+				final LogItem item = (LogItem) iterator.next();
+				f.write(item.getLogBytes());
 			}
+
+			f.flush();
+			f.close();
+			
+		} catch (Exception e) {
+    		AdaptiveLogger.log(Level.ERROR, "Unknown exception thrown in saveLog - " + e.getMessage());
+			Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 		}
 	}
 

@@ -20,6 +20,15 @@
   </head>
   <body>
   
+$ 1.2.12
+  % Version 1.2.12
+  _ 2015-03-31
+  ! Fixes for stuff
+  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
+  	<p/>   	
+  	* Fixed fuel pressure and oil pressure being reversed 
+  	* Hardcoded fuel and oil pressure to be in PSI
+  	* Save log on exit / disconnect if one exists 
 $ 1.2.11
   % Version 1.2.11
   _ 2015-03-30
