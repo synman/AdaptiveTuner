@@ -65,7 +65,7 @@
 		            android:background="@drawable/shape_gradient_green_to_red" >
 		        </RelativeLayout>
 	
-		        <com.shellware.adaptronic.adaptive.tuner.widgets.GaugeSlider
+		        <com.shellware.adaptronic.adaptivetuner.widgets.GaugeSlider
 		            android:id="@+id/tpsslider"
 		            android:layout_width="30dp"
 		            android:layout_height="30dp"
@@ -116,14 +116,14 @@
 		        android:src="@drawable/afrtwo" 
 		        android:contentDescription="@string/afr_gauge"/>
 
-		    <com.shellware.adaptronic.adaptive.tuner.widgets.GaugeNeedle
+		    <com.shellware.adaptronic.adaptivetuner.widgets.GaugeNeedle
 		        android:id="@+id/afrneedle"
 		        android:layout_width="fill_parent"
 		        android:layout_height="fill_parent"
 		        android:scaleType="fitXY"
 		        android:src="@drawable/needle_middle" />
 		    	
-			<com.shellware.adaptronic.adaptive.tuner.widgets.GaugeNeedle
+			<com.shellware.adaptronic.adaptivetuner.widgets.GaugeNeedle
 			    android:id="@+id/targetafrneedle"
 			    android:layout_width="fill_parent"
 			    android:layout_height="fill_parent"
@@ -160,7 +160,7 @@
 		    android:contentDescription="@string/map_gauge"
 		    android:scaleType="fitXY"/>
 	    	
-		<com.shellware.adaptronic.adaptive.tuner.widgets.GaugeNeedle
+		<com.shellware.adaptronic.adaptivetuner.widgets.GaugeNeedle
 		    android:id="@+id/mapneedle"
 		    android:layout_width="fill_parent"
 		    android:layout_height="fill_parent"
@@ -189,7 +189,7 @@
 		    android:contentDescription="@string/tachometer"
 		    android:scaleType="fitXY"/>
 	    	
-		<com.shellware.adaptronic.adaptive.tuner.widgets.GaugeNeedle
+		<com.shellware.adaptronic.adaptivetuner.widgets.GaugeNeedle
 		    android:id="@+id/rpmneedle"
 		    android:layout_width="fill_parent"
 		    android:layout_height="fill_parent"
@@ -218,7 +218,7 @@
 		    android:contentDescription="@string/water_gauge"
 		    android:scaleType="fitXY"/>
 	    	
-		<com.shellware.adaptronic.adaptive.tuner.widgets.GaugeNeedle
+		<com.shellware.adaptronic.adaptivetuner.widgets.GaugeNeedle
 		    android:id="@+id/waterneedle"
 		    android:layout_width="fill_parent"
 		    android:layout_height="fill_parent"
@@ -256,7 +256,7 @@
 		    android:contentDescription="@string/iat_gauge"
 		    android:scaleType="fitXY"/>
 	    	
-		<com.shellware.adaptronic.adaptive.tuner.widgets.GaugeNeedle
+		<com.shellware.adaptronic.adaptivetuner.widgets.GaugeNeedle
 		    android:id="@+id/iatneedle"
 		    android:layout_width="fill_parent"
 		    android:layout_height="fill_parent"

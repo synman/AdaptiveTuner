@@ -51,7 +51,7 @@
 	</RelativeLayout>
 
     
-	<com.shellware.adaptronic.adaptive.tuner.widgets.CellValueWidget
+	<com.shellware.adaptronic.adaptivetuner.widgets.CellValueWidget
 	    android:id="@+id/cellValueWidget1"
 	    android:layout_width="170dp"
 	    android:layout_height="170dp"

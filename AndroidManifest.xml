@@ -36,11 +36,11 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:allowBackup="true"
-        android:backupAgent=".MainActivityBackupAgentHelper"
+        android:backupAgent="com.shellware.adaptronic.adaptivetuner.MainActivityBackupAgentHelper"
         android:theme="@android:style/Theme.Holo" >
         
         <activity
-            android:name=".MainActivity"
+            android:name="com.shellware.adaptronic.adaptivetuner.MainActivity"
             android:label="@string/title_activity_main"  
             android:launchMode="singleInstance">
 
@@ -56,21 +56,21 @@
 			<meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/device_filter" />			
         </activity>
         
-        <activity android:name=".preferences.AdaptivePreferences" 
+        <activity android:name="com.shellware.adaptronic.adaptivetuner.preferences.AdaptivePreferences" 
             android:theme="@android:style/Theme.Holo" />
-        
+                
         <service 
-            android:name=".services.ConnectionService" 
+            android:name="com.shellware.adaptronic.adaptivetuner.services.ConnectionService" 
             android:exported="true">
 			<intent-filter>
-			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.CONNECT_BT" />
- 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.CONNECT_USB" />
- 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.DISCONNECT" />
- 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_INACTIVE" />
- 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.UI_ACTIVE" />
- 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.READ_FUEL_MAP" />
- 			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.READ_CRANKING_MAP" />
-   			    <action android:name="com.shellware.adaptronic.adaptive.tuner.action.SAVE_ECU_FILE" />
+			    <action android:name="com.shellware.adaptronic.adaptivetuner.action.CONNECT_BT" />
+ 			    <action android:name="com.shellware.adaptronic.adaptivetuner.action.CONNECT_USB" />
+ 			    <action android:name="com.shellware.adaptronic.adaptivetuner.action.DISCONNECT" />
+ 			    <action android:name="com.shellware.adaptronic.adaptivetuner.action.UI_INACTIVE" />
+ 			    <action android:name="com.shellware.adaptronic.adaptivetuner.action.UI_ACTIVE" />
+ 			    <action android:name="com.shellware.adaptronic.adaptivetuner.action.READ_FUEL_MAP" />
+ 			    <action android:name="com.shellware.adaptronic.adaptivetuner.action.READ_CRANKING_MAP" />
+   			    <action android:name="com.shellware.adaptronic.adaptivetuner.action.SAVE_ECU_FILE" />
  			</intent-filter>
 		</service>	
 		

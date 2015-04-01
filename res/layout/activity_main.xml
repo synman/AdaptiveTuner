@@ -25,21 +25,21 @@
         android:id="@+id/frag_adaptive"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        class="com.shellware.adaptronic.adaptive.tuner.fragments.AdaptiveFragment"
+        class="com.shellware.adaptronic.adaptivetuner.fragments.AdaptiveFragment"
         tools:layout="@layout/adaptive_tab" />
 
     <fragment
         android:id="@+id/frag_gauges"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        class="com.shellware.adaptronic.adaptive.tuner.fragments.GaugesFragment"
+        class="com.shellware.adaptronic.adaptivetuner.fragments.GaugesFragment"
         tools:layout="@layout/gauges_tab" />
     
     <fragment
         android:id="@+id/frag_fuel"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        class="com.shellware.adaptronic.adaptive.tuner.fragments.FuelFragment"
+        class="com.shellware.adaptronic.adaptivetuner.fragments.FuelFragment"
         tools:layout="@layout/fuel_tab" />
     
     <ImageView
