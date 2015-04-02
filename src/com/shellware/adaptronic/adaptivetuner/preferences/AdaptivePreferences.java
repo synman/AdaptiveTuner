@@ -54,7 +54,7 @@ public class AdaptivePreferences extends PreferenceActivity {
     public static final float MIN_WATER_TEMP_FAHRENHEIT = 160f;
     public static final float MAX_WATER_TEMP_FAHRENHEIT = 210f;
 
-    @SuppressLint("CommitPrefEdits")
+//    @SuppressLint("CommitPrefEdits")
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
 //    	requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -140,8 +140,31 @@ public class AdaptivePreferences extends PreferenceActivity {
 							return true;
 						}
 			        });
-			        
+			   
 		        uomPrefCat.addPreference(uomTempPref);
+		        
+			        // List preference
+			        final ListPreference presUomPref = new ListPreference(ctx);
+			        presUomPref.setPersistent(true);
+			        presUomPref.setKey("prefs_pressure_uom");
+			        presUomPref.setEntries(R.array.pressure_uom_names);
+			        presUomPref.setEntryValues(R.array.pressure_uom_values);
+			        presUomPref.setDialogTitle(R.string.prefs_uom_pressure_dialog_title);
+			        presUomPref.setTitle(R.string.prefs_uom_pressure_title);
+			        presUomPref.setDefaultValue("0");
+			        presUomPref.setSummary(res.getStringArray(R.array.pressure_uom_names) 
+			        		[Integer.parseInt(prefs.getString("prefs_pressure_uom", "0"))]);
+				        
+			        presUomPref.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+						public boolean onPreferenceChange(Preference arg0, final Object arg1) {
+					        presUomPref.setSummary(res.getStringArray(R.array.pressure_uom_names) 
+					        		[Integer.parseInt((String) arg1)]);	
+							return true;
+						}
+			        });
+			        
+			        uomPrefCat.addPreference(presUomPref);
+
 			        
 	        	PreferenceCategory connectionPrefCat = new PreferenceCategory(ctx);
 	        	connectionPrefCat.setTitle(R.string.prefs_connection_category);

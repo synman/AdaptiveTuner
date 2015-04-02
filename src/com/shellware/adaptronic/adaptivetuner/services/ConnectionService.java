@@ -150,6 +150,8 @@ public class ConnectionService extends Service {
 	private static boolean dataNotAvailable = true;
 	
 	private static int tempUomPref = 1;
+	private static int pressureUomPref = 0;
+	
 	private static boolean wakeLock = true;
 	private static boolean afrAlarmLogging = false;
 	private static float afrNotEqualTargetTolerance = 5f;
@@ -888,9 +890,9 @@ public class ConnectionService extends Service {
 		if (ModbusRTU.validCRC(buf, REGISTER_4215_LENGTH)) {   
 			dataNotAvailable = false;
 			
-    		logItem.setOilpres(Math.round((Integer.parseInt(buf[3] + buf[4], 16) * KPA_TO_PSI)));
-    		logItem.setFuelpres(Math.round((Integer.parseInt(buf[5] + buf[6], 16) * KPA_TO_PSI)));
-    		logItem.setAuxpres(Math.round((Integer.parseInt(buf[9] + buf[10], 16) * KPA_TO_PSI)));
+    		logItem.setOilpres(Math.round((Integer.parseInt(buf[3] + buf[4], 16) * pressureUomPref == 0 ? 1 : KPA_TO_PSI)));
+    		logItem.setFuelpres(Math.round((Integer.parseInt(buf[5] + buf[6], 16) * pressureUomPref == 0 ? 1 : KPA_TO_PSI)));
+    		logItem.setAuxpres(Math.round((Integer.parseInt(buf[9] + buf[10], 16) * pressureUomPref == 0 ? 1 : KPA_TO_PSI)));
     		
 			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_4096_PLUS_NINE);            
@@ -1030,6 +1032,10 @@ public class ConnectionService extends Service {
 
     public void setTempUomPref(final int val) {
 		tempUomPref = val;
+    }
+    
+    public void setPressureUomPref(final int val) {
+    	pressureUomPref = val;
     }
     
     public void setSsi4Enabled(final boolean ssi4) {

@@ -48,7 +48,9 @@
     <string name="prefs_uom_category">Unit of Measure</string>
     <string name="prefs_uom_temp_dialog_title">Selected Temperature Unit of Measure</string>
     <string name="prefs_uom_temp_title">Temperature</string>
-    
+    <string name="prefs_uom_pressure_dialog_title">Selected Pressure Unit of Measure</string>
+   	<string name="prefs_uom_pressure_title">Fuel and Oil Pressure</string>   
+	 
     <string name="prefs_connection_category">Connection Settings</string>
     <string name="prefs_connection_auto_connect">Automatic Connection on Startup</string>
     <string name="prefs_connect_on_charge">Autoconnect on Dock/Charge</string>

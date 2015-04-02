@@ -20,6 +20,13 @@
   </head>
   <body>
   
+$ 1.2.13
+  % Version 1.2.13
+  _ 2015-04-01
+  ! UOM for Pressure
+  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
+  	<p/>   	
+  	* Added UOM selection for fuel and oil pressure 
 $ 1.2.12
   % Version 1.2.12
   _ 2015-03-31

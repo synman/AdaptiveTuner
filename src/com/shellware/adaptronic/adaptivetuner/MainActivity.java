@@ -188,6 +188,7 @@ public class MainActivity 	extends Activity
 //	private static int screenHeight = 0;
 	
 	private static int tempUomPref = 1;
+	private static int pressureUomPref = 0;
 	private static boolean displayAuxTPref = false;
 	private static boolean ssi4Enabled = false;
 	
@@ -442,15 +443,13 @@ public class MainActivity 	extends Activity
         dataArray.add("BAT\n--.-v");
 
         
-        if (ssi4Enabled) dataArray.add("Fuel P\n --- PSI");
+        if (ssi4Enabled) dataArray.add("Fuel P\n ---");
         
         if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
         if (displayAuxTPref) dataArray.add("AUXT\n ---\u00B0");
         if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
         
-        if (ssi4Enabled) dataArray.add("Oil P\n --- PSI");
-
-        //        	dataArray.add("APRES\n ---");
+        if (ssi4Enabled) dataArray.add("Oil P\n ---");
 
         gridData.setAdapter(dataArray);   
 
@@ -615,6 +614,9 @@ public class MainActivity 	extends Activity
     	
     	tempUomPref = Integer.parseInt(prefs.getString("prefs_uom_temp", "1"));
     	if (connectionService != null) connectionService.setTempUomPref(tempUomPref);
+
+    	pressureUomPref = Integer.parseInt(prefs.getString("prefs_pressure_uom", "0"));
+    	if (connectionService != null) connectionService.setPressureUomPref(pressureUomPref);
 
     	displayAuxTPref = prefs.getBoolean("prefs_show_auxt", false);
 
@@ -979,13 +981,13 @@ public class MainActivity 	extends Activity
 	    		dataArray.add(String.format("KNOCK\n%d", knock));
 	    		dataArray.add(String.format("BAT\n%.1fv", volts));
 
-	    		if (ssi4Enabled) dataArray.add(String.format("Fuel P\n%d PSI", fuelpres));
+	    		if (ssi4Enabled) dataArray.add(String.format("Fuel P\n%d %s", fuelpres, pressureUomPref == 0 ? "kPA" : "PSI"));
 	    		
 	            if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
 	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
 	            if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
 	            
-	            if (ssi4Enabled) dataArray.add(String.format("Oil P\n%d PSI", oilpres));
+	            if (ssi4Enabled) dataArray.add(String.format("Oil P\n%d %s", oilpres, pressureUomPref == 0 ? "kPA" : "PSI"));
 
 				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
 	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
