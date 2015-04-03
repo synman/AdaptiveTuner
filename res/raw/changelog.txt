@@ -20,19 +20,20 @@
   </head>
   <body>
   
+$ 1.2.13.1
+  % <b>Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.</b><br><br>Version 1.2.13.1
+  _ 2015-04-02
+  ! UOM for Pressure
+  	* Fixed UOM calculation for fuel and oil pressure   
 $ 1.2.13
   % Version 1.2.13
   _ 2015-04-01
   ! UOM for Pressure
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* Added UOM selection for fuel and oil pressure 
 $ 1.2.12
   % Version 1.2.12
   _ 2015-03-31
   ! Fixes for stuff
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* Fixed fuel pressure and oil pressure being reversed 
   	* Hardcoded fuel and oil pressure to be in PSI
   	* Save log on exit / disconnect if one exists 
@@ -40,22 +41,16 @@ $ 1.2.11
   % Version 1.2.11
   _ 2015-03-30
   ! Initial SSI-4 Support
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* SSI-4 support enabled in General Prefs.  Fuel and Oil Pressure will display on Adaptive tab
 $ 1.2.10
   % Version 1.2.10
   _ 2015-03-27
   ! Boost / Vacuum vs MAP
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* Select boost (psi) / vacuum (inhg) gauge instead of MAP kPa in General Prefs
 $ 1.2.9
   % Version 1.2.9
   _ 2015-03-23
   ! Swipe and Tach
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* You can now swipe between tabs
   	* Reskinned tachometer
   	* Fixed various 5.0 issues
@@ -65,16 +60,12 @@ $ 1.2.7
   % Version 1.2.7
   _ 2014-04-02
   ! AUX-T Display & Logging (Long overdue)
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* Added logging and display of AUX-T (Tim Kent)
   	* Added Preference Checkbox for displaying AUX-T on the Adaptive Tab
 $ 1.2.6
   % Version 1.2.6
   _ 2013-08-04
   ! Fuel Cut Switch
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* Cranking fuel table (initial / unstable)
 	* Additional RS232 to USB adapters (unstable)
 	* Fuel cut switch (initial) 
@@ -84,15 +75,11 @@ $ 1.2.5
   % Version 1.2.5
   _ 2013-06-21
   ! Winchiphead CH341 Support
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* Integrated Matt Waddilove's RS232 to USB adapter contributions into the Adaptive Tuner main branch
 $ 1.2.1
   % Version 1.2.1
   _ 2013-05-14
   ! Fuel Cell Edit Widget TTS Alerts & Digital 7
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* Added Android TTS alerts and preferences
   	* Added cell value modifier widget
   	* Added Digital 7 font to Adaptive Tab
@@ -104,8 +91,6 @@ $ 1.2.0
   % Version 1.2.0
   _ 2013-04-09
   ! TERMS OF USE & FUEL MAP EDITING
-  	* Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.
-  	<p/>   	
   	* Added fuel table cell edit capability
   	* Added redundancy check for updating map values
   	* Fuel Map crosshairs green for closed loop and yellow for open loop

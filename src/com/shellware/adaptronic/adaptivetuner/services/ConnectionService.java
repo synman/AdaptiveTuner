@@ -890,9 +890,9 @@ public class ConnectionService extends Service {
 		if (ModbusRTU.validCRC(buf, REGISTER_4215_LENGTH)) {   
 			dataNotAvailable = false;
 			
-    		logItem.setOilpres(Math.round((Integer.parseInt(buf[3] + buf[4], 16) * pressureUomPref == 0 ? 1 : KPA_TO_PSI)));
-    		logItem.setFuelpres(Math.round((Integer.parseInt(buf[5] + buf[6], 16) * pressureUomPref == 0 ? 1 : KPA_TO_PSI)));
-    		logItem.setAuxpres(Math.round((Integer.parseInt(buf[9] + buf[10], 16) * pressureUomPref == 0 ? 1 : KPA_TO_PSI)));
+    		logItem.setOilpres(Math.round((Integer.parseInt(buf[3] + buf[4], 16) * (pressureUomPref == 0 ? 1 : KPA_TO_PSI))));
+    		logItem.setFuelpres(Math.round((Integer.parseInt(buf[5] + buf[6], 16) * (pressureUomPref == 0 ? 1 : KPA_TO_PSI))));
+    		logItem.setAuxpres(Math.round((Integer.parseInt(buf[9] + buf[10], 16) * (pressureUomPref == 0 ? 1 : KPA_TO_PSI))));
     		
 			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_4096_PLUS_NINE);            
