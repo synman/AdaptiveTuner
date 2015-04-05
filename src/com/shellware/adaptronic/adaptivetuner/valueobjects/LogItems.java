@@ -21,6 +21,26 @@ import java.util.Locale;
 
 public class LogItems {
 
+	public static enum SafetyCutReason {
+		NOCUT,
+		REVSOFT,
+		REVHARD,
+		COLDREVLIMIT,	
+		HOTREVLIMIT,	
+		OVERBOOST,	
+		OVERRUN,	
+		FLATSHIFT,	
+		TURBOTIMER,	
+		LOWRPMOIL,	
+		HIGHRPMOIL,	
+		FUELP,	
+		AUXP,
+		LEANOUT,	
+		INJOC,	
+		NOIGN,
+		TCPITLANELAUNCH		
+	}
+	
 	private ArrayList<LogItem> items = new ArrayList<LogItem>(65535);
 	
 	public ArrayList<LogItem> getItems() {
@@ -59,6 +79,7 @@ public class LogItems {
 		newItem.fuelpres = item.fuelpres;
 		newItem.oilpres = item.oilpres;
 		newItem.auxpres = item.auxpres;
+		newItem.safetyCutReason = item.safetyCutReason;
 		
 		items.add(newItem);
 	}
@@ -95,6 +116,8 @@ public class LogItems {
 		private boolean learningFLoad = false;
 		
 		private boolean closedLoop = false;
+		
+		private SafetyCutReason safetyCutReason = SafetyCutReason.NOCUT;
 				
 		public int getRpm() {
 			return rpm;
@@ -268,9 +291,17 @@ public class LogItems {
 			return timestamp;
 		}
 
+		public SafetyCutReason getSafetyCutReason() {
+			return safetyCutReason;
+		}
+
+		public void setSafetyCutReason(SafetyCutReason safetyCutReason) {
+			this.safetyCutReason = safetyCutReason;
+		}
+
 		public String getLogString() {
 			
-			final String str = String.format(Locale.US, "%d, %d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d, %d, %d, %.1f, %d, %d, %d\n", 
+			final String str = String.format(Locale.US, "%d, %d, %d, %d, %.1f, %.1f, %.1f, %d, %d, %d, %d, %d, %.1f, %d, %d, %d, %s\n", 
 												timestamp,
 												rpm,
 												map,
@@ -286,8 +317,8 @@ public class LogItems {
 												volts,
 												fuelpres,
 												oilpres,
-												auxpres);
-			
+												auxpres,
+												safetyCutReason.name());
 			return str;										
 		}
 		

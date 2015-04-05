@@ -115,7 +115,7 @@ public class MainActivity 	extends Activity
 	private static final float VE_DIVISOR = 128f;
 	private static final float MS_DIVISOR = 1500f;
 	
-	private static final String LOG_HEADER = "timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat, auxt, knock, volts, fuelpres, oilpres, auxpres\n";
+	private static final String LOG_HEADER = "timestamp, rpm, map, closedloop, targetafr, afr, refafr, tps, wat, mat, auxt, knock, volts, fuelpres, oilpres, auxpres, safetycutreason\n";
 	
 	private final Fragment[] frags = { null, null, null };
 	private static final short FRAGS_COUNT = 3;
@@ -956,7 +956,7 @@ public class MainActivity 	extends Activity
 			    		
     		if (rpm >= 200) lastRPM = rpm;
 
-    		txtData.setText(String.format("AVG: %.0f ms", connectionService.getAvgResponseMillis()));
+    		txtData.setText(String.format("AVG: %.0f ms - %s", connectionService.getAvgResponseMillis(), item.getSafetyCutReason().name()));
 
 			if (frags[0].isVisible()) {
 				imgFWait.setBackgroundColor(fWait ? Color.parseColor("#FFCC00") : Color.TRANSPARENT);
@@ -1468,7 +1468,7 @@ public class MainActivity 	extends Activity
 		if (file == null) return;
 		
 		Intent share = new Intent(Intent.ACTION_SEND);
-		share.setType("text/csv");
+		share.setType("text/plain");
 		share.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + file.getAbsolutePath()));
 		startActivity(Intent.createChooser(share, getText(logAll ? R.string.share_log_all_heading : R.string.share_afr_log_heading)));
 	}

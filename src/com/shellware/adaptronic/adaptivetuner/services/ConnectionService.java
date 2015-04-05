@@ -47,6 +47,7 @@ import com.shellware.adaptronic.adaptivetuner.modbus.ConnectedThread;
 import com.shellware.adaptronic.adaptivetuner.modbus.ModbusRTU;
 import com.shellware.adaptronic.adaptivetuner.usb.UsbConnectedThread;
 import com.shellware.adaptronic.adaptivetuner.valueobjects.LogItems;
+import com.shellware.adaptronic.adaptivetuner.valueobjects.LogItems.SafetyCutReason;
 
 public class ConnectionService extends Service {
     
@@ -894,6 +895,28 @@ public class ConnectionService extends Service {
     		logItem.setFuelpres(Math.round((Integer.parseInt(buf[5] + buf[6], 16) * (pressureUomPref == 0 ? 1 : KPA_TO_PSI))));
     		logItem.setAuxpres(Math.round((Integer.parseInt(buf[9] + buf[10], 16) * (pressureUomPref == 0 ? 1 : KPA_TO_PSI))));
     		
+    		logItem.setSafetyCutReason(SafetyCutReason.NOCUT);
+    		final int safetyCutFlags = Integer.parseInt(buf[11] + buf[12], 16);
+    		
+    		for (int x = 0; x < 16; x++) {
+    			if (getBit(safetyCutFlags, x) > 0) {
+    				logItem.setSafetyCutReason(SafetyCutReason.values()[x + 1]);
+    			}
+    		}
+    		
+    		// afr logging stuff
+    		if (afrAlarmLogging) {
+    			final float threshold = logItem.getTargetAfr() * (afrNotEqualTargetTolerance * .01f);
+    			if (Math.abs(logItem.getTargetAfr() - logItem.getAfr()) >= threshold ) {
+    				afrAlarmLogItems.addLogItem(logItem);
+    			}
+    		}
+    		
+    		// log all events?
+    		if (logAll) {
+    			logAllItems.addLogItem(logItem);
+    		}
+    		
 			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
 			sendRequest(REGISTER_4096_PLUS_NINE);            
             return;
@@ -916,7 +939,8 @@ public class ConnectionService extends Service {
 			logItem.setClosedLoop(getBit(Integer.parseInt(buf[9] + buf[10], 16), 8) > 0); 
 			
 			AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
-			sendRequest(ssi4Enabled ? REGISTER_4215_PLUS_FOUR : REGISTER_4096_PLUS_NINE);            
+//			sendRequest(ssi4Enabled ? REGISTER_4215_PLUS_FOUR : REGISTER_4096_PLUS_NINE);            
+			sendRequest(REGISTER_4215_PLUS_FOUR);
             return;
             
 		} else {
@@ -946,19 +970,6 @@ public class ConnectionService extends Service {
     		logItem.setTps(Integer.parseInt(buf[17] + buf[18], 16));
     		
     		logItem.setVolts(Integer.parseInt(buf[21] + buf[22], 16) / 10f);
-    		
-    		// afr logging stuff
-    		if (afrAlarmLogging) {
-    			final float threshold = logItem.getTargetAfr() * (afrNotEqualTargetTolerance * .01f);
-    			if (Math.abs(logItem.getTargetAfr() - logItem.getAfr()) >= threshold ) {
-    				afrAlarmLogItems.addLogItem(logItem);
-    			}
-    		}
-    		
-    		// log all events?
-    		if (logAll) {
-    			logAllItems.addLogItem(logItem);
-    		}
     		
             AdaptiveLogger.log("Processed " + lastRegister + " response: " + data);
     		sendRequest(REGISTER_4140_PLUS_SIX);
