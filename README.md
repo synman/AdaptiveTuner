@@ -1,5 +1,5 @@
 
-Copyright 2012-2013 Shell M. Shrader
+Copyright 2012-2015 Shell M. Shrader
 
 Contributors
 ============
