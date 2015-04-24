@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<merge xmlns:android="http://schemas.android.com/apk/res/android" >
+
+	<TextView android:id="@+id/digitaltitle"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignParentTop="true"
+         android:layout_centerHorizontal="true"/>
+
+	<RelativeLayout android:id="@+id/digitalborder"
+  	     android:layout_width="140dp"
+  	     android:layout_height="wrap_content"
+  	     android:layout_centerHorizontal="true"
+         android:paddingLeft="10dp"
+         android:paddingRight="10dp"
+         android:paddingBottom="5dp"
+         android:layout_below="@+id/digitaltitle" 
+   	     android:background="@drawable/digital_background" >
+
+   	     <RelativeLayout 
+	  	     android:layout_width="wrap_content"
+	  	     android:layout_height="wrap_content"
+	  	     android:layout_centerHorizontal="true">
+	         	   	     
+	  	     <TextView android:id="@+id/digitalvalue"
+	  	         android:layout_width="wrap_content"
+	  	         android:layout_height="wrap_content"
+	  	         android:layout_toLeftOf="@+id/digitalunits"
+	  	         android:paddingTop="5dp"/>
+
+	  	     <TextView android:id="@+id/digitalunits"
+	  	         android:layout_alignParentRight="true"
+	  	         android:layout_width="wrap_content"
+	  	         android:layout_height="wrap_content"
+	  	         android:paddingLeft="5dp"
+	  	         android:paddingTop="10dp"/>
+		</RelativeLayout> 
+	</RelativeLayout>  	 
+	    
+</merge> 

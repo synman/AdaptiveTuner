@@ -129,7 +129,7 @@ public class MainActivity 	extends Activity
 	private MenuItem menuUsbConnect;
 	private MenuItem menuShareLog;
 	
-	private GridView gridData;
+//	private GridView gridData;
 	private ImageView imgStatus;
 	
 	private TextView txtIgnitionLearn;
@@ -424,7 +424,7 @@ public class MainActivity 	extends Activity
         
         imgIat = (ImageView) findViewById(R.id.iat);
 
-        gridData = (GridView) findViewById(R.id.gridData);
+//        gridData = (GridView) findViewById(R.id.gridData);
         
 //        dataArray = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         dataArray = new AdaptiveAdapter(this, R.layout.adaptive_grid_item,
@@ -451,7 +451,7 @@ public class MainActivity 	extends Activity
         
         if (ssi4Enabled) dataArray.add("Oil P\n ---");
 
-        gridData.setAdapter(dataArray);   
+//        gridData.setAdapter(dataArray);   
 
         lvDevices.setOnItemClickListener(DevicesClickListener);
         
@@ -989,8 +989,8 @@ public class MainActivity 	extends Activity
 	            
 	            if (ssi4Enabled) dataArray.add(String.format("Oil P\n%d %s", oilpres, pressureUomPref == 0 ? "kPA" : "PSI"));
 
-				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
-	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
+//				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
+//	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
 			}
 
 			if (frags[1].isVisible()) {
@@ -1045,11 +1045,11 @@ public class MainActivity 	extends Activity
 			// water temperature alarm			
     		if (waterTempPref) {
     			if (wat < minimumWaterTemp) {
-    				if (frags[0].isVisible() && gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
+//    				if (frags[0].isVisible() && gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
     				if (frags[1].isVisible()) waterGaugeAlarm.setBackgroundColor(Color.BLUE);
     			}
     			if (wat > maximumWaterTemp) {
-    				if (frags[0].isVisible() && gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.RED);
+//    				if (frags[0].isVisible() && gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.RED);
     				if (frags[1].isVisible()) waterGaugeAlarm.setBackgroundColor(Color.RED);
     			}
     		}
@@ -1059,7 +1059,7 @@ public class MainActivity 	extends Activity
     			final float threshold = targetAfr * (afrNotEqualTargetTolerance * .01f);
     			if (Math.abs(targetAfr - afr) >= threshold ) {
     				final int color =  afr > targetAfr ? Color.RED : Color.BLUE;
-    				if (frags[0].isVisible() && gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(color);
+//    				if (frags[0].isVisible() && gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(color);
     				if (frags[1].isVisible()) afrGaugeAlarm.setBackgroundColor(color);
     				if (frags[2].isVisible()) fuelTableAfr.setBackgroundColor(color);
     			}
