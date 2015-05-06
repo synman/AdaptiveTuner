@@ -25,6 +25,9 @@ public class DigitalGauge extends RelativeLayout {
 	private String value = "000";
 	private String units = "\u00B0 F";
 	private int width = 140;
+	
+	private float minimumValue = -999999;
+	private float maximumValue = 999999;
 
 	public DigitalGauge(Context context) {
 		super(context);
@@ -79,22 +82,21 @@ public class DigitalGauge extends RelativeLayout {
         
 		if (!isInEditMode()) gaugeTitleView.setTypeface(Typeface.createFromAsset(getContext().getAssets(), "fonts/digital_7.ttf"), Typeface.NORMAL);
 		gaugeTitleView.setTextColor(Color.parseColor("#ffa500"));;
-		gaugeTitleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 30);
+		gaugeTitleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, (int) getResources().getDimension(R.dimen.gauge_title_size));
 		
 		if (!isInEditMode()) gaugeValueView.setTypeface(Typeface.createFromAsset(getContext().getAssets(), "fonts/digital_7.ttf"), Typeface.BOLD);
 		gaugeValueView.setTextColor(Color.GREEN);
-		gaugeValueView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 60);
+		gaugeValueView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, (int) getResources().getDimension(R.dimen.gauge_value_size));
         
 		if (!isInEditMode()) gaugeUnitsView.setTypeface(Typeface.createFromAsset(getContext().getAssets(), "fonts/digital_7.ttf"), Typeface.BOLD);
 		gaugeUnitsView.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
 		gaugeUnitsView.setTextColor(Color.parseColor("#eee9e9"));;
-		gaugeUnitsView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 20);
+		gaugeUnitsView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, (int) getResources().getDimension(R.dimen.gauge_units_size));
 		
 		gaugeTitleView.setText(title);
 		gaugeValueView.setText(value);
 		gaugeUnitsView.setText(units);
-		
-		// set our width -- 115dp == 2 digits 140dp == 3 digits 170dp == 4 digits
+
 		RelativeLayout.LayoutParams parms = (RelativeLayout.LayoutParams) digitalBorder.getLayoutParams();
 		parms.width = convertDpToPx(width);
 		digitalBorder.setLayoutParams(parms);
@@ -106,8 +108,36 @@ public class DigitalGauge extends RelativeLayout {
 	}
 	
 	public void setValue(final int value) {
-		this.value = String.valueOf(value);
-		gaugeValueView.setText(this.value);
+		if (value == 0) {
+			this.value = "---";
+		} else {
+			this.value = String.valueOf(value);			
+		}
+		setGaugeValue(value);
+	}
+	
+	public void setValue(final float value) {
+		if (value == 0) {
+			this.value = "--.-";
+		} else {
+			this.value = String.format("%.1f", value);
+		}
+		setGaugeValue(value);
+	}
+	
+	private void setGaugeValue(final float value) {
+		
+		if (value > maximumValue)  {
+			gaugeValueView.setTextColor(Color.RED);
+		} else {
+			if (value < minimumValue) {
+				gaugeValueView.setTextColor(Color.BLUE);
+			} else {
+				gaugeValueView.setTextColor(Color.GREEN);				
+			}
+		}
+ 
+		gaugeValueView.setText(this.value);	
 	}
 	
 	public void setTitle(final String title) {
@@ -118,5 +148,12 @@ public class DigitalGauge extends RelativeLayout {
 	public void setUnits(final String units) {
 		this.units = units;
 		gaugeUnitsView.setText(this.units);
+	}
+	
+	public void setMinimumValue(float minimumValue) {
+		this.minimumValue = minimumValue;
+	}
+	public void setMaximumValue(float maximumValue) {
+		this.maximumValue = maximumValue;
 	}
 }

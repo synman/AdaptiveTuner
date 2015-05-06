@@ -18,6 +18,7 @@
  -->
  <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:gauge="http://schemas.android.com/apk/res/com.shellware.adaptronic.adaptive.tuner"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/shape_gradient_background"  >
@@ -112,21 +113,232 @@
 			</RelativeLayout>
 	</RelativeLayout>
 
-	<RelativeLayout
-	    android:id="@+id/gridFrame"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    android:layout_alignParentBottom="true"
-	    android:layout_centerHorizontal="true"
-	    android:layout_marginBottom="@dimen/padding_large" >
-
-	    <GridView
-	        android:id="@+id/gridData"
-	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:stackFromBottom="true"
-	        android:numColumns="3" />
-
-    </RelativeLayout>
+	<TableLayout
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_centerHorizontal="true"
+		android:layout_alignParentBottom="true" >
+        
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp" >
+            
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/tachdigital"
+		 	     gauge:title="TACH"
+		 	     gauge:units="RPM"
+		 	     gauge:width="90"
+		 	     gauge:value="- - - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />
+             	 
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/mapdigital"
+		 	     gauge:title="MAP"
+		 	     gauge:units="KPA"
+		 	     gauge:width="75"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />  
+		   	     
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/matdigital"
+		 	     gauge:title="MAT"
+		 	     gauge:units="\u00B0 F"
+		 	     gauge:width="70"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />     	     
+		</TableRow>
+		
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp" >
+            
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/afrdigital"
+		 	     gauge:title="AFR"
+		 	     gauge:units=""
+		 	     gauge:width="70"
+		 	     gauge:value="- -.-"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />
+             	 
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/tafrdigital"
+		 	     gauge:title="TAFR"
+		 	     gauge:units=""
+		 	     gauge:width="70"
+		 	     gauge:value="- -.-"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />  
+		   	     
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/watdigital"
+		 	     gauge:title="WAT"
+		 	     gauge:units="\u00B0 F"
+		 	     gauge:width="70"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />     	     
+		</TableRow> 
+		  		
+        <TableRow
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp" >
+            
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/tpsdigital"
+		 	     gauge:title="TPS"
+		 	     gauge:units="%"
+		 	     gauge:width="70"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />
+             	 
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/knockdigital"
+		 	     gauge:title="knock"
+		 	     gauge:units="ADC"
+		 	     gauge:width="80"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />  
+		   	     
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/batdigital"
+		 	     gauge:title="BAT"
+		 	     gauge:units="V"
+		 	     gauge:width="70"
+		 	     gauge:value="- -.-"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />     	     
+		</TableRow>      
+        		      
+        <TableRow
+            android:id="@+id/bottomdigitalrow"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="5dp" >
+            
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+      	      	 android:visibility="invisible"
+   		 	     android:id="@+id/fpresdigital"
+		 	     gauge:title="Fuel P"
+		 	     gauge:units="KPA"
+		 	     gauge:width="75"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />
+		   	     
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+      	      	 android:visibility="invisible"
+		 	     android:id="@+id/auxtdigital"
+		 	     gauge:title="Aux T"
+		 	     gauge:units="\u00B0 F"
+		 	     gauge:width="70"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />   
+		   	                  	 
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+      	      	 android:visibility="invisible"
+		 	     android:id="@+id/opresdigital"
+		 	     gauge:title="Oil P"
+		 	     gauge:units="KPA"
+		 	     gauge:width="75"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="10dp"
+		  	     android:paddingLeft="10dp"
+		  	     android:paddingRight="10dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="10dp"
+				 android:layout_marginRight="10dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />  
+		</TableRow>  		  
+	</TableLayout>	
 
 </RelativeLayout>

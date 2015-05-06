@@ -84,6 +84,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RelativeLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -96,8 +97,8 @@ import com.shellware.adaptronic.adaptivetuner.receivers.BatteryStatusReceiver;
 import com.shellware.adaptronic.adaptivetuner.services.ConnectionService;
 import com.shellware.adaptronic.adaptivetuner.services.ConnectionService.State;
 import com.shellware.adaptronic.adaptivetuner.valueobjects.LogItems.LogItem;
-import com.shellware.adaptronic.adaptivetuner.widgets.AdaptiveAdapter;
 import com.shellware.adaptronic.adaptivetuner.widgets.CellValueWidget;
+import com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge;
 import com.shellware.adaptronic.adaptivetuner.widgets.GaugeNeedle;
 import com.shellware.adaptronic.adaptivetuner.widgets.GaugeSlider;
 
@@ -164,6 +165,19 @@ public class MainActivity 	extends Activity
 	
 	private ImageView afrGaugeAlarm;
 	private ImageView waterGaugeAlarm;
+	
+	private DigitalGauge digitalMap;
+	private DigitalGauge digitalRpm;
+	private DigitalGauge digitalWat;
+	private DigitalGauge digitalMat;
+	private DigitalGauge digitalAfr;
+	private DigitalGauge digitalTafr;
+	private DigitalGauge digitalVolts;
+	private DigitalGauge digitalTps;
+	private DigitalGauge digitalKnock;
+	private DigitalGauge digitalFuelP;
+	private DigitalGauge digitalOilP;
+	private DigitalGauge digitalAuxT;
 
 	private ProgressDialog progress;
 	
@@ -173,7 +187,7 @@ public class MainActivity 	extends Activity
 	private final BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();;
 	
 	private ArrayAdapter<String> devices;
-	private AdaptiveAdapter dataArray;
+//	private AdaptiveAdapter dataArray;
 
 	private static int lastMAP = 0;
 	private static int lastRPM = 0;
@@ -424,35 +438,19 @@ public class MainActivity 	extends Activity
         
         imgIat = (ImageView) findViewById(R.id.iat);
 
-//        gridData = (GridView) findViewById(R.id.gridData);
+        digitalMap = (DigitalGauge) findViewById(R.id.mapdigital);
+        digitalRpm = (DigitalGauge) findViewById(R.id.tachdigital);
+        digitalVolts = (DigitalGauge) findViewById(R.id.batdigital);
+        digitalWat = (DigitalGauge) findViewById(R.id.watdigital);
+        digitalMat = (DigitalGauge) findViewById(R.id.matdigital);
+        digitalAfr = (DigitalGauge) findViewById(R.id.afrdigital);
+        digitalTafr = (DigitalGauge) findViewById(R.id.tafrdigital);
+        digitalKnock = (DigitalGauge) findViewById(R.id.knockdigital);
+        digitalTps = (DigitalGauge) findViewById(R.id.tpsdigital);
+        digitalFuelP = (DigitalGauge) findViewById(R.id.fpresdigital);
+        digitalOilP = (DigitalGauge) findViewById(R.id.opresdigital);
+        digitalAuxT = (DigitalGauge) findViewById(R.id.auxtdigital);
         
-//        dataArray = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        dataArray = new AdaptiveAdapter(this, R.layout.adaptive_grid_item,
-        								Typeface.createFromAsset(ctx.getAssets(), "fonts/digital_7.ttf"));
-        
-        dataArray.add("RPM\n ----");
-        dataArray.add("MAP\n ---");
-        dataArray.add("MAT\n ---\u00B0");
-
-        dataArray.add("AFR\n --.- (--.-)");
-        dataArray.add("TAFR\n --.-");
-        dataArray.add("WAT\n ---\u00B0");
-
-        dataArray.add("TPS\n---%");
-        dataArray.add("KNOCK\n---");
-        dataArray.add("BAT\n--.-v");
-
-        
-        if (ssi4Enabled) dataArray.add("Fuel P\n ---");
-        
-        if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
-        if (displayAuxTPref) dataArray.add("AUXT\n ---\u00B0");
-        if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
-        
-        if (ssi4Enabled) dataArray.add("Oil P\n ---");
-
-//        gridData.setAdapter(dataArray);   
-
         lvDevices.setOnItemClickListener(DevicesClickListener);
         
         waterNeedle = (GaugeNeedle) findViewById(R.id.waterneedle);
@@ -620,13 +618,32 @@ public class MainActivity 	extends Activity
 
     	displayAuxTPref = prefs.getBoolean("prefs_show_auxt", false);
 
+    	digitalWat.setUnits("\u00B0 " + (tempUomPref == 0 ? "C" : "F"));
+    	digitalMat.setUnits("\u00B0 " + (tempUomPref == 0 ? "C" : "F"));
+
     	showBoost = prefs.getBoolean("prefs_show_boost", false);
     	maxBoost = Integer.parseInt(prefs.getString("prefs_max_boost", "0"));
     	
     	ssi4Enabled = prefs.getBoolean("prefs_ssi4_enabled", false);
     	if (connectionService != null) connectionService.setSsi4Enabled(ssi4Enabled);
 
+		digitalFuelP.setVisibility(ssi4Enabled ? View.VISIBLE : displayAuxTPref ? View.INVISIBLE : View.GONE);
+		digitalOilP.setVisibility(digitalFuelP.getVisibility());
+		digitalAuxT.setVisibility(displayAuxTPref ? View.VISIBLE : ssi4Enabled ? View.INVISIBLE : View.GONE);
+
+		if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) { 
+    			final TableRow row = (TableRow) findViewById(R.id.bottomdigitalrow);
+    			row.setVisibility(ssi4Enabled || displayAuxTPref ? View.VISIBLE : View.GONE);
+    	}
+		
+		digitalFuelP.setUnits(pressureUomPref == 0 ? "kPA" : "PSI");
+		digitalOilP.setUnits(pressureUomPref == 0 ? "kPA" : "PSI");
+    	digitalAuxT.setUnits("\u00B0 " + (tempUomPref == 0 ? "C" : "F"));
+    
     	if (showBoost) {
+    		digitalMap.setTitle("BOOST");
+    		digitalMap.setUnits("PSI");
+    		
     		switch (maxBoost) {
     			case 0:
     	            ((ImageView) findViewById(R.id.map)).setImageResource(R.drawable.boost_vac_15);
@@ -636,6 +653,8 @@ public class MainActivity 	extends Activity
     	            break;
     		}
         } else {
+        	digitalMap.setTitle("MAP");
+    		digitalMap.setUnits("KPA");
             ((ImageView) findViewById(R.id.map)).setImageResource(R.drawable.mapgauge);        	
         }
                
@@ -671,6 +690,14 @@ public class MainActivity 	extends Activity
     	        break;
     	}
 
+    	if (waterTempPref) {
+    		digitalWat.setMinimumValue(minimumWaterTemp);
+    		digitalWat.setMaximumValue(maximumWaterTemp);
+    	} else {
+    		digitalWat.setMinimumValue(-99999);
+    		digitalWat.setMaximumValue(99999);
+    	}
+    	
         iatNeedle.setPivotPoint(.5f);
         iatNeedle.setMinValue(0);
         iatNeedle.setMinDegrees(-180);
@@ -896,7 +923,7 @@ public class MainActivity 	extends Activity
 	    	}
 	    	
 			// populate all data elements
-    		dataArray.clear();
+//    		dataArray.clear();
 			final LogItem item = connectionService.getLogItem();
 			
 			final boolean fWait = item.isLearningFWait();
@@ -969,28 +996,39 @@ public class MainActivity 	extends Activity
 	
 				txtFuelLearn.setBackgroundColor(closedLoop ? Color.GREEN : Color.TRANSPARENT);
 
-				dataArray.add(String.format("RPM\n%d", lastRPM));
-	    		dataArray.add(String.format("MAP\n%d kPa", map));
-	    		dataArray.add(String.format("MAT\n%d\u00B0 %s", mat, getTemperatureSymbol()));
+				digitalRpm.setValue(lastRPM);
+				
+				if (!showBoost) {
+					digitalMap.setUnits("kpa");
+					digitalMap.setValue(map);
+				} else {				
+					if (map < 102) {
+						digitalMap.setUnits("inHg");
+				        digitalMap.setValue(30f + (((map - 102) / 6.894f) * 2.036025f));						
+					} else {
+						digitalMap.setUnits("psi");
+				        digitalMap.setValue((map - 102) / 6.894f);
+					}
+				}
 
-	    		dataArray.add(String.format("AFR\n%.1f (%.1f)", afr, referenceAfr));
-	    		dataArray.add("TAFR\n" +  (targetAfr != 0f ? String.format("%.1f", targetAfr) : "--.-"));
-	    		dataArray.add(String.format("WAT\n%d\u00B0 %s", wat, getTemperatureSymbol()));
+				digitalMat.setValue(mat);
+
 	    		
-	    		dataArray.add(String.format("TPS\n%d%%", lastTPS));
-	    		dataArray.add(String.format("KNOCK\n%d", knock));
-	    		dataArray.add(String.format("BAT\n%.1fv", volts));
+	    		digitalAfr.setValue(afr);
+	    		digitalTafr.setValue(targetAfr);
+	    		digitalWat.setValue(wat);
 
-	    		if (ssi4Enabled) dataArray.add(String.format("Fuel P\n%d %s", fuelpres, pressureUomPref == 0 ? "kPA" : "PSI"));
 	    		
-	            if (displayAuxTPref && !ssi4Enabled) dataArray.add("\n");
-	    		if (displayAuxTPref) dataArray.add(String.format("AUXT\n%d\u00B0 %s", auxt, getTemperatureSymbol()));
-	            if ((displayAuxTPref && !ssi4Enabled) || (ssi4Enabled && !displayAuxTPref)) dataArray.add("\n");
-	            
-	            if (ssi4Enabled) dataArray.add(String.format("Oil P\n%d %s", oilpres, pressureUomPref == 0 ? "kPA" : "PSI"));
+	    		digitalTps.setValue(lastTPS);
+	    		digitalKnock.setValue(knock);
+	    		digitalVolts.setValue(volts);
 
-//				if (gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.TRANSPARENT);
-//	    		if (gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(Color.TRANSPARENT);
+	    		if (ssi4Enabled) {
+	    			digitalFuelP.setValue(fuelpres);
+	    			digitalOilP.setValue(oilpres);
+	    		}
+	    		
+	    		if (displayAuxTPref) digitalAuxT.setValue(auxt);
 			}
 
 			if (frags[1].isVisible()) {

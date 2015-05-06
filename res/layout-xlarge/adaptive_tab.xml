@@ -115,31 +115,12 @@
 			</RelativeLayout>
 	</RelativeLayout>
 
-	<RelativeLayout
-	    android:id="@+id/gridFrame"
-	    android:layout_width="fill_parent"
-	    android:layout_height="wrap_content"
-	    android:layout_alignParentBottom="true"
-	    android:layout_centerHorizontal="true" >
-    
-	    <!-- android:layout_marginLeft="80dp" 
-
-	    <GridView
-	        android:id="@+id/gridData"
-	        android:layout_width="match_parent"
-	        android:layout_height="match_parent"
-	        android:columnWidth="125dip"
-	        android:gravity="center"
-	        android:horizontalSpacing="10dip"
-	        android:numColumns="3"
-	        android:stackFromBottom="true"
-	        android:stretchMode="spacingWidthUniform"
-	        android:verticalSpacing="10dip" /> -->
-	        
 	<TableLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:layout_centerInParent="true" >
+		android:layout_centerHorizontal="true"
+		android:layout_marginBottom="20dp"
+		android:layout_alignParentBottom="true" >
         
         <TableRow
             android:layout_width="wrap_content"
@@ -150,8 +131,8 @@
 		 	     android:id="@+id/tachdigital"
 		 	     gauge:title="TACH"
 		 	     gauge:units="RPM"
-		 	     gauge:width="170"
-		 	     gauge:value="9999"
+		 	     gauge:width="175"
+		 	     gauge:value="- - - -"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -167,6 +148,7 @@
 		 	     gauge:title="MAP"
 		 	     gauge:units="KPA"
 		 	     gauge:width="140"
+		 	     gauge:value="- - -"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -182,6 +164,7 @@
 		 	     gauge:title="MAT"
 		 	     gauge:units="\u00B0 F"
 		 	     gauge:width="140"
+		 	     gauge:value="- - -"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -202,8 +185,8 @@
 		 	     android:id="@+id/afrdigital"
 		 	     gauge:title="AFR"
 		 	     gauge:units=""
-		 	     gauge:width="105"
-		 	     gauge:value="14.7"
+		 	     gauge:width="120"
+		 	     gauge:value="- -.-"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -218,8 +201,8 @@
 		 	     android:id="@+id/tafrdigital"
 		 	     gauge:title="TAFR"
 		 	     gauge:units=""
-		 	     gauge:width="105"
-		 	     gauge:value="14.7"
+		 	     gauge:width="120"
+		 	     gauge:value="- -.-"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -235,6 +218,7 @@
 		 	     gauge:title="WAT"
 		 	     gauge:units="\u00B0 F"
 		 	     gauge:width="140"
+		 	     gauge:value="- - -"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -255,8 +239,8 @@
 		 	     android:id="@+id/tpsdigital"
 		 	     gauge:title="TPS"
 		 	     gauge:units="%"
-		 	     gauge:width="115"
-		 	     gauge:value="100"
+		 	     gauge:width="140"
+		 	     gauge:value="- - -"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -272,7 +256,7 @@
 		 	     gauge:title="knock"
 		 	     gauge:units="ADC"
 		 	     gauge:width="140"
-		 	     gauge:value="255"
+		 	     gauge:value="- - -"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -287,8 +271,8 @@
 		 	     android:id="@+id/batdigital"
 		 	     gauge:title="BAT"
 		 	     gauge:units="V"
-		 	     gauge:width="115"
-		 	     gauge:value="12.9"
+		 	     gauge:width="120"
+		 	     gauge:value="- -.-"
 		  	     android:layout_width="wrap_content"
 		  	     android:layout_height="wrap_content"
 		  	     android:paddingBottom="15dp"
@@ -300,7 +284,5 @@
 		   	     android:background="@drawable/digital_gauge_gradient_background" />     	     
 		</TableRow>        
 	</TableLayout>	        
-
-    </RelativeLayout>
 
 </RelativeLayout>

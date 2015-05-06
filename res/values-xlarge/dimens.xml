@@ -22,7 +22,7 @@
     <dimen name="padding_large">16dp</dimen>
     
     <dimen name="gauge_title_size">10dp</dimen>
-    <dimen name="gauge_value_size">15dp</dimen>
-    <dimen name="gauge_units_size">5dp</dimen>
+    <dimen name="gauge_value_size">27dp</dimen>
+    <dimen name="gauge_units_size">7dp</dimen>
 
 </resources>
