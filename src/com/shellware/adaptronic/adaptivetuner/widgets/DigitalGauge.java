@@ -27,7 +27,7 @@ public class DigitalGauge extends RelativeLayout {
 	private int width = 140;
 	
 	private float minimumValue = -999999;
-	private float maximumValue = 999999;
+	private float maximumValue = 999999;	
 
 	public DigitalGauge(Context context) {
 		super(context);
@@ -109,7 +109,7 @@ public class DigitalGauge extends RelativeLayout {
 	
 	public void setValue(final int value) {
 		if (value == 0) {
-			this.value = "---";
+			this.value = "- - -";
 		} else {
 			this.value = String.valueOf(value);			
 		}
@@ -118,7 +118,7 @@ public class DigitalGauge extends RelativeLayout {
 	
 	public void setValue(final float value) {
 		if (value == 0) {
-			this.value = "--.-";
+			this.value = "- -.-";
 		} else {
 			this.value = String.format("%.1f", value);
 		}
@@ -155,5 +155,8 @@ public class DigitalGauge extends RelativeLayout {
 	}
 	public void setMaximumValue(float maximumValue) {
 		this.maximumValue = maximumValue;
+	}
+	public void setGaugeValueTextColor(final int color) {
+		gaugeValueView.setTextColor(color);
 	}
 }

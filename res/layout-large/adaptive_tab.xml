@@ -174,7 +174,24 @@
 		  	     android:layout_marginLeft="40dp"
 				 android:layout_marginRight="40dp"		  	     
 		   	     android:background="@drawable/digital_gauge_gradient_background" />     	     
-		</TableRow>
+             	 
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/fpresdigital"
+		 	     android:visibility="gone"
+		 	     gauge:title="Fuel P"
+		 	     gauge:units="KPA"
+		 	     gauge:width="100"
+		 	     gauge:value="- - -"		 	     
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="15dp"
+		  	     android:paddingLeft="15dp"
+		  	     android:paddingRight="15dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="40dp"
+				 android:layout_marginRight="40dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />  
+   		</TableRow>
 		
         <TableRow
             android:layout_width="wrap_content"
@@ -216,6 +233,23 @@
 			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
 		 	     android:id="@+id/watdigital"
 		 	     gauge:title="WAT"
+		 	     gauge:units="\u00B0 F"
+		 	     gauge:width="90"
+		 	     gauge:value="- - -"
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="15dp"
+		  	     android:paddingLeft="15dp"
+		  	     android:paddingRight="15dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="40dp"
+				 android:layout_marginRight="40dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />  	
+		   	     	   	     
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/auxtdigital"
+		 	     android:visibility="gone"
+		 	     gauge:title="Aux T"
 		 	     gauge:units="\u00B0 F"
 		 	     gauge:width="90"
 		 	     gauge:value="- - -"
@@ -281,7 +315,24 @@
 		  	     android:paddingTop="5dp"
 		  	     android:layout_marginLeft="40dp"
 				 android:layout_marginRight="40dp"		  	     
-		   	     android:background="@drawable/digital_gauge_gradient_background" />     	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />    
+             	 
+			<com.shellware.adaptronic.adaptivetuner.widgets.DigitalGauge 
+		 	     android:id="@+id/opresdigital"
+		 	     android:visibility="gone"
+		 	     gauge:title="Oil P"
+		 	     gauge:units="KPA"
+		 	     gauge:width="100"
+		 	     gauge:value="- - -"		 	     
+		  	     android:layout_width="wrap_content"
+		  	     android:layout_height="wrap_content"
+		  	     android:paddingBottom="15dp"
+		  	     android:paddingLeft="15dp"
+		  	     android:paddingRight="15dp"
+		  	     android:paddingTop="5dp"
+		  	     android:layout_marginLeft="40dp"
+				 android:layout_marginRight="40dp"		  	     
+		   	     android:background="@drawable/digital_gauge_gradient_background" />   	     
 		</TableRow>        
 	</TableLayout>	        
 

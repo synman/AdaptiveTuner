@@ -20,8 +20,13 @@
   </head>
   <body>
   
+$ 1.2.15
+  % <b>Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.</b>
+  <br><br>Version 1.2.15
+  _ 2015-05-06
+  ! Going Digital
+  	* Digital Gauges on the Adaptive Tab   
 $ 1.2.14
-  % <b>Adaptive Tuner is governed by the terms of the <a href="https://github.com/synman/AdaptiveTuner/blob/master/README.md">Apache 2.0 License</a>. You must agree to these terms if you choose to use Adaptive Tuner in any manner whatsoever.</b><br><br>Version 1.2.14
   _ 2015-04-04
   ! Safety Cut 
   	* Added Safety Cut reason to status and log   

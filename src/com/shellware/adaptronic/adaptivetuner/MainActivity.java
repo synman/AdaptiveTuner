@@ -618,8 +618,8 @@ public class MainActivity 	extends Activity
 
     	displayAuxTPref = prefs.getBoolean("prefs_show_auxt", false);
 
-    	digitalWat.setUnits("\u00B0 " + (tempUomPref == 0 ? "C" : "F"));
-    	digitalMat.setUnits("\u00B0 " + (tempUomPref == 0 ? "C" : "F"));
+    	digitalWat.setUnits("\u00B0 " + (getTemperatureSymbol()));
+    	digitalMat.setUnits("\u00B0 " + (getTemperatureSymbol()));
 
     	showBoost = prefs.getBoolean("prefs_show_boost", false);
     	maxBoost = Integer.parseInt(prefs.getString("prefs_max_boost", "0"));
@@ -638,7 +638,7 @@ public class MainActivity 	extends Activity
 		
 		digitalFuelP.setUnits(pressureUomPref == 0 ? "kPA" : "PSI");
 		digitalOilP.setUnits(pressureUomPref == 0 ? "kPA" : "PSI");
-    	digitalAuxT.setUnits("\u00B0 " + (tempUomPref == 0 ? "C" : "F"));
+    	digitalAuxT.setUnits("\u00B0 " + getTemperatureSymbol());
     
     	if (showBoost) {
     		digitalMap.setTitle("BOOST");
@@ -1081,15 +1081,8 @@ public class MainActivity 	extends Activity
 			}
 
 			// water temperature alarm			
-    		if (waterTempPref) {
-    			if (wat < minimumWaterTemp) {
-//    				if (frags[0].isVisible() && gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.BLUE);
-    				if (frags[1].isVisible()) waterGaugeAlarm.setBackgroundColor(Color.BLUE);
-    			}
-    			if (wat > maximumWaterTemp) {
-//    				if (frags[0].isVisible() && gridData.getChildAt(3) != null && gridData.getChildAt(5) != null) gridData.getChildAt(5).setBackgroundColor(Color.RED);
-    				if (frags[1].isVisible()) waterGaugeAlarm.setBackgroundColor(Color.RED);
-    			}
+    		if (waterTempPref && frags[1].isVisible()) {
+				waterGaugeAlarm.setBackgroundColor(wat < minimumWaterTemp ? Color.BLUE : wat > maximumWaterTemp ? Color.RED : Color.GREEN);
     		}
 
     		// afr vs target alarm			
@@ -1097,7 +1090,7 @@ public class MainActivity 	extends Activity
     			final float threshold = targetAfr * (afrNotEqualTargetTolerance * .01f);
     			if (Math.abs(targetAfr - afr) >= threshold ) {
     				final int color =  afr > targetAfr ? Color.RED : Color.BLUE;
-//    				if (frags[0].isVisible() && gridData.getChildAt(3) != null) gridData.getChildAt(3).setBackgroundColor(color);
+    				if (frags[0].isVisible()) digitalAfr.setGaugeValueTextColor(color);
     				if (frags[1].isVisible()) afrGaugeAlarm.setBackgroundColor(color);
     				if (frags[2].isVisible()) fuelTableAfr.setBackgroundColor(color);
     			}
